@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import NextImage from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChartNoAxesColumnIncreasing, Columns3, Film, Flag, ImageIcon, Layers3, List, MessageSquare, Paperclip, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
+import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChartNoAxesColumnIncreasing, Columns3, Film, Flag, ImageIcon, Layers3, List, MessageSquare, MoreHorizontal, Paperclip, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
 import { formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
 
 const icons = { image: ImageIcon, video: Film, animation: Shapes, other: Layers3 };
@@ -30,7 +30,7 @@ function TaskCard({ task, now, href, selected }: { task: Task; now: number; href
       {task.format === 'video' ? <span className="cover-play" aria-hidden="true"><Play size={14} fill="currentColor" /></span> : null}
       {task.status === 'done' && <span className="cover-accepted"><Check size={12} aria-hidden="true" /></span>}
     </span>}
-    <h3><ChartNoAxesColumnIncreasing size={14} className={`card-priority-mark ${task.priority}`} />{task.offer}<span className="card-ellipsis" aria-hidden="true">⋯</span></h3>
+    <h3><ChartNoAxesColumnIncreasing size={14} className={`card-priority-mark ${task.priority}`} />{task.offer}</h3>
     <p className="card-description">{task.description}</p><div className="card-tags"><span className="card-format"><FormatMark format={task.format} />{formats[task.format]} · {task.quantity} шт.</span><span className="geo-tag">{task.geo}</span></div>
     {task.status === 'done' && <span className="card-approved"><Check size={13} aria-hidden="true" />Согласовано</span>}
     <div className="card-footer"><span className={`due ${overdue ? 'late' : ''}`} title={overdue ? 'Дедлайн просрочен' : 'Дедлайн'}>{overdue ? <TriangleAlert size={13} /> : <CalendarDays size={14} />}{formatDate(task.deadline)}</span>
@@ -231,7 +231,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
           {hasFilters && <button type="button" className="reset-filters" onClick={resetFilters}>Сбросить</button>}
         </div>
       </div>
-      {view === 'board' ? <div className={`kanban${showAllStages ? ' all-stages' : ''}`}>{displayedStages.map(({ id, label, hint }) => {
+      {view === 'board' ? <div className={`kanban${showAllStages ? ' all-stages' : ''}`}>{displayedStages.filter(stage => !status || stage.id === status).map(({ id, label, hint }) => {
         const column = filtered.filter((task) => task.status === id);
         const share = filtered.length ? (column.length / filtered.length) * 100 : 0;
         const shareLabel = `${label}: ${new Intl.NumberFormat('ru', { maximumFractionDigits: 1 }).format(share)}% (${column.length} из ${filtered.length} задач)`;
@@ -240,7 +240,22 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
         const selected = column.find((task) => task.id === selectedId);
         const visible = expanded[id] || hasFilters ? column : selected && !shown.includes(selected) ? [selected, ...shown.slice(0, limit - 1)] : shown;
         return <section className={`column ${id} ${status && status !== id ? 'mobile-hidden' : ''}`} key={id} aria-label={label}>
-          <header className="column-head"><span className="column-dot" role="img" aria-label={shareLabel} title={shareLabel} style={{ '--column-share': `${share}%` } as React.CSSProperties} /><h3>{label}</h3><span className="column-count">{column.length}</span><span className="column-tools" aria-hidden="true">⋯ ＋</span></header>
+          <header className="column-head"><span className="column-dot" role="img" aria-label={shareLabel} title={shareLabel} style={{ '--column-share': `${share}%` } as React.CSSProperties} /><h3>{label}</h3><span className="column-count">{column.length}</span><div className="column-tools">
+            <details className="column-menu">
+              <summary aria-label={`Действия колонки ${label}`}><MoreHorizontal size={15} /></summary>
+              <div className="column-menu-items">
+                <button type="button" onClick={event => {
+                  event.currentTarget.closest('details')?.removeAttribute('open');
+                  setStatus(status === id ? '' : id);
+                }}>{status === id ? 'Показать все колонки' : 'Только эта колонка'}</button>
+                <button type="button" disabled={hasFilters || column.length <= limit} onClick={event => {
+                  event.currentTarget.closest('details')?.removeAttribute('open');
+                  setExpanded(previous => ({ ...previous, [id]: !previous[id] }));
+                }}>{expanded[id] ? 'Свернуть задачи' : 'Развернуть задачи'}</button>
+              </div>
+            </details>
+            {isBuyer && <Link href="/tasks/new" aria-label={`Создать задачу · ${label}`}><Plus size={15} /></Link>}
+          </div></header>
           <div className="column-body">{visible.map((task) => <TaskCard key={task.id} task={task} now={now} href={`${boardPath}task=${task.id}`} selected={selectedId === task.id} />)}
             {column.length === 0 && <div className="empty-column"><span>Нет задач</span><small>{isBuyer && id === 'review' ? 'Здесь появятся задачи для вашей проверки' : hint}</small></div>}
             {!hasFilters && column.length > limit && <button className="column-more" type="button" aria-expanded={!!expanded[id]} onClick={() => setExpanded({ ...expanded, [id]: !expanded[id] })}>{expanded[id] ? 'Свернуть' : `Ещё ${column.length - limit}`}<ChevronDown size={13} aria-hidden="true" /></button>}
@@ -253,3 +268,4 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
     <div className="drawer-slot">{drawer}</div>
   </div>;
 }
+
