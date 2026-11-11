@@ -184,14 +184,15 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   const boardPath = mine ? '/board?scope=mine&' : '/board?';
   const hasFilters = lateOnly || quick !== 'all' || !!(query || geo || priority || assignee || status || format || offer);
   function resetFilters() { setLateOnly(false); setQuick('all'); setQuery(''); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); setFormat(''); setOffer(''); }
+  const showAllStages = stages === 'all' || hasFilters || mine || scoped.some(task => task.id === selectedId && (task.status === 'new' || task.status === 'revision'));
   return <div className={`board-layout${drawer ? ' with-drawer' : ''}${defaultDrawer ? ' default-drawer' : ''}`}>
     <div className="board-main">
     <header className="reference-topbar"><section className="board-intro" aria-label="Креативное производство">
-      <div><p className="workspace-kicker">Производство</p><h1>{mine ? 'Мои задачи' : 'Доска задач'}</h1><p>Производство, согласование и результаты в одном месте.</p></div>
+      <div><p className="workspace-kicker">Производство</p><h1>{mine ? 'Мои задачи' : 'Доска задач'}</h1><p>Производство креативов</p></div>
 
     </section>
     <div className="production-views" aria-label="Представления задач">{([
-      ['board', 'Доска', Columns3], ['list', 'Список', List], ['calendar', 'Календарь', CalendarDays], ['workload', 'Загрузка', Users], ['archive', 'Архив', Archive],
+      ['board', 'Канбан', Columns3], ['list', 'Список', List], ['calendar', 'Календарь', CalendarDays], ['workload', 'Загрузка', Users], ['archive', 'Архив', Archive],
     ] as const).map(([id, label, Icon]) => <button key={id} type="button" aria-pressed={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><Icon size={15} aria-hidden="true" />{label}</button>)}</div>
     <div className="board-stage-choice"><select aria-label="Колонки доски" value={stages} onChange={event=>setStages(event.target.value)}><option value="production">Производство</option><option value="all">Все статусы</option></select></div>
     <div className="board-quick-tabs production-filters" aria-label="Быстрые фильтры">
@@ -209,10 +210,10 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
       <select aria-label="Оффер задач" value={offer} onChange={e => setOffer(e.target.value)}><option value="">Оффер</option>{[...new Set(scoped.map(t => t.offer))].sort().map(value => <option key={value}>{value}</option>)}</select>
       <select aria-label="GEO задач" value={geo} onChange={e => setGeo(e.target.value)}><option value="">ГЕО</option>{geos.map(value => <option key={value}>{value}</option>)}</select>
       <select aria-label="Формат задач" value={format} onChange={e => setFormat(e.target.value)}><option value="">Формат</option>{Object.entries(formats).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-      <select aria-label="Исполнитель задач" value={assignee} onChange={e => setAssignee(e.target.value)}><option value="">Исполнитель</option><option value="free">Без исполнителя</option>{[...new Map(scoped.filter(t => t.creativeId).map(t => [t.creativeId!, t.creativeName])).entries()].map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
+      <select aria-label="Исполнитель задач" value={assignee} onChange={e => setAssignee(e.target.value)}><option value="">Все исполнители</option><option value="free">Без исполнителя</option>{[...new Map(scoped.filter(t => t.creativeId).map(t => [t.creativeId!, t.creativeName])).entries()].map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
       <button type="button" className="quick-filter" aria-label="Настроить фильтры доски" aria-expanded={showFilters} onClick={() => setShowFilters(!showFilters)}><SlidersHorizontal size={14} />Фильтры</button>
     </div>
-    <div className="reference-create">{isBuyer && <Link href="/tasks/new" className="button primary"><Plus size={16}/>Создать задачу</Link>}</div></header>
+    <div className="reference-create">{isBuyer && <Link href="/tasks/new" className="button primary" aria-label="Создать задачу"><Plus size={16}/>Задача</Link>}</div></header>
     <section className={`board${isBuyer ? ' buyer-board' : ''}`} id="kanban" aria-label="Kanban-доска">
     <div className="board-toolbar" id="board-filters" hidden={!showFilters}>
         <div className="board-stage-filter"><select aria-label="Колонки доски" value={stages} onChange={event=>setStages(event.target.value)}><option value="production">Производство</option><option value="all">Все статусы</option></select></div><div className="board-view" aria-live="polite">{filtered.length} из {scoped.length}</div>
@@ -224,7 +225,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
           {hasFilters && <button type="button" className="reset-filters" onClick={resetFilters}>Сбросить</button>}
         </div>
       </div>
-      {view === 'board' ? <div className={`kanban${stages === 'all' ? ' all-stages' : ''}`}>{statuses.filter(item => stages === 'all' || ['progress','review','done'].includes(item.id)).map(({ id, label, hint }) => {
+      {view === 'board' ? <div className={`kanban${showAllStages ? ' all-stages' : ''}`}>{statuses.filter(item => showAllStages || ['progress','review','done'].includes(item.id)).map(({ id, label, hint }) => {
         const column = filtered.filter((task) => task.status === id);
         const limit = 3;
         const shown = column.slice(0, limit);

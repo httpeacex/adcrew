@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowDownToLine, ArrowUpRight, CalendarDays, GitCompareArrows, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpRight, CalendarDays, File, FileText, GitCompareArrows, X } from 'lucide-react';
 import type { ProductStore } from '@/lib/product-store';
 import { actionsFor, actionLabels, formatDate, formats, isOverdue, priorities, statuses, type Event, type Profile, type Submission, type Task } from '@/lib/workflow';
 import { fileHref } from '@/lib/client-runtime';
@@ -34,7 +34,7 @@ export function TaskInspector({ task, events, submissions, person, now, closeHre
       <div className="drawer-head-line"><div className="drawer-badges"><strong>КР-{String(task.id).padStart(3, '0')}</strong><span className={`status-pill ${status.id}`}>{status.label}</span></div><div className="drawer-head-tools">
         <CopyTaskLink href={currentHref} /><Link className="icon-link" href={`/tasks/${task.id}`} aria-label="Открыть полную карточку"><ArrowUpRight size={17} /></Link><Link className="icon-link" href={closeHref} scroll={false} aria-label="Закрыть карточку"><X size={18} /></Link>
       </div></div>
-      <h2 className="drawer-title" id="drawer-title">{task.offer}</h2>
+      <h2 className="drawer-title" id="drawer-title"><FileText className="inspector-document-icon" size={18} aria-hidden="true" />{task.offer}</h2>
       <p className="inspector-context">{task.geo} · {formats[task.format]} · {task.quantity} шт.</p>
 
     </header>
@@ -52,7 +52,7 @@ export function TaskInspector({ task, events, submissions, person, now, closeHre
           </> : <div className="empty-panel">Файлы появятся после первой сдачи.</div>}
           {extras && <div className="inspector-collaboration"><TaskCollaboration key={selected?.id ?? 'brief'} person={person} task={task} extras={extras} returnTo={currentHref} rounds={submissions.map(item => item.round)} fixedRound={selected?.round ?? null} compact /></div>}
         </>}
-        {tab === 'brief' && <div className="drawer-overview"><details className="drawer-description"><summary>Техническое задание</summary><h3>Описание</h3><p>{task.description}</p></details><dl className="facts"><div><dt>Покупатель</dt><dd>{task.buyerName}</dd></div><div><dt>Приоритет</dt><dd>{priorities[task.priority]}</dd></div></dl><section className="inspector-detail-files"><h3>Метки</h3><div className="detail-labels"><span>{formats[task.format]}</span><span>{task.geo}</span><span>{task.quantity} шт.</span></div><h3>Вложения</h3>{files.length ? files.map(file=><a key={file.id} href={fileHref(file.id)} download={file.name}><ArrowDownToLine size={15}/><span>{file.name}</span></a>) : <p className="muted">Файлы появятся после сдачи результата.</p>}</section><section className="drawer-references"><h3>Референсы</h3>{task.references.length ? <ul>{task.references.map((url, index) => <li key={`${index}-${url}`}><a href={url} target="_blank" rel="noreferrer">Ссылка {index + 1}<ArrowUpRight size={13} /></a></li>)}</ul> : <p className="muted">Ссылок пока нет.</p>}</section>{extras && <TaskCollaboration key="brief-discussion" person={person} task={task} extras={extras} returnTo={currentHref} fixedRound={null} compact checksOpen />}</div>}
+        {tab === 'brief' && <div className="drawer-overview"><details className="drawer-description"><summary>Техническое задание</summary><h3>Описание</h3><p>{task.description}</p></details><dl className="facts"><div><dt>Покупатель</dt><dd>{task.buyerName}</dd></div><div><dt>Приоритет</dt><dd>{priorities[task.priority]}</dd></div></dl><section className="inspector-detail-files"><h3>Метки</h3><div className="detail-labels"><span>{formats[task.format]}</span><span>{task.geo}</span><span>{task.quantity} шт.</span></div><h3>Вложения</h3>{files.length ? files.map(file=><a key={file.id} href={fileHref(file.id)} download={file.name}><File size={15}/><span>{file.name}</span><ArrowDownToLine size={15}/></a>) : <p className="muted">Файлы появятся после сдачи результата.</p>}</section><section className="drawer-references"><h3>Связанные документы</h3>{task.references.length ? <ul>{task.references.map((url, index) => <li key={`${index}-${url}`}><a href={url} target="_blank" rel="noreferrer">Ссылка {index + 1}<ArrowUpRight size={13} /></a></li>)}</ul> : <p className="muted">Ссылок пока нет.</p>}</section>{extras && <TaskCollaboration key="brief-discussion" person={person} task={task} extras={extras} returnTo={currentHref} fixedRound={null} compact checksOpen />}</div>}
         {tab === 'brief' && <details className="inspector-history"><summary>История задачи</summary><ol className="timeline">{events.toReversed().map(event => <li key={event.id}><span className={`status-dot ${event.toStatus}`} /><div><strong>{actionLabels[event.action]}{event.round ? ` · v${event.round}` : ''}</strong><small>{event.actorName} · {formatDate(event.at, true)}</small></div></li>)}</ol></details>}
         {actions.includes('submit') && <section className="drawer-results"><h3>Сдача результата</h3><TaskAction task={task.id} version={task.version} action="submit" returnTo={currentHref} /></section>}
       </div>
