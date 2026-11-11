@@ -4,8 +4,9 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import NextImage from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { Bell, Check, ChevronDown, Clock3, Film, Flag, ImageIcon, Layers3, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, X } from 'lucide-react';
-import { formatDate, formats, isOverdue, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
+import { Archive, Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, Columns3, Film, Flag, ImageIcon, Layers3, List, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
+import { formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
+import type { productionMetrics } from '@/lib/metrics';
 import { ThemeToggle } from './theme';
 
 const icons = { image: ImageIcon, video: Film, animation: Shapes, other: Layers3 };
@@ -41,7 +42,45 @@ function TaskCard({ task, now, href, selected }: { task: Task; now: number; href
 }
 
 
-export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, account, drawer, unread = 0 }: {
+function ProductionStats({ metrics }: { metrics: ReturnType<typeof productionMetrics> }) {
+  const { current, previous, trend } = metrics;
+  const decimal = (value: number | null) => value === null ? '—' : value.toLocaleString('ru-RU', { maximumFractionDigits: 1 });
+  const percentChange = (current: number | null, previous: number | null) => current === null || previous === null || previous === 0 ? null : (current - previous) / previous * 100;
+  const rows = [
+    { title: 'Производство за неделю', value: decimal(current.materials), unit: 'креативов', delta: percentChange(current.materials, previous.materials), goodUp: true, Icon: Layers3 },
+    { title: 'Среднее время цикла', value: decimal(current.cycle === null ? null : current.cycle / 86_400_000), unit: 'дня', delta: percentChange(current.cycle, previous.cycle), goodUp: false, Icon: Clock3 },
+    { title: 'Правки на креатив', value: decimal(current.revisions), unit: '', delta: percentChange(current.revisions, previous.revisions), goodUp: false, Icon: Layers3 },
+    { title: 'Апрув с первого раза', value: current.firstPass === null ? '—' : `${Math.round(current.firstPass)}%`, unit: '', delta: current.firstPass === null || previous.firstPass === null ? null : current.firstPass - previous.firstPass, goodUp: true, Icon: Check },
+  ];
+  const max = Math.max(1, ...trend);
+  return <section className="production-stats" aria-label="Показатели производства">{rows.map((row, index) => <article key={row.title} title="Последние 7 дней; изменение относительно предыдущих 7 дней. По доступным вам задачам, без фильтров доски."><span>{row.title}</span><row.Icon size={20} aria-hidden="true" /><div><strong>{row.value}</strong><small>{row.unit}</small>{row.delta !== null && <b className={(row.delta >= 0) === row.goodUp ? 'improving' : 'declining'}>{row.delta > 0 ? '+' : ''}{decimal(row.delta)}{index === 3 ? ' п.п.' : '%'}</b>}</div>{index === 0 && <svg className="production-sparkline" viewBox="0 0 100 36" role="img" aria-label="Завершённые задачи по дням за последнюю неделю"><polyline points={trend.map((n, i) => `${i * 16 + 2},${33 - n / max * 30}`).join(' ')} /></svg>}</article>)}</section>;
+}
+
+function ProductionView({ view, tasks, now, boardPath }: { view: 'list' | 'calendar' | 'workload' | 'archive'; tasks: Task[]; now: number; boardPath: string }) {
+  const [monthOffset, setMonthOffset] = useState(0);
+  if (view === 'workload') {
+    const active = tasks.filter(t => t.status !== 'done');
+    const groups = [...new Map(active.map(t => [t.creativeId, t.creativeName ?? 'Без исполнителя'])).entries()];
+    return <section className="production-workload"><h2>Загрузка команды</h2><p className="muted">Открытые задачи по исполнителям. Просроченные требуют внимания.</p><div>{groups.map(([id, name]) => {
+      const items = active.filter(t => t.creativeId === id);
+      return <article key={id ?? 'free'}><h3>{name}<span>{items.length}</span></h3><div className="workload-stages">{statuses.filter(s => s.id !== 'done').map(s => <span key={s.id}>{s.label}<b>{items.filter(t => t.status === s.id).length}</b></span>)}</div>{items.map(t => <Link key={t.id} href={`${boardPath}task=${t.id}`} scroll={false}><span>{t.offer}</span><small className={isOverdue(t, now) ? 'late' : ''}>{formatDate(t.deadline)}</small></Link>)}</article>;
+    })}</div>{!groups.length && <p>Открытых задач нет.</p>}</section>;
+  }
+  if (view === 'calendar') {
+    const [year, month] = localDay(now).split('-').map(Number);
+    const start = new Date(Date.UTC(year, month - 1 + monthOffset, 1));
+    const offset = (start.getUTCDay() + 6) % 7;
+    return <section className="production-calendar"><header><h2>{start.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric', timeZone: 'UTC' })}</h2><div><button type="button" aria-label="Предыдущий месяц" onClick={() => setMonthOffset(monthOffset - 1)}><ChevronLeft size={18} /></button><button type="button" onClick={() => setMonthOffset(0)}>Сегодня</button><button type="button" aria-label="Следующий месяц" onClick={() => setMonthOffset(monthOffset + 1)}><ChevronRight size={18} /></button></div></header><div className="calendar-scroll"><div className="calendar-grid">{['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(day => <strong key={day}>{day}</strong>)}{Array.from({ length: 42 }, (_, index) => {
+      const date = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), index - offset + 1));
+      const day = date.toISOString().slice(0, 10);
+      return <div key={day} className={`calendar-day${date.getUTCMonth() !== start.getUTCMonth() ? ' outside' : ''}${day === localDay(now) ? ' today' : ''}`}><time dateTime={day}>{date.getUTCDate()}</time>{tasks.filter(t => localDay(t.deadline) === day).map(t => <Link key={t.id} href={`${boardPath}task=${t.id}`} scroll={false} title={t.offer}><span className={`status-dot ${t.status}`} />{t.offer}</Link>)}</div>;
+    })}</div></div></section>;
+  }
+  return <div className="production-list"><table><thead><tr><th>Задача</th><th>Статус</th><th>Формат / GEO</th><th>Исполнитель</th><th>Дедлайн</th></tr></thead><tbody>{tasks.map(task => <tr key={task.id}><td><Link href={`${boardPath}task=${task.id}`} scroll={false}><small>КР-{String(task.id).padStart(3, '0')}</small>{task.offer}</Link></td><td><span className={`status-pill ${task.status}`}>{statuses.find(s => s.id === task.status)!.label}</span></td><td>{formats[task.format]} · {task.geo}</td><td>{task.creativeName ?? 'Свободна'}</td><td className={task.status !== 'done' && isOverdue(task, now) ? 'late' : ''}>{formatDate(task.deadline)}</td></tr>)}</tbody></table>{!tasks.length && <p className="empty-panel">{view === 'archive' ? 'Принятых работ пока нет.' : 'Задачи не найдены.'}</p>}</div>;
+}
+
+export function Board({ tasks, metrics, person, mine, now, selectedId, defaultDrawer, account, drawer, unread = 0 }: {
+  metrics: ReturnType<typeof productionMetrics>;
   tasks: Task[]; person: Actor; mine: boolean; now: number; selectedId?: number; defaultDrawer: boolean; account: ReactNode; drawer: ReactNode; unread?: number;
 }) {
   const [query, setQuery] = useState('');
@@ -50,6 +89,10 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, acc
   const [priority, setPriority] = useState('');
   const [assignee, setAssignee] = useState('');
   const [lateOnly, setLateOnly] = useState(false);
+  const [view, setView] = useState<'board' | 'list' | 'calendar' | 'workload' | 'archive'>('board');
+  const [quick, setQuick] = useState<'all' | 'mine' | 'today'>('all');
+  const [format, setFormat] = useState('');
+  const [offer, setOffer] = useState('');
   const [status, setStatus] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   const [expanded, setExpanded] = useState<Partial<Record<Status, boolean>>>({});
@@ -146,11 +189,13 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, acc
   const geos = [...new Set(scoped.map((task) => task.geo))].sort();
   const term = query.trim().toLocaleLowerCase('ru');
   const overdue = (task: Task) => task.status !== 'done' && isOverdue(task, now);
-  const filtered = scoped.filter((task) => (!term || task.offer.toLocaleLowerCase('ru').includes(term)) && (!geo || task.geo === geo) &&
+  const today = (task: Task) => task.status !== 'done' && localDay(task.deadline) === localDay(now);
+  const own = (task: Task) => task.buyerId === person.id || task.creativeId === person.id;
+  const filtered = scoped.filter((task) => (!term || task.offer.toLocaleLowerCase('ru').includes(term)) && (!geo || task.geo === geo) && (!format || task.format === format) && (!offer || task.offer === offer) && (quick !== 'mine' || own(task)) && (quick !== 'today' || today(task)) && (view !== 'archive' || task.status === 'done') &&
     (!priority || task.priority === priority) && (!assignee || (assignee === 'free' ? !task.creativeId : String(task.creativeId) === assignee)) && (!lateOnly || overdue(task)) && (!status || task.status === status));
   const boardPath = mine ? '/board?scope=mine&' : '/board?';
-  const hasFilters = lateOnly || !!(query || geo || priority || assignee || status);
-  function resetFilters() { setLateOnly(false); setQuery(''); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); }
+  const hasFilters = lateOnly || quick !== 'all' || !!(query || geo || priority || assignee || status || format || offer);
+  function resetFilters() { setLateOnly(false); setQuick('all'); setQuery(''); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); setFormat(''); setOffer(''); }
   return <div className={`board-layout${drawer ? ' with-drawer' : ''}${defaultDrawer ? ' default-drawer' : ''}`}>
     <header className="board-heading" role="banner">
       <div className="header-toolbar">
@@ -174,13 +219,21 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, acc
     </header>
     <div className="board-main">
     <section className="board-intro" aria-label="Креативное производство">
-      <div><p className="workspace-kicker">Рабочее пространство</p><h1>{mine ? 'Мои задачи' : 'Доска задач'}</h1><p>Производство, согласование и результаты в одном месте.</p></div>
+      <div><p className="workspace-kicker">Производство</p><h1>{mine ? 'Мои задачи' : 'Доска задач'}</h1><p>Производство, согласование и результаты в одном месте.</p></div>
       <div className="board-intro-actions"><Link href="/how-it-works" className="button secondary guide-link"><Play size={13} /> Как это работает</Link>{isBuyer && <Link href="/tasks/new" className="button primary"><Plus size={16} />Создать задачу</Link>}</div>
     </section>
-    <div className="board-quick-tabs" aria-label="Представления доски">
-      <Link href="/board?task=none" className={!mine && !lateOnly ? 'active' : ''}>Все задачи <span>{tasks.length}</span></Link>
-      {person.role === 'creative' && <Link href="/board?scope=mine&task=none" className={mine && !lateOnly ? 'active' : ''}>Мои <span>{tasks.filter(task => task.creativeId === person.id).length}</span></Link>}
-      <button type="button" className={lateOnly ? 'active' : ''} aria-pressed={lateOnly} onClick={() => { setLateOnly(!lateOnly); setStatus(''); }}>Просрочены <span>{scoped.filter(overdue).length}</span></button>
+    <div className="production-views" aria-label="Представления задач">{([
+      ['board', 'Доска', Columns3], ['list', 'Список', List], ['calendar', 'Календарь', CalendarDays], ['workload', 'Загрузка', Users], ['archive', 'Архив', Archive],
+    ] as const).map(([id, label, Icon]) => <button key={id} type="button" aria-pressed={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><Icon size={15} aria-hidden="true" />{label}</button>)}</div>
+    <div className="board-quick-tabs production-filters" aria-label="Быстрые фильтры">
+      <button type="button" className={quick === 'all' && !lateOnly ? 'active' : ''} aria-pressed={quick === 'all' && !lateOnly} onClick={() => { setQuick('all'); setLateOnly(false); }}>Все задачи <span>{scoped.length}</span></button>
+      <button type="button" className={quick === 'mine' ? 'active' : ''} aria-pressed={quick === 'mine'} onClick={() => { setQuick(quick === 'mine' ? 'all' : 'mine'); setLateOnly(false); }}>Мои <span>{scoped.filter(own).length}</span></button>
+      <button type="button" className={quick === 'today' ? 'active' : ''} aria-pressed={quick === 'today'} onClick={() => { setQuick(quick === 'today' ? 'all' : 'today'); setLateOnly(false); }}>Сегодня <span>{scoped.filter(today).length}</span></button>
+      <button type="button" className={lateOnly ? 'active' : ''} aria-pressed={lateOnly} onClick={() => { setLateOnly(!lateOnly); setQuick('all'); setStatus(''); }}>Просрочены <span>{scoped.filter(overdue).length}</span></button>
+      <select aria-label="Оффер задач" value={offer} onChange={e => setOffer(e.target.value)}><option value="">Оффер</option>{[...new Set(scoped.map(t => t.offer))].sort().map(value => <option key={value}>{value}</option>)}</select>
+      <select aria-label="GEO задач" value={geo} onChange={e => setGeo(e.target.value)}><option value="">ГЕО</option>{geos.map(value => <option key={value}>{value}</option>)}</select>
+      <select aria-label="Формат задач" value={format} onChange={e => setFormat(e.target.value)}><option value="">Формат</option>{Object.entries(formats).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+      <select aria-label="Исполнитель задач" value={assignee} onChange={e => setAssignee(e.target.value)}><option value="">Исполнитель</option><option value="free">Без исполнителя</option>{[...new Map(scoped.filter(t => t.creativeId).map(t => [t.creativeId!, t.creativeName])).entries()].map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
       <button type="button" className="quick-filter" aria-label="Настроить фильтры доски" aria-expanded={showFilters} onClick={() => setShowFilters(!showFilters)}><SlidersHorizontal size={14} />Фильтры</button>
     </div>
     <section className={`board${isBuyer ? ' buyer-board' : ''}`} id="kanban" aria-label="Kanban-доска">
@@ -194,7 +247,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, acc
           {hasFilters && <button type="button" className="reset-filters" onClick={resetFilters}>Сбросить</button>}
         </div>
       </div>
-      <div className="kanban">{statuses.map(({ id, label, hint }) => {
+      {view === 'board' ? <div className="kanban">{statuses.map(({ id, label, hint }) => {
         const column = filtered.filter((task) => task.status === id);
         const limit = column[0]?.coverId && !hasFilters ? 1 : 2;
         const shown = column.slice(0, limit);
@@ -207,8 +260,10 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, acc
             {!hasFilters && column.length > limit && <button className="column-more" type="button" aria-expanded={!!expanded[id]} onClick={() => setExpanded({ ...expanded, [id]: !expanded[id] })}>{expanded[id] ? 'Свернуть' : `Ещё ${column.length - limit}`}<ChevronDown size={13} aria-hidden="true" /></button>}
           </div>
         </section>;
-      })}</div>
+      })}</div> : <ProductionView view={view} tasks={filtered} now={now} boardPath={boardPath} />}
+      {hasFilters && !showFilters && <button type="button" className="reset-filters production-reset" onClick={resetFilters}>Сбросить фильтры</button>}
     </section>
+    <ProductionStats metrics={metrics} />
     </div>{drawer && <Link className="drawer-backdrop" href={`${boardPath}task=none`} scroll={false} aria-hidden="true" tabIndex={-1} />}
     <div className="drawer-slot">{drawer}</div>
   </div>;

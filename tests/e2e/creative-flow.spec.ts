@@ -53,6 +53,8 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   await creative.locator('input[type=file]').setInputFiles('fixtures/creative.png');
   await creative.getByLabel('ChatGPT').fill('12');
   await creative.getByRole('button', { name: 'Сдать результат' }).click();
+  await expect(creative).toHaveURL(`/board?task=${task.split('/').at(-1)}`);
+  await creative.getByRole('link', { name: 'Открыть полную карточку', exact: true }).click();
   await expect(creative).toHaveURL(task);
   await expectCenteredWorkspace(creative);
   await expect(creative.locator('.status-pill')).toHaveText('На проверке');
@@ -67,6 +69,8 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   await creative.locator('input[type=file]').setInputFiles('fixtures/creative.mp4');
   await creative.getByLabel('ChatGPT').fill('3,5');
   await creative.getByRole('button', { name: 'Сдать результат' }).click();
+  await expect(creative).toHaveURL(`/board?task=${task.split('/').at(-1)}`);
+  await creative.getByRole('link', { name: 'Открыть полную карточку', exact: true }).click();
   await expect(creative).toHaveURL(task);
   await expect(creative.locator('.status-pill')).toHaveText('На проверке');
   await expect(creative.getByRole('heading', { name: 'Версия 2' })).toBeVisible();
@@ -146,24 +150,19 @@ test('theme changes across the board, drawer and analytics and survives reload',
   const html = page.locator('html');
   await expect(html).toHaveAttribute('data-theme', 'dark');
   const darkBackground = await page.locator('body').evaluate(element => getComputedStyle(element).backgroundColor);
-  const darkCard = await page.locator('.task-card').first().evaluate(element => getComputedStyle(element).backgroundColor);
+  const darkCard = await page.locator('.task-card').first().evaluate(element => getComputedStyle(element).backgroundImage);
   await expect(page.getByRole('heading', { name: 'Доска задач', exact: true })).toBeVisible();
   await expect(page.getByRole('complementary', { name: /Видео для Dating/ })).toBeVisible();
-  const factOffsets = await page.locator('.drawer-facts-brief dd').evaluateAll((values) => values.map((value) => {
-    const range = document.createRange();
-    range.selectNodeContents(value);
-    const text = range.getBoundingClientRect();
-    const field = value.getBoundingClientRect();
-    return Math.abs(text.left + text.width / 2 - field.left - field.width / 2);
-  }));
-  expect(factOffsets).toHaveLength(3);
-  expect(Math.max(...factOffsets)).toBeLessThan(1);
+  await expect(page.locator('.drawer-summary > div')).toHaveCount(4);
+  await expect(page.locator('.drawer-summary')).toContainText('Исполнитель');
+  await expect(page.locator('.drawer-summary')).toContainText('Покупатель');
+  await expect(page.locator('.drawer-hero')).toBeVisible();
   await page.getByRole('button', { name: 'Включить светлую тему' }).click();
   await expect(html).toHaveAttribute('data-theme', 'light');
   await page.reload();
   await expect(html).toHaveAttribute('data-theme', 'light');
   expect(await page.locator('body').evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(darkBackground);
-  expect(await page.locator('.task-card').first().evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(darkCard);
+  expect(await page.locator('.task-card').first().evaluate(element => getComputedStyle(element).backgroundImage)).not.toBe(darkCard);
   await expect(page.getByRole('heading', { name: 'Доска задач', exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Закрыть карточку' }).click();
   await expect(page.getByRole('complementary', { name: /Видео для Dating/ })).toHaveCount(0);

@@ -4,7 +4,7 @@ import { AccountMenu, Analytics, Login, NewTask, Settings, TaskDrawer, TaskScree
 import InkOrbitFeatures from '@/components/ui/ink-orbit-features';
 import { demoMode, getStore, requestSnapshot } from '@/lib/data';
 import { ProductPage } from '@/components/product';
-import { deliveryMetrics } from '@/lib/metrics';
+import { deliveryMetrics, productionMetrics } from '@/lib/metrics';
 import { InputError, localDay, reportPeriod } from '@/lib/workflow';
 
 type Props = { params: Promise<{ view?: string[] }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -36,7 +36,7 @@ export default async function Page({ params, searchParams }: Props) {
     const id = selection ?? defaultTask;
     const detail = id && (!mine || tasks.some((task) => task.id === id && (task.buyerId === person.id || task.creativeId === person.id))) ? store.task(person, id) : null;
     const boardPath = mine ? '/board?scope=mine&' : '/board?';
-    screen = <Board key={active} tasks={tasks} person={{ id: person.id, role: person.role }} mine={mine} now={now} selectedId={detail?.task.id}
+    screen = <Board key={active} tasks={tasks} metrics={productionMetrics(tasks.map(task => ({ ...task, rounds: task.status === 'done' ? store.task(person, task.id)!.submissions.length : 0 })), now)} person={{ id: person.id, role: person.role }} mine={mine} now={now} selectedId={detail?.task.id}
       defaultDrawer={!!defaultTask} account={<AccountMenu person={person} demo={demo} />}
       unread={unread} drawer={detail && <TaskDrawer extras={store.taskExtras(person, detail.task.id)} key={detail.task.id} {...detail} person={person} now={now} closeHref={`${boardPath}task=none`} currentHref={`${boardPath}task=${detail.task.id}`} />} />;
   } else if (view === 'tasks' && route.length === 2) {

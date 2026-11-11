@@ -6,7 +6,7 @@ import InkOrbitFeatures from '@/components/ui/ink-orbit-features';
 import { ThemeProvider, type Theme } from '@/components/theme';
 import { setBrowserRuntime } from '@/lib/client-runtime';
 import { ProductPage } from '@/components/product';
-import { deliveryMetrics } from '@/lib/metrics';
+import { deliveryMetrics, productionMetrics } from '@/lib/metrics';
 import { InputError, localDay, reportPeriod } from '@/lib/workflow';
 import { changes, currentProfile, fileUrl, getStore, initializeStore, post, refreshStore } from './local-api';
 import { navigate } from './link';
@@ -48,7 +48,7 @@ function App() {
     const id = query && /^\d+$/.test(query) ? Number(query) : defaultTask;
     const detail = id && (!mine || tasks.some(task => task.id === id && task.creativeId === person.id)) ? store.task(person, id) : null;
     const boardPath = mine ? '/board?scope=mine&' : '/board?';
-    screen = <Board key={`${person.id}:${active}`} tasks={tasks} person={person} mine={mine} now={now} selectedId={detail?.task.id}
+    screen = <Board key={`${person.id}:${active}`} tasks={tasks} metrics={productionMetrics(tasks.map(task => ({ ...task, rounds: task.status === 'done' ? store.task(person, task.id)!.submissions.length : 0 })), now)} person={person} mine={mine} now={now} selectedId={detail?.task.id}
       defaultDrawer={!!defaultTask} account={<AccountMenu person={person} demo />}
       unread={unread} drawer={detail && <TaskDrawer extras={store.taskExtras(person, detail.task.id)} key={detail.task.id} {...detail} person={person} now={now} closeHref={`${boardPath}task=none`} currentHref={`${boardPath}task=${detail.task.id}`} />} />;
   } else if (view === 'tasks' && path.length === 2) {

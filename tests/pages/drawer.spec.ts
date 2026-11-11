@@ -1,0 +1,30 @@
+import { test, expect } from '@playwright/test';
+
+test('task panel shows media and versions in both themes and saves discussion and checks', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('./');
+  await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /Покупатель/ }).click();
+  await page.goto('./#/board');
+  const panel = page.locator('.task-drawer');
+  await expect(panel.locator('.drawer-hero')).toBeVisible();
+  await panel.getByRole('button', { name: 'Скопировать ссылку на задачу', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain('#/board?task=9');
+  await expect(panel.getByRole('heading', { name: 'Версии результата', exact: true })).toBeVisible();
+  await expect(panel.getByRole('heading', { name: 'Чек-лист приёмки', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Включить светлую тему' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(panel.locator('.drawer-hero')).toBeVisible();
+  const check = panel.getByRole('button', { name: 'Соответствует брифу', exact: true });
+  await check.click();
+  await expect(check).toHaveAttribute('aria-pressed', 'true');
+  await panel.getByRole('button', { name: 'Обсуждение', exact: true }).click();
+  await panel.getByLabel('Комментарий', { exact: true }).fill('Проверено в панели задачи');
+  await panel.getByRole('button', { name: 'Отправить', exact: true }).click();
+  await expect(panel.getByText('Проверено в панели задачи', { exact: true })).toBeVisible();
+  await page.reload();
+  await panel.getByRole('button', { name: 'Обсуждение', exact: true }).click();
+  await expect(panel.getByText('Проверено в панели задачи', { exact: true })).toBeVisible();
+  await panel.getByRole('button', { name: 'Версии', exact: true }).click();
+  await expect(panel.getByRole('link', { name: /^Скачать / }).first()).toBeVisible();
+});

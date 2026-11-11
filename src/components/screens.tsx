@@ -11,7 +11,7 @@ import { VersionComparison } from './version-comparison';
 import { deliveryMetrics } from '@/lib/metrics';
 import { actionsFor, actionLabels, duration, formatCredits, formatDate, formats, intervals, isOverdue, priorities, roles, statuses, zoneLabel, type Event, type Profile, type Submission, type Task } from '@/lib/workflow';
 import { Avatar, FormatMark } from './board';
-import { DrawerTabs } from './drawer-tabs';
+import { CopyTaskLink, DrawerTabs } from './drawer-tabs';
 import { BriefForm, SessionForm, TaskAction } from './forms';
 import { ThemeToggle } from './theme';
 import { DemoLogin, LoginCredentials } from './login-controls';
@@ -189,52 +189,68 @@ function DrawerTimeline({ events }: { events: Event[] }) {
   return <ol className="timeline">{events.toReversed().map((event) => <li key={event.id}><span className={`status-dot ${event.toStatus}`} /><div><strong>{actionLabels[event.action]}{event.round ? ` · v${event.round}` : ''}</strong><small>{event.actorName} · {formatDate(event.at, true)}</small></div></li>)}</ol>;
 }
 
+function DrawerVersions({ submissions }: { submissions: Submission[] }) {
+  return <section className="drawer-versions"><div className="drawer-subhead"><h3>Версии результата</h3><span>{submissions.length}</span></div>
+    {!submissions.length && <p className="muted">Файлы появятся после первой сдачи.</p>}
+    {submissions.map((item, index) => <article className={`drawer-version${index === 0 ? ' current' : ''}`} key={item.id}>
+      <div className="drawer-version-heading"><strong>v{item.round}{index === 0 ? ' · Текущая' : ''}</strong><time>{formatDate(item.submittedAt, true)}</time></div>
+      {item.files.map(file => <div className="drawer-version-file" key={file.id}>
+        <a className="drawer-version-thumb" href={fileHref(file.id, true)} target="_blank" rel="noreferrer" aria-label={`Открыть ${file.name}`}>
+          {file.type.startsWith('image/') ? <Image alt="" fill unoptimized src={fileHref(file.id, true)} /> : <Film size={23} />}</a>
+        <span>{file.name}</span><a className="icon-link" href={fileHref(file.id)} download={file.name} aria-label={`Скачать ${file.name}`}><ArrowDownToLine size={17} /></a>
+      </div>)}
+      {item.reviewNote && <p className="drawer-version-note">{item.reviewNote}</p>}
+      <div className="drawer-version-usage"><Sparkles size={13} />{item.usage.length ? item.usage.map(u => `${u.service} — ${formatCredits(u.units)} кр.`).join(' · ') : 'Без AI'}</div>
+    </article>)}
+  </section>;
+}
+
 export function TaskDrawer({ task, events, submissions, person, now, closeHref, currentHref, extras }: {
   task: Task; events: Event[]; submissions: Submission[]; person: Profile; now: number; closeHref: string; currentHref: string; extras?: ReturnType<ProductStore['taskExtras']>;
 }) {
   const actions = actionsFor(person, task);
   const status = statuses.find(({ id }) => id === task.status)!;
   const latest = submissions[0];
-  const activity = events.filter(({ action }) => action === 'submit' || action === 'revise');
-  return <aside className="task-drawer" aria-labelledby="drawer-title">
+  const media = latest?.files.find(file => file.type === 'video/mp4') ?? latest?.files.find(file => file.id === task.coverId) ?? latest?.files[0];
+  const collaboration = extras && <TaskCollaboration person={person} task={task} extras={extras} returnTo={currentHref} rounds={submissions.map(item => item.round)} />;
+  const participants = extras?.members.filter(member => member.id === task.buyerId || member.id === task.creativeId || events.some(event => event.actorName === member.name) || extras.comments.some(comment => comment.actorId === member.id)) ?? [];
+  const versions = <DrawerVersions submissions={submissions} />;
+  return <aside className="task-drawer production-drawer" aria-labelledby="drawer-title">
     <header className="drawer-head">
-      <div className="drawer-head-line"><span className="drawer-code">КР-{String(task.id).padStart(3, '0')}</span><div>
+      <div className="drawer-head-line"><div className="drawer-context"><span><Globe2 size={13} />{task.geo}</span><span><FormatMark format={task.format} />{formats[task.format]}</span><span>{task.quantity} шт.</span></div><div className="drawer-head-tools">
+        <CopyTaskLink href={currentHref} />
         <Link className="icon-link" href={`/tasks/${task.id}`} title="Открыть полную карточку" aria-label="Открыть полную карточку"><ArrowUpRight size={17} /></Link>
         <Link className="icon-link" href={closeHref} scroll={false} title="Закрыть карточку" aria-label="Закрыть карточку"><X size={18} /></Link>
       </div></div>
       <h2 className="drawer-title" id="drawer-title">{task.offer}</h2>
-      <div className="drawer-badges"><span className={`status-pill ${status.id}`}><span className={`status-dot ${status.id}`} /> {status.label}</span>
-        <span className={`priority ${task.priority}`}><Flag size={12} /> {priorities[task.priority]}</span></div>
+      <div className="drawer-badges"><span className="drawer-code">ID: КР-{String(task.id).padStart(3, '0')}</span><span className={`status-pill ${status.id}`}><span className={`status-dot ${status.id}`} />{status.label}</span></div>
     </header>
     <div className="drawer-scroll">
+      {(media || task.coverId) && <div className="drawer-hero">{media?.type === 'video/mp4'
+        ? <video key={media.id} controls preload="metadata" poster={task.coverId ? fileHref(task.coverId, true) : undefined} aria-label={`Предпросмотр ${media.name}`} src={fileHref(media.id, true)} />
+        : <Image fill unoptimized sizes="(max-width: 650px) 100vw, 600px" src={fileHref(media?.id ?? task.coverId!, true)} alt={`Креатив: ${task.offer}`} />}</div>}
+      <dl className="drawer-summary">
+        <div><dt>Исполнитель</dt><dd>{task.creativeInitials && <Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" />}{task.creativeName ?? 'Свободна'}</dd></div>
+        <div><dt><CalendarDays size={13} />Дедлайн</dt><dd className={isOverdue(task, now) && task.status !== 'done' ? 'drawer-late' : undefined}>{formatDate(task.deadline, true)}</dd></div>
+        <div><dt><Flag size={13} />Приоритет</dt><dd className={`priority ${task.priority}`}>{priorities[task.priority]}</dd></div>
+        <div><dt><Users size={13} />Покупатель</dt><dd>{task.buyerName}</dd></div>
+      </dl>
       <DrawerTabs
-        details={<div className="drawer-details">
-          <dl className="drawer-facts drawer-facts-brief">
-            <div><dt><Globe2 size={14} /> GEO</dt><dd>{task.geo}</dd></div>
-            <div><dt><Film size={14} /> Формат</dt><dd>{formats[task.format]}</dd></div>
-            <div><dt><Layers3 size={14} /> Количество</dt><dd>{task.quantity} шт.</dd></div>
-          </dl>
-          <section className="drawer-description" aria-label="Описание задачи"><h3>Описание</h3><p>{task.description}</p></section>
-          {task.references.length > 0 && <section className="drawer-references"><h3>Референсы</h3><ul>{task.references.map((url, index) => <li key={`${index}-${url}`}><a href={url} target="_blank" rel="noreferrer">Ссылка {index + 1} <ArrowUpRight size={13} /></a></li>)}</ul></section>}
-          <dl className="drawer-facts drawer-facts-owners">
-            <div><dt><CalendarDays size={14} /> Дедлайн</dt><dd className={isOverdue(task, now) ? 'drawer-late' : undefined}>{formatDate(task.deadline, true)}</dd></div>
-            <div><dt><Users size={14} /> Исполнитель</dt><dd>{task.creativeInitials && <Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" />} {task.creativeName ?? 'Свободна'}</dd></div>
-          </dl>
+        details={<div className="drawer-overview">{versions}
+          {extras && <div className="drawer-overview-collaboration">{collaboration}</div>}
+          <section className="drawer-participants"><h3>Участники ({participants.length})</h3><div>{participants.map(member => <span key={member.id} title={`${member.name} · ${roles[member.role]}`}><Avatar initials={member.initials} color={member.color} size="tiny" /><span>{member.name}</span></span>)}</div></section>
+          <section className="drawer-description" aria-label="Описание задачи"><h3>Описание</h3><p>{task.description}</p>
+            {task.references.length > 0 && <div className="drawer-references"><h3>Референсы</h3><ul>{task.references.map((url, index) => <li key={`${index}-${url}`}><a href={url} target="_blank" rel="noreferrer">Ссылка {index + 1}<ArrowUpRight size={13} /></a></li>)}</ul></div>}
+          </section>
+          <section className="drawer-ai-summary"><Sparkles size={18} /><div><h3>AI-расход · текущая версия</h3><p>{latest ? latest.usage.length ? latest.usage.map(u => `${u.service} — ${formatCredits(u.units)} кр.`).join(' · ') : 'Без AI' : 'Расходов пока нет'}</p></div></section>
         </div>}
-        activity={<>{extras && <TaskCollaboration person={person} task={task} extras={extras} returnTo={currentHref} rounds={submissions.map(item => item.round)} />}<h3>Сдачи и правки</h3>{activity.length ? <DrawerTimeline events={activity} /> : <p className="muted">Сдач пока нет.</p>}{latest?.reviewNote && <div className="revision-note"><strong>Последние правки</strong><p>{latest.reviewNote}</p></div>}</>}
-        credits={<><h3>Расход по версиям</h3>{submissions.length ? submissions.map((item) => <div className="drawer-usage" key={item.id}><strong>Версия {item.round}</strong>
-          {item.usage.length ? item.usage.map(({ service, units }) => <span key={service}>{service} <b>{formatCredits(units)} кр.</b></span>) : <span>Без AI</span>}</div>) : <p className="muted">Расходов пока нет.</p>}</>}
+        versions={<>{versions}<VersionComparison submissions={submissions} /></>}
+        activity={<>{collaboration}<h3>Сдачи и правки</h3><DrawerTimeline events={events.filter(e => e.action === 'submit' || e.action === 'revise')} /></>}
         history={<><h3>История задачи</h3><DrawerTimeline events={events} /></>}
       />
-      <section className="drawer-results"><div className="drawer-subhead"><h3>Результаты работы</h3>{latest && <span>Версия {latest.round} · {latest.files.length} {latest.files.length === 1 ? 'файл' : latest.files.length < 5 ? 'файла' : 'файлов'}</span>}</div>
-        {latest ? <div className="drawer-files">{latest.files.map((file) => <a key={file.id} className="drawer-file" href={fileHref(file.id, true)} target="_blank" rel="noreferrer" title={file.name} aria-label={`Открыть ${file.name}`}>
-          {file.type.startsWith('image/') ? <Image alt="" fill unoptimized loading="lazy" src={fileHref(file.id, true)} /> : <Film size={30} aria-hidden="true" />}
-        </a>)}</div> : <p className="drawer-result-empty"><Film size={16} aria-hidden="true" /> Файлы появятся после сдачи.</p>}
-      </section>
-      {actions.includes('submit') && <section className="drawer-results"><h3>Сдача результата</h3>{task.status === 'revision' && latest?.reviewNote && <div className="revision-note"><strong>Что нужно исправить</strong><p>{latest.reviewNote}</p></div>}<TaskAction task={task.id} version={task.version} action="submit" /></section>}
-      <Link className="drawer-full-link" href={`/tasks/${task.id}`}>Комментарии, чек-лист и сравнение версий <ArrowUpRight size={15} /></Link>
+      {actions.includes('submit') && <section className="drawer-results"><h3>Сдача результата</h3>{task.status === 'revision' && latest?.reviewNote && <div className="revision-note"><strong>Что нужно исправить</strong><p>{latest.reviewNote}</p></div>}<TaskAction task={task.id} version={task.version} action="submit" returnTo={currentHref} /></section>}
     </div>
-    {actions.some((action) => action !== 'submit') && <footer className="drawer-actions">{actions.filter((action) => action !== 'submit').map((action) => <TaskAction key={action} task={task.id} version={task.version} action={action} returnTo={currentHref} compact />)}</footer>}
+    {actions.some(action => action !== 'submit') && <footer className="drawer-actions">{actions.filter(action => action !== 'submit').map(action => <TaskAction key={action} task={task.id} version={task.version} action={action} returnTo={currentHref} compact />)}</footer>}
   </aside>;
 }
 
