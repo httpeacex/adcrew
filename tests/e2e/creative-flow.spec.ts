@@ -54,6 +54,7 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   await creative.getByLabel('ChatGPT').fill('12');
   await creative.getByRole('button', { name: 'Сдать результат' }).click();
   await expect(creative).toHaveURL(`/board?task=${task.split('/').at(-1)}`);
+  await expect(creative.locator('.task-drawer .status-pill')).toHaveText('На проверке');
   await creative.getByRole('link', { name: 'Открыть полную карточку', exact: true }).click();
   await expect(creative).toHaveURL(task);
   await expectCenteredWorkspace(creative);
@@ -70,6 +71,7 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   await creative.getByLabel('ChatGPT').fill('3,5');
   await creative.getByRole('button', { name: 'Сдать результат' }).click();
   await expect(creative).toHaveURL(`/board?task=${task.split('/').at(-1)}`);
+  await expect(creative.locator('.task-drawer .status-pill')).toHaveText('На проверке');
   await creative.getByRole('link', { name: 'Открыть полную карточку', exact: true }).click();
   await expect(creative).toHaveURL(task);
   await expect(creative.locator('.status-pill')).toHaveText('На проверке');

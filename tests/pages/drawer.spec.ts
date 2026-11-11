@@ -28,6 +28,7 @@ test('task panel shows media and versions in both themes and saves discussion an
   await panel.getByRole('button', { name: 'ТЗ', exact: true }).click();
   await panel.getByLabel('Комментарий', { exact: true }).fill('Общий вопрос по брифу');
   await panel.getByRole('button', { name: 'Отправить', exact: true }).click();
+  await expect(panel.getByText('Общий вопрос по брифу', { exact: true })).toBeVisible();
   await page.reload();
   await panel.getByRole('button', { name: 'ТЗ', exact: true }).click();
   await expect(panel.getByText('Общий вопрос по брифу', { exact: true })).toBeVisible();
