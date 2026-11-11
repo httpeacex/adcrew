@@ -189,7 +189,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   const hasFilters = lateOnly || quick !== 'all' || !!(query || geo || priority || assignee || status || format || offer);
   function resetFilters() { setLateOnly(false); setQuick('all'); setQuery(''); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); setFormat(''); setOffer(''); }
   const showAllStages = stages === 'all' || hasFilters || mine || scoped.some(task => task.id === selectedId && task.status === 'revision');
-  const primaryStages: Status[] = ['progress', 'review', 'done', 'new'];
+  const primaryStages: Status[] = ['new', 'progress', 'review', 'done'];
   const displayedStages = showAllStages ? statuses : primaryStages.map(id => statuses.find(stage => stage.id === id)!);
   return <div className={`board-layout${drawer ? ' with-drawer' : ''}${defaultDrawer ? ' default-drawer' : ''}`}>
     <div className="board-main">
