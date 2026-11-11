@@ -5,7 +5,9 @@ import { AccountMenu, Analytics, Login, NewTask, Settings, TaskDrawer, TaskScree
 import InkOrbitFeatures from '@/components/ui/ink-orbit-features';
 import { ThemeProvider, type Theme } from '@/components/theme';
 import { setBrowserRuntime } from '@/lib/client-runtime';
-import { InputError, localDay } from '@/lib/workflow';
+import { ProductPage } from '@/components/product';
+import { deliveryMetrics } from '@/lib/metrics';
+import { InputError, localDay, reportPeriod } from '@/lib/workflow';
 import { changes, currentProfile, fileUrl, getStore, initializeStore, post, refreshStore } from './local-api';
 import { navigate } from './link';
 import { withDatabaseLock } from './storage';
@@ -33,6 +35,8 @@ function App() {
   const path = route.pathname.split('/').filter(Boolean);
   const view = path[0] === 'login' ? 'board' : path[0];
   const now = snapshot.now;
+  const product = store.productSnapshot(person, now);
+  const unread = product.notices.filter(item => !item.read).length;
   let active = view;
   let screen: ReactNode;
   if (view === 'board' && path.length === 1) {
@@ -46,15 +50,16 @@ function App() {
     const boardPath = mine ? '/board?scope=mine&' : '/board?';
     screen = <Board key={`${person.id}:${active}`} tasks={tasks} person={person} mine={mine} now={now} selectedId={detail?.task.id}
       defaultDrawer={!!defaultTask} account={<AccountMenu person={person} demo />}
-      drawer={detail && <TaskDrawer key={detail.task.id} {...detail} person={person} now={now} closeHref={`${boardPath}task=none`} currentHref={`${boardPath}task=${detail.task.id}`} />} />;
+      unread={unread} drawer={detail && <TaskDrawer extras={store.taskExtras(person, detail.task.id)} key={detail.task.id} {...detail} person={person} now={now} closeHref={`${boardPath}task=none`} currentHref={`${boardPath}task=${detail.task.id}`} />} />;
   } else if (view === 'tasks' && path.length === 2) {
-    if (path[1] === 'new' && person.role === 'buyer') { active = 'new'; screen = <NewTask />; }
+    if (path[1] === 'new' && person.role === 'buyer') { active = 'new'; const source = store.task(person, Number(route.searchParams.get('source')))?.task; const template = product.templates.find(item => String(item.id) === route.searchParams.get('template')); screen = <NewTask initial={source ?? template?.brief} />; }
     else {
       const detail = /^\d+$/.test(path[1]) ? store.task(person, Number(path[1])) : null;
       active = 'task';
-      screen = detail ? <TaskScreen key={`${person.id}:${detail.task.id}:${detail.task.version}`} {...detail} person={person} now={now} /> : <Missing />;
+      screen = detail ? <TaskScreen extras={store.taskExtras(person, detail.task.id)} key={`${person.id}:${detail.task.id}:${detail.task.version}`} {...detail} person={person} now={now} /> : <Missing />;
     }
-  } else if (view === 'settings') screen = <Settings person={person} />;
+  } else if (['templates', 'notifications', 'integrations'].includes(view) && path.length === 1 && (view !== 'templates' || person.role !== 'creative')) screen = <ProductPage view={view as 'templates' | 'notifications' | 'integrations'} person={person} snapshot={product} tasks={store.list(person)} now={now} />;
+  else if (view === 'settings') screen = <Settings person={person} />;
   else if (view === 'how-it-works') screen = <InkOrbitFeatures />;
   else if (view === 'history' && person.role === 'lead') screen = <WorkspaceHistory events={store.workspaceHistory(person)} />;
   else if ((view === 'analytics' || view === 'team' || view === 'ai-expenses') && person.role === 'lead') {
@@ -64,9 +69,14 @@ function App() {
     let error: string | undefined;
     try { result = store.analytics(person, start, end, now); }
     catch (issue) { if (issue instanceof InputError) error = issue.message; else throw issue; }
-    screen = <Analytics key={`${view}:${start}:${end}`} result={result} start={start} end={end} error={error} section={view} />;
+    const period = !error ? reportPeriod(start, end) : null;
+    const completed = store.list(person).filter(task => task.completedAt !== null && period && task.completedAt >= period.from && task.completedAt < period.to);
+    const delivery = deliveryMetrics(completed.map(task => ({ ...task, completedAt: task.completedAt!, rounds: store.task(person, task.id)!.submissions.length })));
+    screen = view === 'team' || view === 'ai-expenses'
+      ? <><ProductPage key={view} view={view} person={person} snapshot={product} tasks={store.list(person)} now={now} usage={result?.usage} />{view === 'ai-expenses' && <Analytics result={result} start={start} end={end} error={error} section={view} />}</>
+      : <Analytics key={`${view}:${start}:${end}`} result={result} start={start} end={end} error={error} section={view} delivery={delivery} />;
   } else screen = <Missing />;
-  return <Workspace key={person.id} person={person} active={active} demo counts={store.taskCounts(person)}>{screen}</Workspace>;
+  return <Workspace key={person.id} person={person} active={active} demo counts={store.taskCounts(person)} unread={unread}>{screen}</Workspace>;
 }
 
 // Native GET forms need hash routing too; React action forms prevent their own default.

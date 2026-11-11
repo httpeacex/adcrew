@@ -1,10 +1,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { ArrowDownToLine, ArrowLeft, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, ChevronDown, ClipboardList, Clock3, Columns3, FileImage, Film, Flag, Globe2, History, Layers3, ListTodo, LogOut, Play, Plus, Settings2, Sparkles, Users, X } from 'lucide-react';
+import { Bell, FileText, Puzzle, ArrowDownToLine, ArrowLeft, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, ChevronDown, ClipboardList, Clock3, Columns3, FileImage, Film, Flag, Globe2, History, Layers3, ListTodo, LogOut, Play, Plus, Settings2, Sparkles, Users, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { demoProfiles } from '@/lib/demo-profiles';
 import type { Store } from '@/lib/store';
+import type { ProductStore } from '@/lib/product-store';
+import { TaskCollaboration } from './product';
+import { VersionComparison } from './version-comparison';
+import { deliveryMetrics } from '@/lib/metrics';
 import { actionsFor, actionLabels, duration, formatCredits, formatDate, formats, intervals, isOverdue, priorities, roles, statuses, zoneLabel, type Event, type Profile, type Submission, type Task } from '@/lib/workflow';
 import { Avatar, FormatMark } from './board';
 import { DrawerTabs } from './drawer-tabs';
@@ -30,9 +34,9 @@ export function AccountMenu({ person, demo }: { person: Profile; demo: boolean }
   </details>;
 }
 
-const sectionNames: Record<string, string> = { analytics: 'Аналитика', team: 'Команда', 'ai-expenses': 'AI-расходы', history: 'История действий', settings: 'Настройки', 'how-it-works': 'Как это работает' };
+const sectionNames: Record<string, string> = { analytics: 'Аналитика', team: 'Команда', 'ai-expenses': 'AI-расходы', history: 'История действий', settings: 'Настройки', 'how-it-works': 'Как это работает', notifications: 'Уведомления', templates: 'Шаблоны', integrations: 'Интеграции' };
 
-export function Workspace({ children, person, active, demo, counts }: { children: ReactNode; person: Profile; active: string; demo: boolean; counts: ReturnType<Store['taskCounts']> }) {
+export function Workspace({ children, person, active, demo, counts, unread = 0 }: { children: ReactNode; person: Profile; active: string; demo: boolean; counts: ReturnType<Store['taskCounts']>; unread?: number }) {
   const isBoard = active === 'board' || active === 'mine';
   const boardActive = active === 'board' || active === 'task' || active === 'new';
   return <div className={`workspace${isBoard ? ' board-workspace' : ''}`}>
@@ -52,6 +56,9 @@ export function Workspace({ children, person, active, demo, counts }: { children
         </div>
         <div className="side-group">
           <p className="side-group-title">Система</p>
+          <Link href="/notifications" className={active === 'notifications' ? 'active' : ''} aria-current={active === 'notifications' ? 'page' : undefined} aria-label="Уведомления"><Bell size={18} /><span>Уведомления</span>{unread > 0 && <span className="side-count">{unread}</span>}</Link>
+          {(person.role === 'buyer' || person.role === 'lead') && <Link href="/templates" className={active === 'templates' ? 'active' : ''} aria-current={active === 'templates' ? 'page' : undefined} aria-label="Шаблоны"><FileText size={18} /><span>Шаблоны ТЗ</span></Link>}
+          <Link href="/integrations" className={active === 'integrations' ? 'active' : ''} aria-current={active === 'integrations' ? 'page' : undefined} aria-label="Интеграции"><Puzzle size={18} /><span>Интеграции</span></Link>
           {person.role === 'lead' && <Link href="/history" className={active === 'history' ? 'active' : ''} aria-current={active === 'history' ? 'page' : undefined} aria-label="История действий" title="История действий"><History size={18} /><span>История действий</span></Link>}
           <Link href="/settings" className={active === 'settings' ? 'active' : ''} aria-current={active === 'settings' ? 'page' : undefined} aria-label="Настройки" title="Настройки"><Settings2 size={18} /><span>Настройки</span></Link>
         </div>
@@ -71,7 +78,7 @@ export function Workspace({ children, person, active, demo, counts }: { children
       </header>}
       <main className="workspace-main" id="workspace-main" tabIndex={-1}>
         {isBoard ? children : <div className="workspace-page" data-view={active}>
-          {sectionNames[active] && <h1 className="workspace-title">{sectionNames[active]}</h1>}
+          {sectionNames[active] && !['templates', 'notifications', 'team', 'ai-expenses', 'integrations'].includes(active) && <h1 className="workspace-title">{sectionNames[active]}</h1>}
           {children}
         </div>}
       </main>
@@ -125,14 +132,15 @@ export function Login({ demo }: { demo: boolean }) {
   </main>;
 }
 
-export function NewTask() {
+export function NewTask({ initial }: { initial?: Task | import('@/lib/workflow').Brief } = {}) {
   return <>
     <div className="page-title"><div><div className="section-label"><ClipboardList size={16} /> Постановка задачи</div><h1>Новое ТЗ</h1><p>Опишите оффер, объём и результат, который нужен.</p></div></div>
-    <BriefForm />
+    {initial && <p className="prefill-note">Бриф заполнен из сохранённой задачи или шаблона. Проверьте требования и задайте новый дедлайн.</p>}
+    <BriefForm key={initial?.offer ?? 'new'} initial={initial} />
   </>;
 }
 
-export function TaskScreen({ task, events, submissions, person, now }: { task: Task; events: Event[]; submissions: Submission[]; person: Profile; now: number }) {
+export function TaskScreen({ task, events, submissions, person, now, extras }: { task: Task; events: Event[]; submissions: Submission[]; person: Profile; now: number; extras?: ReturnType<ProductStore['taskExtras']> }) {
   const actions = actionsFor(person, task);
   const state = statuses.find((status) => status.id === task.status)!;
   const time = task.completedAt ? intervals(events) : null;
@@ -140,6 +148,7 @@ export function TaskScreen({ task, events, submissions, person, now }: { task: T
     <div className="page-title detail-title"><div><div className="section-label"><FormatMark format={task.format} /> КР-{String(task.id).padStart(3, '0')} / {formats[task.format]}</div><h1>{task.offer}</h1></div><span className={`status-pill ${state.id}`}><span className={`status-dot ${state.id}`} /> {state.label}</span></div>
     <div className="detail-grid">
       <div className="detail-main">
+        <VersionComparison submissions={submissions} />
         <section className="panel"><div className="panel-title"><ClipboardList size={20} /><h2>Техническое задание</h2></div>
           <dl className="brief-meta"><div><dt>GEO</dt><dd><span className="geo-tag">{task.geo}</span></dd></div><div><dt>Формат</dt><dd>{formats[task.format]}</dd></div><div><dt>Количество</dt><dd>{task.quantity} шт.</dd></div><div><dt>Приоритет</dt><dd className={`priority ${task.priority}`}><Flag size={14} /> {priorities[task.priority]}</dd></div></dl>
           <p className="brief-description">{task.description}</p>
@@ -163,6 +172,7 @@ export function TaskScreen({ task, events, submissions, person, now }: { task: T
         </section>
       </div>
       <div className="detail-aside">
+        {extras && <TaskCollaboration person={person} task={task} extras={extras} returnTo={`/tasks/${task.id}`} rounds={submissions.map(item => item.round)} />}
         <section className="panel"><div className="panel-title"><CalendarDays size={19} /><h2>Сроки и команда</h2></div>
           <dl className="facts"><div><dt>Дедлайн</dt><dd className={isOverdue(task, now) ? 'late' : ''}>{formatDate(task.deadline, true)} {isOverdue(task, now) && <small>Просрочено</small>}</dd></div><div><dt>Покупатель</dt><dd>{task.buyerName}</dd></div><div><dt>Исполнитель</dt><dd>{task.creativeName ?? 'Свободна'}</dd></div>{time && <><div><dt>Полный цикл</dt><dd>{duration(time.cycle)}</dd></div><div><dt>В производстве</dt><dd>{duration(time.production)}</dd></div><div><dt>На проверке</dt><dd>{duration(time.review)}</dd></div></>}</dl>
           {actions.some((action) => action !== 'submit') && <div className="task-actions">{actions.filter((action) => action !== 'submit').toReversed().map((action) => <TaskAction task={task.id} version={task.version} action={action} key={action} />)}</div>}
@@ -179,8 +189,8 @@ function DrawerTimeline({ events }: { events: Event[] }) {
   return <ol className="timeline">{events.toReversed().map((event) => <li key={event.id}><span className={`status-dot ${event.toStatus}`} /><div><strong>{actionLabels[event.action]}{event.round ? ` · v${event.round}` : ''}</strong><small>{event.actorName} · {formatDate(event.at, true)}</small></div></li>)}</ol>;
 }
 
-export function TaskDrawer({ task, events, submissions, person, now, closeHref, currentHref }: {
-  task: Task; events: Event[]; submissions: Submission[]; person: Profile; now: number; closeHref: string; currentHref: string;
+export function TaskDrawer({ task, events, submissions, person, now, closeHref, currentHref, extras }: {
+  task: Task; events: Event[]; submissions: Submission[]; person: Profile; now: number; closeHref: string; currentHref: string; extras?: ReturnType<ProductStore['taskExtras']>;
 }) {
   const actions = actionsFor(person, task);
   const status = statuses.find(({ id }) => id === task.status)!;
@@ -211,7 +221,7 @@ export function TaskDrawer({ task, events, submissions, person, now, closeHref, 
             <div><dt><Users size={14} /> Исполнитель</dt><dd>{task.creativeInitials && <Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" />} {task.creativeName ?? 'Свободна'}</dd></div>
           </dl>
         </div>}
-        activity={<><h3>Сдачи и правки</h3>{activity.length ? <DrawerTimeline events={activity} /> : <p className="muted">Сдач пока нет.</p>}{latest?.reviewNote && <div className="revision-note"><strong>Последние правки</strong><p>{latest.reviewNote}</p></div>}</>}
+        activity={<>{extras && <TaskCollaboration person={person} task={task} extras={extras} returnTo={currentHref} rounds={submissions.map(item => item.round)} />}<h3>Сдачи и правки</h3>{activity.length ? <DrawerTimeline events={activity} /> : <p className="muted">Сдач пока нет.</p>}{latest?.reviewNote && <div className="revision-note"><strong>Последние правки</strong><p>{latest.reviewNote}</p></div>}</>}
         credits={<><h3>Расход по версиям</h3>{submissions.length ? submissions.map((item) => <div className="drawer-usage" key={item.id}><strong>Версия {item.round}</strong>
           {item.usage.length ? item.usage.map(({ service, units }) => <span key={service}>{service} <b>{formatCredits(units)} кр.</b></span>) : <span>Без AI</span>}</div>) : <p className="muted">Расходов пока нет.</p>}</>}
         history={<><h3>История задачи</h3><DrawerTimeline events={events} /></>}
@@ -222,6 +232,7 @@ export function TaskDrawer({ task, events, submissions, person, now, closeHref, 
         </a>)}</div> : <p className="drawer-result-empty"><Film size={16} aria-hidden="true" /> Файлы появятся после сдачи.</p>}
       </section>
       {actions.includes('submit') && <section className="drawer-results"><h3>Сдача результата</h3>{task.status === 'revision' && latest?.reviewNote && <div className="revision-note"><strong>Что нужно исправить</strong><p>{latest.reviewNote}</p></div>}<TaskAction task={task.id} version={task.version} action="submit" /></section>}
+      <Link className="drawer-full-link" href={`/tasks/${task.id}`}>Комментарии, чек-лист и сравнение версий <ArrowUpRight size={15} /></Link>
     </div>
     {actions.some((action) => action !== 'submit') && <footer className="drawer-actions">{actions.filter((action) => action !== 'submit').map((action) => <TaskAction key={action} task={task.id} version={task.version} action={action} returnTo={currentHref} compact />)}</footer>}
   </aside>;
@@ -231,40 +242,20 @@ type Report = ReturnType<Store['analytics']>;
 
 function AnalyticsOverview({ result }: { result: Report }) {
   const byService = new Map<string, number>();
-  for (const item of result.usage) {
-    byService.set(item.service, (byService.get(item.service) ?? 0) + item.units);
-  }
-  const total = [...byService.values()].reduce((sum, units) => sum + units, 0);
-  const credits = formatCredits(total);
-  const ringCredits = total >= 1_000_000
-    ? new Intl.NumberFormat('ru-RU', { notation: 'compact', maximumFractionDigits: 1 }).format(total / 1000)
-    : credits;
-  const colors = ['#9eafc4', '#b3a4c6', '#9cb8aa', '#c8a98d', '#b88991', '#8299a0', '#a1a483'];
-  const services = [...byService].sort((a, b) => b[1] - a[1]).map(([name, units], index) => ({ name, units, color: colors[index] }));
-  let offset = 0;
-  const segments = [];
-  for (const { units, color } of services) {
-    const start = offset / total * 100;
-    offset += units;
-    segments.push(`${color} ${start}% ${offset / total * 100}%`);
-  }
+  for (const item of result.usage) byService.set(item.service, (byService.get(item.service) ?? 0) + item.units);
+  const services = [...byService].sort((a, b) => a[0].localeCompare(b[0]));
   return <section className="analytics-overview" aria-labelledby="analytics-overview-title">
     <h2 id="analytics-overview-title" className="overview-title">Сводка аналитики</h2>
-    <dl className="overview-metrics">
-      {[
-        { label: 'Создано за период', value: result.created, Icon: Layers3 },
-        { label: 'Завершено за период', value: result.completed, Icon: Check },
-        { label: 'Средний цикл', value: duration(result.average.cycle), Icon: Clock3 },
-        { label: 'Открытые просрочки', value: result.openOverdue.length, Icon: Flag, overdue: true },
-        { label: 'AI-кредиты за период', value: credits, Icon: Sparkles },
-      ].map(({ label, value, Icon, overdue }) => <div className={`overview-metric${overdue ? ' overdue' : ''}`} key={label}><i aria-hidden="true"><Icon size={18} /></i><dt>{label}</dt><dd>{value}</dd></div>)}
-    </dl>
-    <div className="overview-graphs">
-      <section><h3>AI-расходы по сервисам</h3><p className="overview-caption">Кредиты за выбранный период</p>{total ? <div className="overview-spend">
-        <div className="spend-ring" role="img" style={{ background: services.length === 1 ? services[0].color : `conic-gradient(${segments.join(', ')})` }} aria-label={`${credits} кредитов за период`} title={`${credits} кр.`}><span><strong>{ringCredits}</strong>кредитов</span></div>
-        <ul>{services.map(({ name, units, color }) => <li key={name}><i style={{ background: color }} aria-hidden="true" /><span>{name}</span><strong>{formatCredits(units)} кр.</strong></li>)}</ul>
-      </div> : <p className="muted">За период расходов нет.</p>}</section>
-    </div>
+    <dl className="overview-metrics">{[
+      { label: 'Создано за период', value: result.created, Icon: Layers3 },
+      { label: 'Завершено за период', value: result.completed, Icon: Check },
+      { label: 'Средний цикл', value: duration(result.average.cycle), Icon: Clock3 },
+      { label: 'Открытые просрочки', value: result.openOverdue.length, Icon: Flag },
+      { label: 'AI-сервисов', value: services.length, Icon: Sparkles },
+    ].map(({ label, value, Icon }) => <div className="overview-metric" key={label}><i aria-hidden="true"><Icon size={18} /></i><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+    <div className="overview-graphs"><section><h3>AI-расходы по сервисам</h3><p className="overview-caption">Кредиты учитываются отдельно: единицы разных сервисов имеют разную стоимость.</p>
+      {services.length ? <ul className="service-credit-list">{services.map(([service, units]) => <li key={service}><Sparkles size={16} /><span>{service}</span><strong>{formatCredits(units)} кр.</strong></li>)}</ul> : <p className="muted">За период расходов нет.</p>}
+    </section></div>
   </section>;
 }
 
@@ -292,7 +283,7 @@ function OverdueReport({ result }: { result: Report }) {
   </section>;
 }
 
-export function Analytics({ result, start, end, error, section }: { result: Report | null; start: string; end: string; error?: string; section: 'analytics' | 'team' | 'ai-expenses' }) {
+export function Analytics({ result, start, end, error, section, delivery }: { result: Report | null; start: string; end: string; error?: string; section: 'analytics' | 'team' | 'ai-expenses'; delivery?: ReturnType<typeof deliveryMetrics> }) {
   const descriptions = { analytics: 'Сроки производства, загрузка команды и AI-расходы', team: 'Текущая загрузка креативщиков', 'ai-expenses': 'Расход по сервисам и исполнителям за выбранный период' };
   return <div className="analytics-page">
     <p className="section-description">{descriptions[section]}</p>
@@ -307,6 +298,12 @@ export function Analytics({ result, start, end, error, section }: { result: Repo
       {section === 'ai-expenses' && <CreditReport usage={result.usage} />}
       {section === 'analytics' && <>
         <AnalyticsOverview result={result} />
+        {delivery && <section className="delivery-summary panel" aria-label="Качество производства"><h2>Качество производства</h2><p className="muted">По {delivery.count} принятым задачам за выбранный период</p><dl>{[
+          ['Принято с первого раза', delivery.firstPass === null ? '—' : `${Math.round(delivery.firstPass)}%`],
+          ['Принято в срок', delivery.onTime === null ? '—' : `${Math.round(delivery.onTime)}%`],
+          ['Раундов правок на задачу', delivery.revisions === null ? '—' : delivery.revisions.toLocaleString('ru', { maximumFractionDigits: 1 })],
+          ['Утверждено материалов', delivery.materials],
+        ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>}
         <div className="report-grid"><ReportTeam workload={result.workload} /><section className="panel"><div className="panel-title"><Clock3 size={19} /><h2>Среднее время</h2></div><p className="muted">По задачам, принятым за период.</p><dl className="facts report-facts"><div><dt>Полный цикл</dt><dd>{duration(result.average.cycle)}</dd></div><div><dt>В работе и на правках</dt><dd>{duration(result.average.production)}</dd></div><div><dt>На проверке</dt><dd>{duration(result.average.review)}</dd></div></dl></section></div>
         <CreditReport usage={result.usage} />
         <OverdueReport result={result} />

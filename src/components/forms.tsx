@@ -4,7 +4,7 @@ import { useRef, useState, type FormEvent, type ReactNode } from 'react';
 import Link from 'next/link';
 import { browserRuntime } from '@/lib/client-runtime';
 import { ArrowRight, ArrowUpRight, Check, CircleAlert, LoaderCircle, RotateCcw, UploadCloud } from 'lucide-react';
-import { aiServices, fileTypes, formats, priorities, zoneLabel, type Action } from '@/lib/workflow';
+import { aiServices, fileTypes, formats, priorities, zoneLabel, type Action, type Brief } from '@/lib/workflow';
 
 type FormError = { error: string; field?: string; status?: number };
 
@@ -41,7 +41,8 @@ export function RequestForm({ url, children, className, progress, returnTo }: {
     event.preventDefault();
     if (submitting.current) return;
     submitting.current = true;
-    const form = new FormData(event.currentTarget, (event.nativeEvent as SubmitEvent).submitter);
+    const element = event.currentTarget;
+    const form = new FormData(element, (event.nativeEvent as SubmitEvent).submitter);
     key.current ??= crypto.randomUUID();
     form.set('requestId', key.current);
     setPercent(0);
@@ -51,7 +52,13 @@ export function RequestForm({ url, children, className, progress, returnTo }: {
       const result = await postForm(url, form, setPercent);
       const path = returnTo ?? result.path;
       const runtime = browserRuntime();
-      if (runtime) runtime.navigate(path); else window.location.assign(path);
+      if (runtime) {
+        runtime.navigate(path);
+        key.current = undefined;
+        submitting.current = false;
+        setBusy(false);
+        element.reset();
+      } else window.location.assign(path);
     }
     catch (error) { setIssue(error as FormError); setBusy(false); submitting.current = false; }
   }
@@ -72,17 +79,17 @@ function ErrorText({ issue, name }: { issue?: FormError; name: string }) {
   return issue?.field === name ? <span className="field-error" role="alert">{issue.error}</span> : null;
 }
 
-export function BriefForm() {
+export function BriefForm({ initial }: { initial?: Brief } = {}) {
   return <RequestForm url="/api/tasks" className="brief-form">{({ busy, issue }) => <fieldset disabled={busy}>
     <div className="form-grid">
-      <label className="field span-two">Оффер<input name="offer" required minLength={2} maxLength={120} placeholder="Например, Neon Dash" aria-invalid={issue?.field === 'offer'} /><ErrorText issue={issue} name="offer" /></label>
-      <label className="field">GEO<input name="geo" required minLength={2} maxLength={40} placeholder="Например, DE" aria-invalid={issue?.field === 'geo'} /><ErrorText issue={issue} name="geo" /></label>
-      <label className="field">Тип креатива<select name="format" defaultValue="image">{Object.entries(formats).map(([id, text]) => <option key={id} value={id}>{text}</option>)}</select><ErrorText issue={issue} name="format" /></label>
-      <label className="field">Количество<input name="quantity" type="number" required min="1" max="999" defaultValue="1" aria-invalid={issue?.field === 'quantity'} /><ErrorText issue={issue} name="quantity" /></label>
-      <label className="field">Приоритет<select name="priority" defaultValue="normal">{Object.entries(priorities).map(([id, text]) => <option key={id} value={id}>{text}</option>)}</select><ErrorText issue={issue} name="priority" /></label>
+      <label className="field span-two">Оффер<input name="offer" defaultValue={initial?.offer} required minLength={2} maxLength={120} placeholder="Например, Neon Dash" aria-invalid={issue?.field === 'offer'} /><ErrorText issue={issue} name="offer" /></label>
+      <label className="field">GEO<input name="geo" defaultValue={initial?.geo} required minLength={2} maxLength={40} placeholder="Например, DE" aria-invalid={issue?.field === 'geo'} /><ErrorText issue={issue} name="geo" /></label>
+      <label className="field">Тип креатива<select name="format" defaultValue={initial?.format ?? 'image'}>{Object.entries(formats).map(([id, text]) => <option key={id} value={id}>{text}</option>)}</select><ErrorText issue={issue} name="format" /></label>
+      <label className="field">Количество<input name="quantity" type="number" required min="1" max="999" defaultValue={initial?.quantity ?? 1} aria-invalid={issue?.field === 'quantity'} /><ErrorText issue={issue} name="quantity" /></label>
+      <label className="field">Приоритет<select name="priority" defaultValue={initial?.priority ?? 'normal'}>{Object.entries(priorities).map(([id, text]) => <option key={id} value={id}>{text}</option>)}</select><ErrorText issue={issue} name="priority" /></label>
       <label className="field span-two">Дедлайн <small>Часовой пояс команды · {zoneLabel}</small><input name="deadline" type="datetime-local" required aria-invalid={issue?.field === 'deadline'} /><ErrorText issue={issue} name="deadline" /></label>
-      <label className="field span-two">Описание<textarea name="description" required minLength={5} maxLength={6000} rows={5} placeholder="Что нужно сделать, какие требования к креативам и как проверить результат" aria-invalid={issue?.field === 'description'} /><ErrorText issue={issue} name="description" /></label>
-      <label className="field span-two">Референсы <small>До 10 ссылок, каждая с новой строки</small><textarea name="references" rows={3} placeholder="https://…" aria-invalid={issue?.field === 'references'} /><ErrorText issue={issue} name="references" /></label>
+      <label className="field span-two">Описание<textarea name="description" defaultValue={initial?.description} required minLength={5} maxLength={6000} rows={5} placeholder="Что нужно сделать, какие требования к креативам и как проверить результат" aria-invalid={issue?.field === 'description'} /><ErrorText issue={issue} name="description" /></label>
+      <label className="field span-two">Референсы <small>До 10 ссылок, каждая с новой строки</small><textarea name="references" defaultValue={initial?.references.join('\n')} rows={3} placeholder="https://…" aria-invalid={issue?.field === 'references'} /><ErrorText issue={issue} name="references" /></label>
     </div>
     <div className="form-footer"><Link className="button secondary" href="/board">Отмена</Link><button className="button primary" type="submit">{busy ? <LoaderCircle className="spin" size={17} /> : <ArrowUpRight size={17} />} Опубликовать ТЗ</button></div>
   </fieldset>}</RequestForm>;

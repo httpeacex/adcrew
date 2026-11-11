@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
-import { Store, type Upload } from '@/lib/store';
+import type { Upload } from '@/lib/store';
+import { ProductStore as Store } from '@/lib/product-store';
 import { aiServices, creditUnits, fileTypes, InputError, maxFileBytes, maxFiles, validateBrief, type Action } from '@/lib/workflow';
 import { uploadType } from '@/lib/upload-type';
 import { initializeSqlite, type DatabaseSync } from './sqlite';
@@ -71,6 +72,12 @@ export async function post(url: string, form: FormData, progress: (value: number
       if (!person) throw new InputError('Войдите в аккаунт.', 401);
       const requestId = field('requestId');
       let id: number;
+      if (url.startsWith('/api/product/')) {
+        const result = store.productCommand(person, url, Object.fromEntries([...form].map(([key, value]) => [key, String(value)])));
+        await saveSnapshot(database().export());
+        changes.postMessage('updated');
+        return result;
+      }
       if (url === '/api/tasks') {
         id = store.create(person, validateBrief(Object.fromEntries(form), 0), requestId);
       } else {

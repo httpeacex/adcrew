@@ -3,7 +3,9 @@ import { Board } from '@/components/board';
 import { AccountMenu, Analytics, Login, NewTask, Settings, TaskDrawer, TaskScreen, Workspace, WorkspaceHistory } from '@/components/screens';
 import InkOrbitFeatures from '@/components/ui/ink-orbit-features';
 import { demoMode, getStore, requestSnapshot } from '@/lib/data';
-import { InputError, localDay } from '@/lib/workflow';
+import { ProductPage } from '@/components/product';
+import { deliveryMetrics } from '@/lib/metrics';
+import { InputError, localDay, reportPeriod } from '@/lib/workflow';
 
 type Props = { params: Promise<{ view?: string[] }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -21,6 +23,8 @@ export default async function Page({ params, searchParams }: Props) {
 
   const store = getStore();
   const query = await searchParams;
+  const snapshot = store.productSnapshot(person, now);
+  const unread = snapshot.notices.filter(item => !item.read).length;
   let screen;
   let active = view;
   if (view === 'board' && route.length === 1) {
@@ -34,20 +38,25 @@ export default async function Page({ params, searchParams }: Props) {
     const boardPath = mine ? '/board?scope=mine&' : '/board?';
     screen = <Board key={active} tasks={tasks} person={{ id: person.id, role: person.role }} mine={mine} now={now} selectedId={detail?.task.id}
       defaultDrawer={!!defaultTask} account={<AccountMenu person={person} demo={demo} />}
-      drawer={detail && <TaskDrawer key={detail.task.id} {...detail} person={person} now={now} closeHref={`${boardPath}task=none`} currentHref={`${boardPath}task=${detail.task.id}`} />} />;
+      unread={unread} drawer={detail && <TaskDrawer extras={store.taskExtras(person, detail.task.id)} key={detail.task.id} {...detail} person={person} now={now} closeHref={`${boardPath}task=none`} currentHref={`${boardPath}task=${detail.task.id}`} />} />;
   } else if (view === 'tasks' && route.length === 2) {
     if (route[1] === 'new') {
       if (person.role !== 'buyer') notFound();
       active = 'new';
-      screen = <NewTask />;
+      const source = typeof query.source === 'string' ? store.task(person, Number(query.source))?.task : undefined;
+      const template = snapshot.templates.find(item => String(item.id) === query.template);
+      screen = <NewTask initial={source ?? template?.brief} />;
     } else {
       const id = Number(route[1]);
       if (!Number.isSafeInteger(id) || id < 1 || String(id) !== route[1]) notFound();
       const detail = store.task(person, id);
       if (!detail) notFound();
       active = 'task';
-      screen = <TaskScreen {...detail} person={person} now={now} />;
+      screen = <TaskScreen extras={store.taskExtras(person, id)} {...detail} person={person} now={now} />;
     }
+  } else if (['templates', 'notifications', 'integrations'].includes(view) && route.length === 1) {
+    if (view === 'templates' && person.role === 'creative') notFound();
+    screen = <ProductPage view={view as 'templates' | 'notifications' | 'integrations'} person={person} snapshot={snapshot} tasks={store.list(person)} now={now} />;
   } else if (view === 'how-it-works' && route.length === 1) {
     screen = <InkOrbitFeatures />;
   } else if (view === 'settings' && route.length === 1) {
@@ -65,7 +74,12 @@ export default async function Page({ params, searchParams }: Props) {
       if (!(error instanceof InputError)) throw error;
       issue = error.message;
     }
-    screen = <Analytics result={result} start={start} end={end} error={issue} section={view} />;
+    const period = !issue ? reportPeriod(start, end) : null;
+    const completed = store.list(person).filter(task => task.completedAt !== null && period && task.completedAt >= period.from && task.completedAt < period.to);
+    const delivery = deliveryMetrics(completed.map(task => ({ ...task, completedAt: task.completedAt!, rounds: store.task(person, task.id)!.submissions.length })));
+    screen = view === 'team' || view === 'ai-expenses'
+      ? <><ProductPage view={view} person={person} snapshot={snapshot} tasks={store.list(person)} now={now} usage={result?.usage} />{view === 'ai-expenses' && <Analytics result={result} start={start} end={end} error={issue} section={view} />}</>
+      : <Analytics result={result} start={start} end={end} error={issue} section={view} delivery={delivery} />;
   } else notFound();
-  return <Workspace person={person} active={active} demo={demo} counts={store.taskCounts(person)}>{screen}</Workspace>;
+  return <Workspace person={person} active={active} demo={demo} counts={store.taskCounts(person)} unread={unread}>{screen}</Workspace>;
 }

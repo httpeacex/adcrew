@@ -100,6 +100,11 @@ export async function POST(request: Request, { params }: Context) {
 
     const person = await currentProfile();
     if (!person) throw new InputError('Сессия завершилась. Войдите снова.', 401);
+    if (collection === 'product' && route.length === 2) {
+      const form = await formBody(request, smallRequest);
+      const result = getStore().productCommand(person, `/api/product/${key}`, Object.fromEntries([...form].map(([name, value]) => [name, String(value)])));
+      return NextResponse.json(result);
+    }
     if (collection === 'tasks' && route.length === 1) {
       if (person.role !== 'buyer') throw new InputError('Создать задачу может покупатель.', 403);
       const form = await formBody(request, smallRequest);

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import NextImage from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { Check, ChevronDown, Clock3, Film, Flag, ImageIcon, Layers3, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, X } from 'lucide-react';
+import { Bell, Check, ChevronDown, Clock3, Film, Flag, ImageIcon, Layers3, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, X } from 'lucide-react';
 import { formatDate, formats, isOverdue, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
 import { ThemeToggle } from './theme';
 
@@ -38,13 +38,14 @@ function TaskCard({ task, now, href, selected }: { task: Task; now: number; href
 }
 
 
-export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, account, drawer }: {
-  tasks: Task[]; person: Actor; mine: boolean; now: number; selectedId?: number; defaultDrawer: boolean; account: ReactNode; drawer: ReactNode;
+export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, account, drawer, unread = 0 }: {
+  tasks: Task[]; person: Actor; mine: boolean; now: number; selectedId?: number; defaultDrawer: boolean; account: ReactNode; drawer: ReactNode; unread?: number;
 }) {
   const [query, setQuery] = useState('');
   const searchInput = useRef<HTMLInputElement>(null);
   const [geo, setGeo] = useState('');
   const [priority, setPriority] = useState('');
+  const [assignee, setAssignee] = useState('');
   const [lateOnly, setLateOnly] = useState(false);
   const [status, setStatus] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
@@ -59,6 +60,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, acc
         /* eslint-disable react-hooks/set-state-in-effect */
         setQuery(typeof saved.query === 'string' ? saved.query : '');
         setGeo(typeof saved.geo === 'string' ? saved.geo : '');
+        setAssignee(typeof saved.assignee === 'string' ? saved.assignee : '');
         setPriority(Object.hasOwn(priorities, saved.priority) ? saved.priority : '');
         setStatus(statuses.some(item => item.id === saved.status) ? saved.status : '');
         setLateOnly(saved.lateOnly === true);
@@ -71,8 +73,8 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, acc
   }, [storageKey]);
   useEffect(() => {
     if (!restored.current) return;
-    try { sessionStorage.setItem(storageKey, JSON.stringify({ query, geo, priority, status, lateOnly, showFilters, expanded })); } catch { /* Browsing remains available without storage. */ }
-  }, [storageKey, query, geo, priority, status, lateOnly, showFilters, expanded]);
+    try { sessionStorage.setItem(storageKey, JSON.stringify({ query, geo, priority, assignee, status, lateOnly, showFilters, expanded })); } catch { /* Browsing remains available without storage. */ }
+  }, [storageKey, query, geo, priority, assignee, status, lateOnly, showFilters, expanded]);
   const isBuyer = person.role === 'buyer';
   const hasTaskDrawer = !!drawer && !defaultDrawer;
   useEffect(() => {
@@ -142,10 +144,10 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, acc
   const term = query.trim().toLocaleLowerCase('ru');
   const overdue = (task: Task) => task.status !== 'done' && isOverdue(task, now);
   const filtered = scoped.filter((task) => (!term || task.offer.toLocaleLowerCase('ru').includes(term)) && (!geo || task.geo === geo) &&
-    (!priority || task.priority === priority) && (!lateOnly || overdue(task)) && (!status || task.status === status));
+    (!priority || task.priority === priority) && (!assignee || (assignee === 'free' ? !task.creativeId : String(task.creativeId) === assignee)) && (!lateOnly || overdue(task)) && (!status || task.status === status));
   const boardPath = mine ? '/board?scope=mine&' : '/board?';
-  const hasFilters = lateOnly || !!(query || geo || priority || status);
-  function resetFilters() { setLateOnly(false); setQuery(''); setGeo(''); setPriority(''); setStatus(''); }
+  const hasFilters = lateOnly || !!(query || geo || priority || assignee || status);
+  function resetFilters() { setLateOnly(false); setQuery(''); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); }
   return <div className={`board-layout${drawer ? ' with-drawer' : ''}${defaultDrawer ? ' default-drawer' : ''}`}>
     <header className="board-heading" role="banner">
       <div className="header-toolbar">
@@ -159,6 +161,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, acc
           <div className="header-tools">
             <button type="button" className="theme-toggle" title="Фильтры" aria-label="Фильтры" aria-expanded={showFilters} aria-controls="board-filters" onClick={() => setShowFilters(!showFilters)}><SlidersHorizontal size={17} /></button>
             <button type="button" className="theme-toggle alert-button" title="Просроченные задачи" aria-label="Просроченные задачи" aria-pressed={lateOnly} onClick={() => { setLateOnly(!lateOnly); setStatus(''); }}><Clock3 size={18} />{scoped.some(overdue) && <i />}</button>
+            <Link className="theme-toggle notification-trigger" href="/notifications" aria-label={`Уведомления${unread ? `: ${unread} непрочитанных` : ''}`} title="Уведомления"><Bell size={18} />{unread > 0 && <i />}</Link>
             <ThemeToggle />
             {isBuyer && <Link href="/tasks/new" className="theme-toggle header-create" title="Новая задача" aria-label="Новая задача"><Plus size={20} /></Link>}
           </div>
@@ -167,19 +170,22 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, acc
       </div>
     </header>
     <div className="board-main">
-    <h1 className="visually-hidden">{mine ? 'Мои задачи' : 'Доска задач'}</h1>
-    <section className="reference-hero" aria-label="Креативное производство">
-      <div className="reference-hero-copy"><span>ADCREW</span><h2>Твой магазин креативов и рекламных задач</h2>
-        <p>Заказывай UGC-видео, фото и креативы, управляй командой, расходами и результатами в одном сервисе.</p>
-        <div className="reference-hero-actions">{isBuyer ? <Link href="/tasks/new" className="button primary"><span className="button-icon" aria-hidden="true"><Plus size={15} /></span>Создать задачу</Link> : <a className="button primary" href="#kanban">К задачам</a>}
-          <Link href="/how-it-works" className="button guide-link"><Play size={13} /> Как это работает</Link></div>
-      </div>
+    <section className="board-intro" aria-label="Креативное производство">
+      <div><p className="workspace-kicker">Рабочее пространство</p><h1>{mine ? 'Мои задачи' : 'Доска задач'}</h1><p>Производство, согласование и результаты в одном месте.</p></div>
+      <div className="board-intro-actions"><Link href="/how-it-works" className="button secondary guide-link"><Play size={13} /> Как это работает</Link>{isBuyer && <Link href="/tasks/new" className="button primary"><Plus size={16} />Создать задачу</Link>}</div>
     </section>
+    <div className="board-quick-tabs" aria-label="Представления доски">
+      <Link href="/board?task=none" className={!mine && !lateOnly ? 'active' : ''}>Все задачи <span>{tasks.length}</span></Link>
+      {person.role === 'creative' && <Link href="/board?scope=mine&task=none" className={mine && !lateOnly ? 'active' : ''}>Мои <span>{tasks.filter(task => task.creativeId === person.id).length}</span></Link>}
+      <button type="button" className={lateOnly ? 'active' : ''} aria-pressed={lateOnly} onClick={() => { setLateOnly(!lateOnly); setStatus(''); }}>Просрочены <span>{scoped.filter(overdue).length}</span></button>
+      <button type="button" className="quick-filter" aria-label="Настроить фильтры доски" aria-expanded={showFilters} onClick={() => setShowFilters(!showFilters)}><SlidersHorizontal size={14} />Фильтры</button>
+    </div>
     <section className={`board${isBuyer ? ' buyer-board' : ''}`} id="kanban" aria-label="Kanban-доска">
     <div className="board-toolbar" id="board-filters" hidden={!showFilters}>
         <div className="board-view" aria-live="polite">{filtered.length} из {scoped.length}</div>
         <div className="board-filters">
           <select aria-label="GEO" value={geo} onChange={(event) => setGeo(event.target.value)}><option value="">Все GEO</option>{geos.map((value) => <option key={value}>{value}</option>)}</select>
+          <select aria-label="Исполнитель" value={assignee} onChange={event => setAssignee(event.target.value)}><option value="">Все исполнители</option><option value="free">Без исполнителя</option>{[...new Map(scoped.filter(task => task.creativeId).map(task => [task.creativeId!, task.creativeName])).entries()].map(([id, name]) => <option value={id} key={id}>{name}</option>)}</select>
           <select aria-label="Приоритет" value={priority} onChange={(event) => setPriority(event.target.value)}><option value="">Приоритет</option>{Object.entries(priorities).map(([id, text]) => <option value={id} key={id}>{text}</option>)}</select>
           <select aria-label="Статус" value={status} onChange={(event) => { setStatus(event.target.value); if (event.target.value) setLateOnly(false); }}><option value="">Все статусы</option>{statuses.map(({ id, label }) => <option value={id} key={id}>{label}</option>)}</select>
           {hasFilters && <button type="button" className="reset-filters" onClick={resetFilters}>Сбросить</button>}

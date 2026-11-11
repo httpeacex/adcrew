@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { cookies } from 'next/headers';
 import { demoProfiles } from './demo-profiles.ts';
-import { Store } from './store.ts';
+import { ProductStore as Store } from './product-store.ts';
 import type { Brief } from './workflow.ts';
 
 export const sessionCookie = 'kadr_session';
