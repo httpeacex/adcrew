@@ -30,7 +30,7 @@ function TaskCard({ task, now, href, selected }: { task: Task; now: number; href
       {task.format === 'video' ? <span className="cover-play" aria-hidden="true"><Play size={14} fill="currentColor" /></span> : null}
       {task.status === 'done' && <span className="cover-accepted"><Check size={12} aria-hidden="true" /></span>}
     </span>}
-    <h3><ChartNoAxesColumnIncreasing size={14} className={`card-priority-mark ${task.priority}`} />{task.offer}</h3>
+    <h3><ChartNoAxesColumnIncreasing size={14} className={`card-priority-mark ${task.priority}`} /><span className="card-title-text">{task.offer}</span></h3>
     <p className="card-description">{task.description}</p><div className="card-tags"><span className="card-format"><FormatMark format={task.format} />{formats[task.format]} · {task.quantity} шт.</span><span className="geo-tag">{task.geo}</span></div>
     {task.status === 'done' && <span className="card-approved"><Check size={13} aria-hidden="true" />Согласовано</span>}
     <div className="card-footer"><span className={`due ${overdue ? 'late' : ''}`} title={overdue ? 'Дедлайн просрочен' : 'Дедлайн'}>{overdue ? <TriangleAlert size={13} /> : <CalendarDays size={14} />}{formatDate(task.deadline)}</span>
@@ -42,7 +42,7 @@ function TaskCard({ task, now, href, selected }: { task: Task; now: number; href
       </div>
       <span title="Комментарии"><MessageSquare size={12} />{task.commentCount ?? 0}</span>
       <span title="Файлы"><Paperclip size={12} />{task.fileCount ?? 0}</span>
-      <span title="Чек-лист приёмки"><i className="progress-ring" style={{ '--progress': `${(task.checkedCount ?? 0) / 3 * 100}%` } as React.CSSProperties} />{task.checkedCount ?? 0}/3</span><span className={`card-format-label format-${task.format}`}><i/>{formats[task.format]}</span>
+      <span title="Чек-лист приёмки"><i className="progress-ring" style={{ '--progress': `${(task.checkedCount ?? 0) / 3 * 100}%` } as React.CSSProperties} />{task.checkedCount ?? 0}/3</span><span className={`card-format-label format-${task.format}`}><i/><span className="card-format-text">{formats[task.format]}</span></span>
     </div></div>
   </Link>;
 }
