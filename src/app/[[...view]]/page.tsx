@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
+import { ReferenceBoard } from '@/components/reference-board';
 import { Board } from '@/components/board';
 import { AccountMenu, Analytics, Login, NewTask, Settings, TaskDrawer, TaskScreen, Workspace, WorkspaceHistory } from '@/components/screens';
 import InkOrbitFeatures from '@/components/ui/ink-orbit-features';
@@ -12,6 +13,7 @@ type Props = { params: Promise<{ view?: string[] }>; searchParams: Promise<Recor
 export default async function Page({ params, searchParams }: Props) {
   const route = (await params).view ?? [];
   const view = route[0];
+  if (view === 'reference') return <ReferenceBoard />;
   const demo = demoMode();
   const { now, person } = await requestSnapshot();
   if (!view) redirect(person ? '/board' : '/login');

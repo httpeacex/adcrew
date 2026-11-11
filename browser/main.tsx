@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { ReferenceBoard } from '@/components/reference-board';
 import { Board } from '@/components/board';
 import { AccountMenu, Analytics, Login, NewTask, Settings, TaskDrawer, TaskScreen, Workspace, WorkspaceHistory } from '@/components/screens';
 import InkOrbitFeatures from '@/components/ui/ink-orbit-features';
@@ -29,6 +30,7 @@ function App() {
     return () => { window.removeEventListener('hashchange', update); changes.removeEventListener('message', changed); };
   }, []);
   const route = new URL(snapshot.hash.slice(1) || '/board', 'https://adcrew.local');
+  if (route.pathname === '/reference') return <ReferenceBoard />;
   const person = currentProfile();
   if (!person) return <Login key="login" demo />;
   const store = getStore();
