@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('neutral workspace preserves theme, quick replies and directory navigation', async ({ page }) => {
+test('neutral workspace preserves theme, comments and directory navigation', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
@@ -10,13 +10,12 @@ test('neutral workspace preserves theme, quick replies and directory navigation'
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
   const composer = panel.getByLabel('Комментарий', { exact: true });
   await composer.fill('Проверка:');
-  await panel.getByRole('button', { name: 'Уменьшить текст', exact: true }).click();
-  await expect(composer).toHaveValue('Проверка:\nУменьшить текст');
+  await expect(panel.getByText('Быстрые фразы', { exact: true })).toHaveCount(0);
   await panel.getByRole('button', { name: 'Отправить', exact: true }).click();
-  await expect(panel.locator('.comment-entry')).toContainText('Уменьшить текст');
+  await expect(panel.locator('.comment-entry')).toContainText('Проверка:');
   await page.reload();
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
-  await expect(panel.locator('.comment-entry')).toContainText('Уменьшить текст');
+  await expect(panel.locator('.comment-entry')).toContainText('Проверка:');
   await expect(page.locator('.task-card.is-selected .card-counters').getByTitle('Комментарии')).toHaveText('1');
   await page.getByRole('button', { name: 'Использовать системную тему', exact: true }).click();
   await page.emulateMedia({ colorScheme: 'light' });
