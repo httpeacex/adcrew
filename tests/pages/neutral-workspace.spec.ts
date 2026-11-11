@@ -7,6 +7,7 @@ test('neutral workspace preserves theme, quick replies and directory navigation'
   await page.getByRole('dialog').getByRole('button', { name: /Руководитель/ }).click();
   await page.goto('./#/board?task=10');
   const panel = page.locator('.task-drawer');
+  await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
   const composer = panel.getByLabel('Комментарий', { exact: true });
   await composer.fill('Проверка:');
   await panel.getByRole('button', { name: 'Уменьшить текст', exact: true }).click();
@@ -14,6 +15,7 @@ test('neutral workspace preserves theme, quick replies and directory navigation'
   await panel.getByRole('button', { name: 'Отправить', exact: true }).click();
   await expect(panel.locator('.comment-entry')).toContainText('Уменьшить текст');
   await page.reload();
+  await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await expect(panel.locator('.comment-entry')).toContainText('Уменьшить текст');
   await expect(page.locator('.task-card.is-selected .card-counters').getByTitle('Комментарии')).toHaveText('1');
   await page.getByRole('button', { name: 'Использовать системную тему', exact: true }).click();

@@ -1532,3 +1532,82 @@ body::before { background: none; }
 }
 @media (max-width: 650px) { .board-main .kanban { grid-template-columns: none; grid-auto-columns: minmax(265px,85%); } .board-main .column { min-height: 65dvh; } }
 @media (min-width: 1200px) { .board-main .kanban { grid-template-columns: repeat(5,minmax(300px,calc((100% - 32px)/3))); } }
+/* Reference component anatomy: text cards and search inside the left rail. */
+.board-main .card-cover, .board-main .card-top { display: none; }
+.board-main .has-cover .card-description { display: -webkit-box; }
+.board-main .task-card h3 { display: flex; align-items: baseline; gap: 9px; margin-bottom: 10px; }
+.card-priority-mark { flex-shrink: 0; color: var(--priority-high); }
+.card-priority-mark.urgent { color: var(--overdue); }
+.board-main .card-tags { margin-bottom: 11px; }
+.board-main .card-format { padding: 0; background: none; }
+.board-main .card-body { position: relative; padding-top: 16px; padding-bottom: 13px; }
+.board-main .card-person { position: absolute; left: 14px; bottom: 15px; }
+.board-main .card-person > span:first-child { display: none; }
+.board-main .card-counters { padding-left: 31px; }
+.board-main .empty-avatar { font-size: 11px; }
+.board-main .card-description { -webkit-line-clamp: 2; }
+.inspector-detail-files { margin-block: 20px; }
+.inspector-detail-files h3 { font-size: 13px; font-weight: 500; color: var(--muted); margin: 18px 0 12px; }
+.inspector-detail-files > a { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 14px; }
+.inspector-detail-files > a span { overflow-wrap: anywhere; }
+.detail-labels { display: flex; gap: 8px; flex-wrap: wrap; }
+.detail-labels span { background: var(--raised); color: var(--text); padding: 5px 9px; font-size: 12px; border-radius: 5px; }
+@media (min-width: 1400px) {
+ .board-sidebar > .side-nav { margin-top: 65px; }
+ .board-local-search .search { position: fixed; left: 14px; top: 76px; width: 222px !important; z-index: 20; border-radius: 5px; height: 42px; background: var(--well); }
+ .production-filters .board-local-search { flex: 0 0 0; width: 0; }
+ .board-intro { min-height: 54px; }
+ .board-main .column { min-height: calc(100dvh - 175px); }
+}
+/* Approved reference layout, with neutral selection and buttons. */
+.board-main .kanban { grid-template-columns: repeat(3,minmax(0,1fr)); overflow-x: visible; }
+.board-main .kanban.all-stages { grid-template-columns: repeat(5,minmax(285px,1fr)); overflow-x: auto; }
+.board-main .column { min-height: calc(100dvh - 135px); }
+.column-tools { margin-left: auto; font-size: 19px; color: var(--muted); white-space: nowrap; }
+.board-main .column-head .column-count { margin-left: 2px; }
+.board-main .column-head { gap: 8px; }
+.board-stage-choice { align-self: flex-start; margin: 0 0 9px; }
+.board-stage-choice select { background: var(--surface); color: var(--muted); border: 1px solid var(--rule); border-radius: 7px; padding: 7px 10px; font-size: 11px; }
+.production-filters > button:not(.quick-filter), .production-filters > select:not([aria-label="Исполнитель задач"]) { display: none; }
+.production-filters { justify-content: flex-end; margin-top: -44px; margin-bottom: 8px; }
+.production-filters > select[aria-label="Исполнитель задач"] { width: 170px; }
+.production-filters > .quick-filter { border: 1px solid var(--rule); border-radius: 7px; }
+.board-main .card-tags { display: none; }
+.board-main .card-footer { margin-top: 15px; }
+.board-main .task-card h3 { font-size: 15px; font-weight: 500; }
+.board-main .card-description { font-size: 13px; line-height: 1.6; }
+.board-main .task-card { background: #29292c; border-color: #343438; }
+[data-theme='light'] .board-main .task-card { background: #fff; border-color: var(--rule); }
+.approved-inspector .drawer-overview { display: flex; flex-direction: column; gap: 12px; }
+.approved-inspector .drawer-overview .task-collaboration { display: contents; }
+.approved-inspector .drawer-overview .collaboration-aside { order: -2; }
+.approved-inspector .drawer-overview .inspector-detail-files { order: -1; margin: 0; }
+.approved-inspector .drawer-overview > .facts { display: none; }
+.approved-inspector .drawer-overview .drawer-description { order: 1; font-size: 12px; color: var(--muted); }
+.approved-inspector .drawer-description summary { padding: 7px 0; cursor: pointer; }
+.approved-inspector .drawer-overview > .product-panel { order: 2; padding: 10px; }
+.approved-inspector .drawer-overview .comment-timeline { margin-block: 10px; }
+.approved-inspector .drawer-overview .product-section-title { background: var(--raised); padding: 7px; border-radius: 8px; margin-bottom: 8px; }
+.approved-inspector .drawer-overview fieldset { display: grid; gap: 8px; }
+.approved-inspector .drawer-overview .quick-phrases { padding-top: 8px; }
+.approved-inspector .drawer-overview .mention-picker { order: 3; }
+@media (min-width: 1400px) {
+ .workspace { --sidebar-width: 250px; --drawer-width: 420px; }
+ .production-views button:nth-child(n+3) { display: none; }
+ .production-views { margin-right: 255px; margin-top: -52px; margin-bottom: 15px; }
+ .board-main { padding: 20px 18px 12px; }
+ .board-intro h1 { font-size: 25px; }
+ .board-intro .button { position: absolute; top: 22px; right: calc(var(--drawer-width) + 20px); }
+ .board-intro:has(.button) + .production-views { margin-top: -52px; align-self: flex-end; }
+}
+@media (max-width: 1399px) { .production-filters { margin-top: 0; justify-content: flex-start; } .board-main .kanban { grid-template-columns: repeat(3,minmax(260px,1fr)); overflow-x: auto; } }
+@media (max-width: 650px) { .board-main .kanban { grid-template-columns: none; overflow-x: auto; grid-auto-columns: 85%; } }
+@media (max-width: 1399px) { .production-filters > button:not(.quick-filter), .production-filters > select:not([aria-label="Исполнитель задач"]) { display: inline-flex; } }
+@media (min-width: 1400px) { .board-main:has(.quick-filter[aria-expanded=true]) .production-filters > button, .board-main:has(.quick-filter[aria-expanded=true]) .production-filters > select { display: inline-flex; } .board-main:has(.quick-filter[aria-expanded=true]) .production-filters { margin-top: 0; } }
+.approved-inspector .drawer-overview .acceptance-checks > summary { display: none; }
+.approved-inspector .drawer-overview .acceptance-checks .product-panel { background: transparent; border: 0; padding: 0; }
+.approved-inspector .drawer-overview .acceptance-checks h2 { font-size: 13px; color: var(--muted); font-weight: 500; }
+.approved-inspector .drawer-overview .checklist-button { padding: 7px 0; font-size: 13px; }
+.approved-inspector .drawer-overview .task-collaboration > section { background: var(--well); }
+@media (min-width: 1400px) { .board-main:has(.quick-filter[aria-expanded=true]) .production-views button { display: inline-flex; } .board-main:has(.quick-filter[aria-expanded=true]) .production-views { margin: 0 0 8px; align-self: flex-start; max-width: 100%; } }
+@media (min-width: 1400px) { .workspace { --sidebar-width: 16vw; --drawer-width: 26vw; } .board-local-search .search { width: calc(16vw - 28px) !important; } .board-main .task-card h3 { font-size: clamp(15px,1vw,18px); } .board-main .card-description { font-size: clamp(13px,.9vw,16px); } .board-main .column-head h3 { font-size: clamp(16px,1.1vw,20px); } }

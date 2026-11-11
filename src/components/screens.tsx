@@ -40,7 +40,7 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
   const boardActive = active === 'board' || active === 'task' || active === 'new';
   return <div className={`workspace${isBoard ? ' board-workspace' : ''}`}>
     <a href="#workspace-main" className="skip">К рабочей области</a>
-    <aside className="sidebar">
+    <aside className={`sidebar${isBoard ? ' board-sidebar' : ''}`}>
       <Link href="/board" className="brand-link" aria-label="AdCrew, доска задач"><Brand /></Link>
       <nav className="side-nav" aria-label="Рабочее пространство">
         <div className="side-group">

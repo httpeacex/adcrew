@@ -7,6 +7,7 @@ test('task panel shows media and versions in both themes and saves discussion an
   await page.getByRole('dialog').getByRole('button', { name: /Покупатель/ }).click();
   await page.goto('./#/board');
   const panel = page.locator('.task-drawer');
+  await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await expect(panel.locator('.drawer-hero')).toBeVisible();
   await panel.getByRole('button', { name: 'Скопировать ссылку на задачу', exact: true }).click();
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain('#/board?task=9');
@@ -23,6 +24,7 @@ test('task panel shows media and versions in both themes and saves discussion an
   await panel.getByRole('button', { name: 'Отправить', exact: true }).click();
   await expect(panel.getByText('Проверено в панели задачи', { exact: true })).toBeVisible();
   await page.reload();
+  await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await expect(panel.getByText('Проверено в панели задачи', { exact: true })).toBeVisible();
   await expect(panel.getByRole('link', { name: /^Скачать / }).first()).toBeVisible();
   await panel.getByRole('button', { name: 'Детали', exact: true }).click();

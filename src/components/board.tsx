@@ -30,7 +30,7 @@ function TaskCard({ task, now, href, selected }: { task: Task; now: number; href
       {task.format === 'video' ? <span className="cover-play" aria-hidden="true"><Play size={14} fill="currentColor" /></span> : null}
       {task.status === 'done' && <span className="cover-accepted"><Check size={12} aria-hidden="true" /></span>}
     </span>}
-    <h3>{task.offer}</h3>
+    <h3><Flag size={14} className={`card-priority-mark ${task.priority}`} />{task.offer}</h3>
     <p className="card-description">{task.description}</p><div className="card-tags"><span className="card-format"><FormatMark format={task.format} />{formats[task.format]} · {task.quantity} шт.</span><span className="geo-tag">{task.geo}</span></div>
     {task.status === 'done' && <span className="card-approved"><Check size={13} aria-hidden="true" />Согласовано</span>}
     <div className="card-footer"><span className={`due ${overdue ? 'late' : ''}`} title={overdue ? 'Дедлайн просрочен' : 'Дедлайн'}>{overdue ? <TriangleAlert size={13} /> : <Clock3 size={13} />}{formatDate(task.deadline)}</span>
@@ -71,6 +71,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   tasks: Task[]; person: Actor; mine: boolean; now: number; selectedId?: number; defaultDrawer: boolean; account: ReactNode; drawer: ReactNode; unread?: number;
 }) {
   const [query, setQuery] = useState('');
+  const [stages, setStages] = useState('production');
   const searchInput = useRef<HTMLInputElement>(null);
   const [geo, setGeo] = useState('');
   const [priority, setPriority] = useState('');
@@ -192,6 +193,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
     <div className="production-views" aria-label="Представления задач">{([
       ['board', 'Доска', Columns3], ['list', 'Список', List], ['calendar', 'Календарь', CalendarDays], ['workload', 'Загрузка', Users], ['archive', 'Архив', Archive],
     ] as const).map(([id, label, Icon]) => <button key={id} type="button" aria-pressed={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><Icon size={15} aria-hidden="true" />{label}</button>)}</div>
+    <div className="board-stage-choice"><select aria-label="Колонки доски" value={stages} onChange={event=>setStages(event.target.value)}><option value="production">Производство</option><option value="all">Все статусы</option></select></div>
     <div className="board-quick-tabs production-filters" aria-label="Быстрые фильтры">
     <div className="board-local-search">        <div className="search" role="search" aria-label="Поиск по задачам">
           <Search className="search-icon" size={16} aria-hidden="true" />
@@ -221,14 +223,14 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
           {hasFilters && <button type="button" className="reset-filters" onClick={resetFilters}>Сбросить</button>}
         </div>
       </div>
-      {view === 'board' ? <div className="kanban">{statuses.map(({ id, label, hint }) => {
+      {view === 'board' ? <div className={`kanban${stages === 'all' ? ' all-stages' : ''}`}>{statuses.filter(item => stages === 'all' || ['progress','review','done'].includes(item.id)).map(({ id, label, hint }) => {
         const column = filtered.filter((task) => task.status === id);
-        const limit = column[0]?.coverId && !hasFilters ? 1 : 2;
+        const limit = 3;
         const shown = column.slice(0, limit);
         const selected = column.find((task) => task.id === selectedId);
         const visible = expanded[id] || hasFilters ? column : selected && !shown.includes(selected) ? [selected, ...shown.slice(0, limit - 1)] : shown;
         return <section className={`column ${id} ${status && status !== id ? 'mobile-hidden' : ''}`} key={id} aria-label={label}>
-          <header className="column-head"><span className="column-dot" aria-hidden="true" /><h3>{label}</h3><span className="column-count">{column.length}</span></header>
+          <header className="column-head"><span className="column-dot" aria-hidden="true" /><h3>{label}</h3><span className="column-count">{column.length}</span><span className="column-tools" aria-hidden="true">⋯ ＋</span></header>
           <div className="column-body">{visible.map((task) => <TaskCard key={task.id} task={task} now={now} href={`${boardPath}task=${task.id}`} selected={selectedId === task.id} />)}
             {column.length === 0 && <div className="empty-column"><span>Нет задач</span><small>{isBuyer && id === 'review' ? 'Здесь появятся задачи для вашей проверки' : hint}</small></div>}
             {!hasFilters && column.length > limit && <button className="column-more" type="button" aria-expanded={!!expanded[id]} onClick={() => setExpanded({ ...expanded, [id]: !expanded[id] })}>{expanded[id] ? 'Свернуть' : `Ещё ${column.length - limit}`}<ChevronDown size={13} aria-hidden="true" /></button>}

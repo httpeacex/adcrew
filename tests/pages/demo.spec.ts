@@ -50,6 +50,7 @@ test('Pages keeps a two-round task, files and credits after reloading and switch
   const taskId = task.match(/tasks\/(\d+)/)![1];
   await page.goto(`./#/board?task=${taskId}`);
   const inspector = page.locator('.approved-inspector');
+  await inspector.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await inspector.getByLabel('Версия результата').selectOption({ label: 'Версия 1' });
   await expect(inspector.getByRole('button', { name: /^Принять v/ })).toHaveCount(0);
   await expect(inspector.getByRole('heading', { name: 'Обсуждение версии 1', exact: true })).toBeVisible();
@@ -100,8 +101,7 @@ test('Pages routes, covers and the mobile dialog fit the published project path'
     await page.getByRole('navigation').getByRole('link', { name, exact: true }).click();
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
   }
-  const cover = page.locator('.card-cover img').first();
-  await expect.poll(() => cover.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+  await expect(page.locator('.card-description').first()).toBeVisible();
   await page.locator('.sidebar-account summary').click();
   await page.locator('.sidebar-account').getByRole('link', { name: 'Как это работает', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Как это работает', exact: true })).toBeVisible();
