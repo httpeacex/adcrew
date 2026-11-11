@@ -1007,18 +1007,6 @@ body::before { background: var(--canvas-wash); }
 .production-filters > select { width: auto; min-width: 70px; max-width: 160px; padding: 7px 24px 7px 10px; font-size: 11px; color: var(--muted); background-color: var(--surface); border: 1px solid var(--rule); text-overflow: ellipsis; }
 .production-filters > .quick-filter { margin-left: 0; }
 .production-reset { display: block; margin-top: 12px; padding: 8px; font-size: 12px; color: var(--accent-ink); }
-.production-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin: 10px 0 24px; }
-.production-stats article { position: relative; min-width: 0; padding: 17px 15px; border: 1px solid var(--rule); border-radius: 15px; background: linear-gradient(135deg,var(--raised),var(--surface)); }
-.production-stats article > span { display: block; padding-right: 20px; color: var(--muted); font-size: 11px; line-height: 1.5; }
-.production-stats article > svg:not(.production-sparkline) { position: absolute; top: 17px; right: 12px; color: var(--quiet); }
-.production-stats article > div { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; margin-top: 10px; }
-.production-stats strong { font-size: 25px; letter-spacing: -.04em; font-weight: 650; }
-.production-stats small { color: var(--muted); font-size: 10px; }
-.production-stats b { font-size: 10px; font-weight: 550; padding: 3px 5px; border-radius: 8px; }
-.production-stats .improving { color: var(--done); background: var(--done-bg); }
-.production-stats .declining { color: var(--revision); background: var(--revision-bg); }
-.production-sparkline { display: block; width: 74px; height: 26px; margin-top: 5px; color: var(--done); }
-.production-sparkline polyline { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .production-list { overflow-x: auto; border: 1px solid var(--rule); border-radius: 16px; background: var(--surface); }
 .production-list table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
 .production-list th { color: var(--quiet); font-weight: 500; background: var(--well); }
@@ -1117,17 +1105,11 @@ body::before { background: var(--canvas-wash); }
 @media (min-width: 1500px) {
   .drawer-summary { grid-template-columns: repeat(4,minmax(0,1fr)); }
 }
-@media (max-width: 850px) {
-  .production-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
-}
 @media (max-width: 650px) {
   .production-views { width: 100%; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); }
   .production-views button { padding: 8px 6px; font-size: 11px; gap: 5px; }
   .production-filters { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
   .production-filters > button, .production-filters > select { width: 100%; max-width: 100%; justify-content: center; padding-inline: 8px; font-size: 11px; }
-  .production-stats { gap: 8px; }
-  .production-stats article { padding: 12px 10px; }
-  .production-stats strong { font-size: 23px; }
   .production-calendar, .production-workload { padding: 12px; }
   .production-drawer .drawer-head .icon-link { width: 40px; height: 40px; }
   .production-drawer .drawer-title { font-size: 21px; }
@@ -1269,25 +1251,14 @@ body::before { background: var(--canvas-wash); }
 [data-theme='light'] .metric-tile:nth-child(4) { --metric-surface: #d4eadd; --metric-text: #1c382d; --metric-icon-surface: #eff9f3; }
 [data-theme='light'] .metric-tile:nth-child(5) { --metric-surface: #f2dce2; --metric-text: #462833; --metric-icon-surface: #fbeff2; }
 
-.production-stats article.metric-tile, .overview-metric.metric-tile {
+.overview-metric.metric-tile {
   background: var(--metric-surface);
   color: var(--metric-text);
   border-color: transparent;
   border-radius: 16px;
   box-shadow: none;
 }
-.production-stats article.metric-tile {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: 1fr auto 16px;
-  align-items: end;
-  gap: 8px;
-  min-height: 112px;
-}
-.production-stats article.metric-tile > span,
 .overview-metric.metric-tile dt { align-self: start; color: inherit; grid-column: 1 / -1; padding: 0; }
-.production-stats article.metric-tile > div { margin: 0; grid-area: 2 / 1; gap: 3px 5px; }
-.production-stats article.metric-tile small { color: inherit; }
 .metric-tile .metric-icon {
   grid-area: 2 / 2;
   display: grid;
@@ -1299,25 +1270,64 @@ body::before { background: var(--canvas-wash); }
   color: inherit;
   background: var(--metric-icon-surface);
 }
-.production-stats .metric-tile .production-sparkline {
-  grid-area: 3 / 1 / 4 / -1;
-  position: static;
-  height: 16px;
-  color: inherit;
-  margin: 0;
-}
-.production-stats .metric-tile .production-sparkline polyline { stroke: currentColor; }
 .overview-metric.metric-tile {
   grid-template: 'label label' 1fr 'value icon' auto / minmax(0,1fr) auto;
   gap: 10px 6px;
   min-height: 104px;
 }
 .overview-metric.metric-tile .metric-icon { grid-area: icon; }
-.overview-metric.metric-tile dd, .production-stats .metric-tile strong {
+.overview-metric.metric-tile dd {
   font-size: clamp(22px, 2.3vw, 29px);
   font-variant-numeric: tabular-nums;
 }
 @media (max-width: 650px) {
   .metric-tile .metric-icon { width: 26px; height: 26px; }
-  .production-stats article.metric-tile, .overview-metric.metric-tile { padding: 12px 10px; }
+  .overview-metric.metric-tile { padding: 12px 10px; }
+}
+
+/* Compact task inspector. Long threads and expanded sections can still scroll. */
+.production-drawer.approved-inspector .drawer-head { padding-block: 10px 8px; }
+.production-drawer.approved-inspector .drawer-title { margin: 6px 0 3px; font-size: 20px; }
+.approved-inspector .drawer-summary { margin-top: 8px; gap: 8px; }
+.approved-inspector .drawer-summary > div { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 6px; }
+.approved-inspector .drawer-summary dt { margin: 0; }
+.approved-inspector .drawer-summary dd { font-size: 11px; }
+.production-drawer.approved-inspector .drawer-head .icon-link { width: 32px; height: 32px; }
+.approved-inspector .drawer-tabs button { min-height: 29px; }
+.approved-inspector .drawer-tab-body { padding-block: 8px; }
+.approved-inspector .inspector-version { margin-bottom: 7px; }
+.approved-inspector .inspector-version select { padding-block: 6px; }
+.approved-inspector .inspector-media .drawer-hero {
+  height: clamp(118px, 22dvh, 182px);
+  aspect-ratio: auto;
+}
+.approved-inspector .inspector-file { padding: 4px 9px; }
+.approved-inspector .inspector-file a { display: grid; place-items: center; width: 30px; height: 30px; }
+.approved-inspector .inspector-usage { margin-block: 6px; }
+.approved-inspector .inspector-collaboration .task-collaboration { gap: 7px; margin-top: 6px; }
+.approved-inspector .acceptance-checks > summary { padding: 7px 9px; }
+.approved-inspector .inspector-collaboration .product-panel { padding: 8px 9px; }
+.approved-inspector .inspector-collaboration .product-section-title { padding-bottom: 6px; margin-bottom: 0; }
+.approved-inspector .inspector-collaboration .comment-timeline { margin: 6px 0; max-height: clamp(36px, 8dvh, 72px); gap: 6px; }
+.approved-inspector .inspector-collaboration .comment-entry p { margin: 2px 0; }
+.approved-inspector .inspector-collaboration .product-muted { font-size: 11px; line-height: 1.4; }
+.approved-inspector .inspector-collaboration fieldset {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 6px;
+}
+.approved-inspector .inspector-collaboration fieldset > .field,
+.approved-inspector .inspector-collaboration fieldset > .form-error { grid-column: 1 / -1; }
+.approved-inspector .inspector-collaboration textarea { min-height: 44px; height: 44px; }
+.approved-inspector .inspector-collaboration .mention-picker summary { padding-block: 4px; }
+.approved-inspector .inspector-collaboration fieldset .button { min-height: 32px; padding: 4px 10px; font-size: 11px; }
+.production-drawer.approved-inspector .drawer-actions { padding-block: 7px max(8px, env(safe-area-inset-bottom)); gap: 5px 8px; }
+.approved-inspector .drawer-actions .button { min-height: 38px; font-size: 12px; }
+@media (max-height: 820px) {
+  .approved-inspector .inspector-media .drawer-hero { height: clamp(96px, 17dvh, 136px); }
+  .approved-inspector .inspector-files { margin-top: 4px; }
+  .approved-inspector .inspector-files button { padding: 4px 6px; }
+  .approved-inspector .inspector-collaboration .comment-timeline { max-height: 36px; margin-block: 4px; }
+  .approved-inspector .inspector-collaboration .field { gap: 3px; }
 }

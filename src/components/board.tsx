@@ -6,7 +6,6 @@ import NextImage from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
 import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, Columns3, Film, Flag, ImageIcon, Layers3, List, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
 import { formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
-import type { productionMetrics } from '@/lib/metrics';
 import { ThemeSelector } from './theme';
 
 const icons = { image: ImageIcon, video: Film, animation: Shapes, other: Layers3 };
@@ -42,20 +41,6 @@ function TaskCard({ task, now, href, selected }: { task: Task; now: number; href
 }
 
 
-function ProductionStats({ metrics }: { metrics: ReturnType<typeof productionMetrics> }) {
-  const { current, previous, trend } = metrics;
-  const decimal = (value: number | null) => value === null ? '—' : value.toLocaleString('ru-RU', { maximumFractionDigits: 1 });
-  const percentChange = (current: number | null, previous: number | null) => current === null || previous === null || previous === 0 ? null : (current - previous) / previous * 100;
-  const rows = [
-    { title: 'Производство за неделю', value: decimal(current.materials), unit: 'креативов', delta: percentChange(current.materials, previous.materials), goodUp: true, Icon: Layers3 },
-    { title: 'Среднее время цикла', value: decimal(current.cycle === null ? null : current.cycle / 86_400_000), unit: 'дня', delta: percentChange(current.cycle, previous.cycle), goodUp: false, Icon: Clock3 },
-    { title: 'Правки на креатив', value: decimal(current.revisions), unit: '', delta: percentChange(current.revisions, previous.revisions), goodUp: false, Icon: Layers3 },
-    { title: 'Апрув с первого раза', value: current.firstPass === null ? '—' : `${Math.round(current.firstPass)}%`, unit: '', delta: current.firstPass === null || previous.firstPass === null ? null : current.firstPass - previous.firstPass, goodUp: true, Icon: Check },
-  ];
-  const max = Math.max(1, ...trend);
-  return <section className="production-stats" aria-label="Показатели производства">{rows.map((row, index) => <article className="metric-tile" key={row.title} title="Последние 7 дней; изменение относительно предыдущих 7 дней. По доступным вам задачам, без фильтров доски."><span>{row.title}</span><i className="metric-icon" aria-hidden="true"><row.Icon size={16} /></i><div><strong>{row.value}</strong><small>{row.unit}</small>{row.delta !== null && <b className={(row.delta >= 0) === row.goodUp ? 'improving' : 'declining'}>{row.delta > 0 ? '+' : ''}{decimal(row.delta)}{index === 3 ? ' п.п.' : '%'}</b>}</div>{index === 0 && <svg className="production-sparkline" viewBox="0 0 100 36" role="img" aria-label="Завершённые задачи по дням за последнюю неделю"><polyline points={trend.map((n, i) => `${i * 16 + 2},${33 - n / max * 30}`).join(' ')} /></svg>}</article>)}</section>;
-}
-
 function ProductionView({ view, tasks, now, boardPath }: { view: 'list' | 'calendar' | 'workload' | 'archive'; tasks: Task[]; now: number; boardPath: string }) {
   const [monthOffset, setMonthOffset] = useState(0);
   if (view === 'workload') {
@@ -79,8 +64,7 @@ function ProductionView({ view, tasks, now, boardPath }: { view: 'list' | 'calen
   return <div className="production-list"><table><thead><tr><th>Задача</th><th>Статус</th><th>Формат / GEO</th><th>Исполнитель</th><th>Дедлайн</th></tr></thead><tbody>{tasks.map(task => <tr key={task.id}><td><Link href={`${boardPath}task=${task.id}`} scroll={false}><small>КР-{String(task.id).padStart(3, '0')}</small>{task.offer}</Link></td><td><span className={`status-pill ${task.status}`}>{statuses.find(s => s.id === task.status)!.label}</span></td><td>{formats[task.format]} · {task.geo}</td><td>{task.creativeName ?? 'Свободна'}</td><td className={task.status !== 'done' && isOverdue(task, now) ? 'late' : ''}>{formatDate(task.deadline)}</td></tr>)}</tbody></table>{!tasks.length && <p className="empty-panel">{view === 'archive' ? 'Принятых работ пока нет.' : 'Задачи не найдены.'}</p>}</div>;
 }
 
-export function Board({ tasks, metrics, person, mine, now, selectedId, defaultDrawer, drawer }: {
-  metrics: ReturnType<typeof productionMetrics>;
+export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, drawer }: {
   tasks: Task[]; person: Actor; mine: boolean; now: number; selectedId?: number; defaultDrawer: boolean; account: ReactNode; drawer: ReactNode; unread?: number;
 }) {
   const [query, setQuery] = useState('');
@@ -250,7 +234,6 @@ export function Board({ tasks, metrics, person, mine, now, selectedId, defaultDr
       })}</div> : <ProductionView view={view} tasks={filtered} now={now} boardPath={boardPath} />}
       {hasFilters && !showFilters && <button type="button" className="reset-filters production-reset" onClick={resetFilters}>Сбросить фильтры</button>}
     </section>
-    <ProductionStats metrics={metrics} />
     </div>{drawer && <Link className="drawer-backdrop" href={`${boardPath}task=none`} scroll={false} aria-hidden="true" tabIndex={-1} />}
     <div className="drawer-slot">{drawer}</div>
   </div>;
