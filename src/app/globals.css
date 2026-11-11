@@ -1914,3 +1914,9 @@ body::before { background: none; }
 @media (max-width: 550px) { .studio-grid { grid-template-columns: minmax(0,1fr); } }
 .board-main .task-card h3 { align-items: flex-start; }
 .board-main .task-card h3 .card-priority-mark { flex: 0 0 14px; width: 14px; height: 14px; margin-top: max(0px, calc(.7em - 7px)); }
+.studio-settings-row { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; }
+.studio-settings-row input[type=color] { width: 44px; min-height: 35px; padding: 4px; }
+.studio-notice { color: var(--muted); font-size: 12px; margin-top: 10px; }
+.studio-canvas { background-image: radial-gradient(var(--rule-strong) .7px, transparent .7px); background-size: 16px 16px; }
+.studio-canvas canvas { border-radius: 4px; box-shadow: 0 10px 28px #0004; }
+.studio-panel textarea { width: 100%; }
