@@ -1466,8 +1466,8 @@ body::before { background: none; }
 .integration-symbol { font-size: 32px; color: var(--done); }
 .integration-node h3 { font-size: 15px; }.integration-node p { font-size: 11px; color: var(--muted); line-height: 1.5; margin: 6px 0 9px; }
 .integration-benefits { display: grid; grid-template-columns: repeat(3,1fr); border: 1px solid var(--rule); border-radius: 14px; padding: 24px; gap: 24px; }
-.integration-benefits > div { display: grid; grid-template-columns: 28px 1fr; gap: 8px; }
-.integration-benefits svg { grid-row: span 2; color: var(--done); }.integration-benefits strong { font-size: 13px; }.integration-benefits span { font-size: 11px; color: var(--muted); }
+.integration-benefits > div { display: grid; justify-items: center; align-content: start; gap: 8px; text-align: center; min-width: 0; }
+.integration-benefits svg { color: var(--done); }.integration-benefits strong { font-size: 13px; }.integration-benefits span { font-size: 11px; color: var(--muted); }
 .activity-page { max-width: 1040px; }.activity-log { list-style: none; padding: 0; margin-top: 28px; }
 .activity-log > li { display: flex; gap: 20px; position: relative; padding-bottom: 26px; }
 .activity-log > li:not(:last-child)::before { content: ''; position: absolute; left: 15px; top: 30px; bottom: 0; width: 1px; background: var(--rule); }
@@ -1881,3 +1881,16 @@ body::before { background: none; }
   100% { opacity: 0; stroke-dashoffset: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .integration-map path.integration-pulse { animation: none; } }
+@property --integration-rim-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+.integration-core {
+  border-color: transparent;
+  background: linear-gradient(var(--rail), var(--rail)) padding-box,
+    conic-gradient(from var(--integration-rim-angle), var(--rule) 10%, #78ad97 34%, #aaa3c3 48%, var(--rule) 75%) border-box;
+  animation: integration-rim 7s linear infinite;
+}
+@keyframes integration-rim { to { --integration-rim-angle: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .integration-core { animation: none; } }
