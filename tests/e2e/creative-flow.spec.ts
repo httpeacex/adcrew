@@ -32,7 +32,7 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   await expect(nav.getByRole('link', { name: 'Доска задач' }).locator('.side-count')).toHaveText(String(initialCount));
   await expect(nav.getByRole('link', { name: 'Мои задачи' })).toHaveCount(0);
   await expect(buyer.getByRole('region', { name: 'На проверке', exact: true }).getByRole('heading', { name: 'На проверке' })).toBeVisible();
-  await buyer.getByRole('link', { name: 'Новая задача' }).click();
+  await buyer.getByRole('link', { name: 'Создать задачу' }).click();
   await expect(buyer).toHaveURL('/tasks/new');
   await expectCenteredWorkspace(buyer);
   await buyer.getByLabel('Оффер', { exact: true }).fill(offer);
@@ -77,7 +77,7 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   await expect(creative.getByText('Сделать крупнее заголовок.').first()).toBeVisible();
 
   await buyer.goto(`/board?task=${task.split('/').at(-1)}`);
-  await buyer.getByRole('button', { name: 'Принять', exact: true }).click();
+  await buyer.getByRole('button', { name: /^Принять v\d+$/ }).click();
   await expect(buyer.locator('.status-pill')).toHaveText('Готово');
   await buyer.getByRole('link', { name: 'Открыть полную карточку' }).click();
   const file = buyer.getByRole('link', { name: 'Скачать creative.mp4' });
@@ -121,7 +121,7 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
 test('mobile board and history fit the viewport', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 780 });
   await login(page, 'Руководитель');
-  await page.getByRole('button', { name: 'Фильтры', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Настроить фильтры доски', exact: true }).first().click();
   await page.getByLabel('Статус', { exact: true }).selectOption('review');
   const luma = page.getByRole('link', { name: /Видео для Dating/ });
   await expect(luma).toBeVisible();
@@ -133,6 +133,7 @@ test('mobile board and history fit the viewport', async ({ page }) => {
   await page.getByLabel('Статус', { exact: true }).selectOption('done');
   await expect(page.getByRole('region', { name: 'Новые', exact: true })).toBeHidden();
   await page.getByRole('link', { name: /Пакет креативов для WeightLoss/ }).click();
+  await page.getByRole('button', { name: 'ТЗ', exact: true }).click();
   const description = page.getByRole('region', { name: 'Описание задачи' }).locator('p');
   await expect(description).toBeVisible();
   const typography = await description.evaluate((element) => ({ width: element.getBoundingClientRect().width, fontWeight: Number(getComputedStyle(element).fontWeight) }));
@@ -153,9 +154,11 @@ test('theme changes across the board, drawer and analytics and survives reload',
   const darkCard = await page.locator('.task-card').first().evaluate(element => getComputedStyle(element).backgroundImage);
   await expect(page.getByRole('heading', { name: 'Доска задач', exact: true })).toBeVisible();
   await expect(page.getByRole('complementary', { name: /Видео для Dating/ })).toBeVisible();
-  await expect(page.locator('.drawer-summary > div')).toHaveCount(4);
+  await expect(page.locator('.drawer-summary > div')).toHaveCount(2);
   await expect(page.locator('.drawer-summary')).toContainText('Исполнитель');
-  await expect(page.locator('.drawer-summary')).toContainText('Покупатель');
+  await page.getByRole('button', { name: 'ТЗ', exact: true }).click();
+  await expect(page.locator('.drawer-tab-body')).toContainText('Покупатель');
+  await page.getByRole('button', { name: 'Результат', exact: true }).click();
   await expect(page.locator('.drawer-hero')).toBeVisible();
   await page.getByRole('button', { name: 'Включить светлую тему' }).click();
   await expect(html).toHaveAttribute('data-theme', 'light');
@@ -176,7 +179,7 @@ test('theme changes across the board, drawer and analytics and survives reload',
   await expect(search).toBeFocused();
   await expect(search).toHaveValue('');
   await expect(page.locator('.board-view')).toHaveText(/^(\d+) из \1$/);
-  await page.getByRole('button', { name: 'Фильтры', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Настроить фильтры доски', exact: true }).first().click();
   await page.getByLabel('Статус', { exact: true }).selectOption('review');
   await expect(board.getByRole('link', { name: /Видео для Dating/ })).toBeVisible();
   await expect(board.getByRole('link', { name: /Пакет креативов для WeightLoss/ })).toHaveCount(0);

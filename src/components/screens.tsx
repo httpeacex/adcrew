@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { Bell, FileText, Puzzle, ArrowDownToLine, ArrowLeft, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, ChevronDown, ClipboardList, Clock3, Columns3, FileImage, Film, Flag, Globe2, History, Layers3, ListTodo, LogOut, Play, Plus, Settings2, Sparkles, Users, X } from 'lucide-react';
+import { Bell, FileText, Puzzle, ArrowDownToLine, ArrowLeft, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, MoreVertical, ClipboardList, Clock3, Columns3, FileImage, Film, Flag, History, Layers3, ListTodo, LogOut, Play, Plus, Settings2, Sparkles, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { demoProfiles } from '@/lib/demo-profiles';
 import type { Store } from '@/lib/store';
@@ -11,7 +11,6 @@ import { VersionComparison } from './version-comparison';
 import { deliveryMetrics } from '@/lib/metrics';
 import { actionsFor, actionLabels, duration, formatCredits, formatDate, formats, intervals, isOverdue, priorities, roles, statuses, zoneLabel, type Event, type Profile, type Submission, type Task } from '@/lib/workflow';
 import { Avatar, FormatMark } from './board';
-import { CopyTaskLink, DrawerTabs } from './drawer-tabs';
 import { BriefForm, SessionForm, TaskAction } from './forms';
 import { ThemeToggle } from './theme';
 import { DemoLogin, LoginCredentials } from './login-controls';
@@ -23,7 +22,7 @@ function Brand() {
 
 export function AccountMenu({ person, demo }: { person: Profile; demo: boolean }) {
   return <details className="profile-menu">
-    <summary aria-label={`Учётная запись: ${person.name}, ${roles[person.role]}`} title={person.name}><Avatar initials={person.initials} color={person.color} /><span><strong>{person.name}</strong><small>{roles[person.role]}</small></span><ChevronDown size={14} /></summary>
+    <summary aria-label={`Учётная запись: ${person.name}, ${roles[person.role]}`} title={person.name}><Avatar initials={person.initials} color={person.color} /><span><strong>{person.name}</strong><small>{roles[person.role]}</small></span><MoreVertical size={16} /></summary>
     <div className="profile-popup">
       {demo && <><span className="side-caption">Переключить учётку</span><SessionForm className="account-switch">{demoProfiles.map((account) => <button key={account.id} name="demo" value={account.id} disabled={person.id === account.id}>
         <Avatar initials={account.initials} color={account.color} size="tiny" /><span><strong>{account.name}</strong><small>{roles[account.role]}</small></span>{person.id === account.id && <Check size={15} />}
@@ -56,7 +55,7 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
         </div>
         <div className="side-group">
           <p className="side-group-title">Система</p>
-          <Link href="/notifications" className={active === 'notifications' ? 'active' : ''} aria-current={active === 'notifications' ? 'page' : undefined} aria-label="Уведомления"><Bell size={18} /><span>Уведомления</span>{unread > 0 && <span className="side-count">{unread}</span>}</Link>
+          <Link href="/notifications" className={active === 'notifications' ? 'active' : ''} aria-current={active === 'notifications' ? 'page' : undefined} aria-label="Уведомления"><span className="sidebar-bell"><Bell size={18} />{unread > 0 && <i />}</span><span>Уведомления</span>{unread > 0 && <span className="side-count">{unread}</span>}</Link>
           {(person.role === 'buyer' || person.role === 'lead') && <Link href="/templates" className={active === 'templates' ? 'active' : ''} aria-current={active === 'templates' ? 'page' : undefined} aria-label="Шаблоны"><FileText size={18} /><span>Шаблоны ТЗ</span></Link>}
           <Link href="/integrations" className={active === 'integrations' ? 'active' : ''} aria-current={active === 'integrations' ? 'page' : undefined} aria-label="Интеграции"><Puzzle size={18} /><span>Интеграции</span></Link>
           {person.role === 'lead' && <Link href="/history" className={active === 'history' ? 'active' : ''} aria-current={active === 'history' ? 'page' : undefined} aria-label="История действий" title="История действий"><History size={18} /><span>История действий</span></Link>}
@@ -68,12 +67,13 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
         <strong>Создавай креативы быстрее в одной системе</strong>
         <Link href={person.role === 'buyer' ? '/tasks/new' : '/how-it-works'} className="sidebar-promo-link">Попробовать <ArrowUpRight size={15} aria-hidden="true" /></Link>
       </div>
+      <div className="sidebar-account"><AccountMenu person={person} demo={demo} /></div>
     </aside>
     <div className="workspace-body">
       {!isBoard && <header className="board-heading">
         <div className="header-toolbar">
           <Link className="header-breadcrumb" href="/board"><ArrowLeft size={17} aria-hidden="true" /> К доске задач</Link>
-          <div className="board-header-actions"><div className="header-tools"><ThemeToggle /></div><div className="board-account"><AccountMenu person={person} demo={demo} /></div></div>
+          <div className="board-header-actions"><div className="header-tools"><ThemeToggle /></div></div>
         </div>
       </header>}
       <main className="workspace-main" id="workspace-main" tabIndex={-1}>
@@ -185,74 +185,7 @@ export function TaskScreen({ task, events, submissions, person, now, extras }: {
   </>;
 }
 
-function DrawerTimeline({ events }: { events: Event[] }) {
-  return <ol className="timeline">{events.toReversed().map((event) => <li key={event.id}><span className={`status-dot ${event.toStatus}`} /><div><strong>{actionLabels[event.action]}{event.round ? ` · v${event.round}` : ''}</strong><small>{event.actorName} · {formatDate(event.at, true)}</small></div></li>)}</ol>;
-}
-
-function DrawerVersions({ submissions }: { submissions: Submission[] }) {
-  return <section className="drawer-versions"><div className="drawer-subhead"><h3>Версии результата</h3><span>{submissions.length}</span></div>
-    {!submissions.length && <p className="muted">Файлы появятся после первой сдачи.</p>}
-    {submissions.map((item, index) => <article className={`drawer-version${index === 0 ? ' current' : ''}`} key={item.id}>
-      <div className="drawer-version-heading"><strong>v{item.round}{index === 0 ? ' · Текущая' : ''}</strong><time>{formatDate(item.submittedAt, true)}</time></div>
-      {item.files.map(file => <div className="drawer-version-file" key={file.id}>
-        <a className="drawer-version-thumb" href={fileHref(file.id, true)} target="_blank" rel="noreferrer" aria-label={`Открыть ${file.name}`}>
-          {file.type.startsWith('image/') ? <Image alt="" fill unoptimized src={fileHref(file.id, true)} /> : <Film size={23} />}</a>
-        <span>{file.name}</span><a className="icon-link" href={fileHref(file.id)} download={file.name} aria-label={`Скачать ${file.name}`}><ArrowDownToLine size={17} /></a>
-      </div>)}
-      {item.reviewNote && <p className="drawer-version-note">{item.reviewNote}</p>}
-      <div className="drawer-version-usage"><Sparkles size={13} />{item.usage.length ? item.usage.map(u => `${u.service} — ${formatCredits(u.units)} кр.`).join(' · ') : 'Без AI'}</div>
-    </article>)}
-  </section>;
-}
-
-export function TaskDrawer({ task, events, submissions, person, now, closeHref, currentHref, extras }: {
-  task: Task; events: Event[]; submissions: Submission[]; person: Profile; now: number; closeHref: string; currentHref: string; extras?: ReturnType<ProductStore['taskExtras']>;
-}) {
-  const actions = actionsFor(person, task);
-  const status = statuses.find(({ id }) => id === task.status)!;
-  const latest = submissions[0];
-  const media = latest?.files.find(file => file.type === 'video/mp4') ?? latest?.files.find(file => file.id === task.coverId) ?? latest?.files[0];
-  const collaboration = extras && <TaskCollaboration person={person} task={task} extras={extras} returnTo={currentHref} rounds={submissions.map(item => item.round)} />;
-  const participants = extras?.members.filter(member => member.id === task.buyerId || member.id === task.creativeId || events.some(event => event.actorName === member.name) || extras.comments.some(comment => comment.actorId === member.id)) ?? [];
-  const versions = <DrawerVersions submissions={submissions} />;
-  return <aside className="task-drawer production-drawer" aria-labelledby="drawer-title">
-    <header className="drawer-head">
-      <div className="drawer-head-line"><div className="drawer-context"><span><Globe2 size={13} />{task.geo}</span><span><FormatMark format={task.format} />{formats[task.format]}</span><span>{task.quantity} шт.</span></div><div className="drawer-head-tools">
-        <CopyTaskLink href={currentHref} />
-        <Link className="icon-link" href={`/tasks/${task.id}`} title="Открыть полную карточку" aria-label="Открыть полную карточку"><ArrowUpRight size={17} /></Link>
-        <Link className="icon-link" href={closeHref} scroll={false} title="Закрыть карточку" aria-label="Закрыть карточку"><X size={18} /></Link>
-      </div></div>
-      <h2 className="drawer-title" id="drawer-title">{task.offer}</h2>
-      <div className="drawer-badges"><span className="drawer-code">ID: КР-{String(task.id).padStart(3, '0')}</span><span className={`status-pill ${status.id}`}><span className={`status-dot ${status.id}`} />{status.label}</span></div>
-    </header>
-    <div className="drawer-scroll">
-      {(media || task.coverId) && <div className="drawer-hero">{media?.type === 'video/mp4'
-        ? <video key={media.id} controls preload="metadata" poster={task.coverId ? fileHref(task.coverId, true) : undefined} aria-label={`Предпросмотр ${media.name}`} src={fileHref(media.id, true)} />
-        : <Image fill unoptimized sizes="(max-width: 650px) 100vw, 600px" src={fileHref(media?.id ?? task.coverId!, true)} alt={`Креатив: ${task.offer}`} />}</div>}
-      <dl className="drawer-summary">
-        <div><dt>Исполнитель</dt><dd>{task.creativeInitials && <Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" />}{task.creativeName ?? 'Свободна'}</dd></div>
-        <div><dt><CalendarDays size={13} />Дедлайн</dt><dd className={isOverdue(task, now) && task.status !== 'done' ? 'drawer-late' : undefined}>{formatDate(task.deadline, true)}</dd></div>
-        <div><dt><Flag size={13} />Приоритет</dt><dd className={`priority ${task.priority}`}>{priorities[task.priority]}</dd></div>
-        <div><dt><Users size={13} />Покупатель</dt><dd>{task.buyerName}</dd></div>
-      </dl>
-      <DrawerTabs
-        details={<div className="drawer-overview">{versions}
-          {extras && <div className="drawer-overview-collaboration">{collaboration}</div>}
-          <section className="drawer-participants"><h3>Участники ({participants.length})</h3><div>{participants.map(member => <span key={member.id} title={`${member.name} · ${roles[member.role]}`}><Avatar initials={member.initials} color={member.color} size="tiny" /><span>{member.name}</span></span>)}</div></section>
-          <section className="drawer-description" aria-label="Описание задачи"><h3>Описание</h3><p>{task.description}</p>
-            {task.references.length > 0 && <div className="drawer-references"><h3>Референсы</h3><ul>{task.references.map((url, index) => <li key={`${index}-${url}`}><a href={url} target="_blank" rel="noreferrer">Ссылка {index + 1}<ArrowUpRight size={13} /></a></li>)}</ul></div>}
-          </section>
-          <section className="drawer-ai-summary"><Sparkles size={18} /><div><h3>AI-расход · текущая версия</h3><p>{latest ? latest.usage.length ? latest.usage.map(u => `${u.service} — ${formatCredits(u.units)} кр.`).join(' · ') : 'Без AI' : 'Расходов пока нет'}</p></div></section>
-        </div>}
-        versions={<>{versions}<VersionComparison submissions={submissions} /></>}
-        activity={<>{collaboration}<h3>Сдачи и правки</h3><DrawerTimeline events={events.filter(e => e.action === 'submit' || e.action === 'revise')} /></>}
-        history={<><h3>История задачи</h3><DrawerTimeline events={events} /></>}
-      />
-      {actions.includes('submit') && <section className="drawer-results"><h3>Сдача результата</h3>{task.status === 'revision' && latest?.reviewNote && <div className="revision-note"><strong>Что нужно исправить</strong><p>{latest.reviewNote}</p></div>}<TaskAction task={task.id} version={task.version} action="submit" returnTo={currentHref} /></section>}
-    </div>
-    {actions.some(action => action !== 'submit') && <footer className="drawer-actions">{actions.filter(action => action !== 'submit').map(action => <TaskAction key={action} task={task.id} version={task.version} action={action} returnTo={currentHref} compact />)}</footer>}
-  </aside>;
-}
+export { TaskInspector as TaskDrawer } from './task-inspector';
 
 type Report = ReturnType<Store['analytics']>;
 

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import NextImage from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { Archive, Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, Columns3, Film, Flag, ImageIcon, Layers3, List, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
+import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, Columns3, Film, Flag, ImageIcon, Layers3, List, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
 import { formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
 import type { productionMetrics } from '@/lib/metrics';
 import { ThemeToggle } from './theme';
@@ -79,7 +79,7 @@ function ProductionView({ view, tasks, now, boardPath }: { view: 'list' | 'calen
   return <div className="production-list"><table><thead><tr><th>Задача</th><th>Статус</th><th>Формат / GEO</th><th>Исполнитель</th><th>Дедлайн</th></tr></thead><tbody>{tasks.map(task => <tr key={task.id}><td><Link href={`${boardPath}task=${task.id}`} scroll={false}><small>КР-{String(task.id).padStart(3, '0')}</small>{task.offer}</Link></td><td><span className={`status-pill ${task.status}`}>{statuses.find(s => s.id === task.status)!.label}</span></td><td>{formats[task.format]} · {task.geo}</td><td>{task.creativeName ?? 'Свободна'}</td><td className={task.status !== 'done' && isOverdue(task, now) ? 'late' : ''}>{formatDate(task.deadline)}</td></tr>)}</tbody></table>{!tasks.length && <p className="empty-panel">{view === 'archive' ? 'Принятых работ пока нет.' : 'Задачи не найдены.'}</p>}</div>;
 }
 
-export function Board({ tasks, metrics, person, mine, now, selectedId, defaultDrawer, account, drawer, unread = 0 }: {
+export function Board({ tasks, metrics, person, mine, now, selectedId, defaultDrawer, drawer }: {
   metrics: ReturnType<typeof productionMetrics>;
   tasks: Task[]; person: Actor; mine: boolean; now: number; selectedId?: number; defaultDrawer: boolean; account: ReactNode; drawer: ReactNode; unread?: number;
 }) {
@@ -191,7 +191,7 @@ export function Board({ tasks, metrics, person, mine, now, selectedId, defaultDr
   const overdue = (task: Task) => task.status !== 'done' && isOverdue(task, now);
   const today = (task: Task) => task.status !== 'done' && localDay(task.deadline) === localDay(now);
   const own = (task: Task) => task.buyerId === person.id || task.creativeId === person.id;
-  const filtered = scoped.filter((task) => (!term || task.offer.toLocaleLowerCase('ru').includes(term)) && (!geo || task.geo === geo) && (!format || task.format === format) && (!offer || task.offer === offer) && (quick !== 'mine' || own(task)) && (quick !== 'today' || today(task)) && (view !== 'archive' || task.status === 'done') &&
+  const filtered = scoped.filter((task) => (!term || `${task.offer} КР-${String(task.id).padStart(3, '0')}`.toLocaleLowerCase('ru').includes(term)) && (!geo || task.geo === geo) && (!format || task.format === format) && (!offer || task.offer === offer) && (quick !== 'mine' || own(task)) && (quick !== 'today' || today(task)) && (view !== 'archive' || task.status === 'done') &&
     (!priority || task.priority === priority) && (!assignee || (assignee === 'free' ? !task.creativeId : String(task.creativeId) === assignee)) && (!lateOnly || overdue(task)) && (!status || task.status === status));
   const boardPath = mine ? '/board?scope=mine&' : '/board?';
   const hasFilters = lateOnly || quick !== 'all' || !!(query || geo || priority || assignee || status || format || offer);
@@ -199,22 +199,8 @@ export function Board({ tasks, metrics, person, mine, now, selectedId, defaultDr
   return <div className={`board-layout${drawer ? ' with-drawer' : ''}${defaultDrawer ? ' default-drawer' : ''}`}>
     <header className="board-heading" role="banner">
       <div className="header-toolbar">
-        <div className="search" role="search" aria-label="Поиск по задачам">
-          <Search className="search-icon" size={16} aria-hidden="true" />
-          <input ref={searchInput} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск задач" aria-label="Поиск по офферу" aria-keyshortcuts="Control+K Meta+K" />
-          {query ? <button className="search-clear" type="button" aria-label="Очистить поиск" onClick={() => { setQuery(''); searchInput.current?.focus(); }}><X size={16} aria-hidden="true" /></button>
-            : <kbd className="search-shortcut" aria-hidden="true">Ctrl K</kbd>}
-        </div>
-        <div className="board-header-actions">
-          <div className="header-tools">
-            <button type="button" className="theme-toggle" title="Фильтры" aria-label="Фильтры" aria-expanded={showFilters} aria-controls="board-filters" onClick={() => setShowFilters(!showFilters)}><SlidersHorizontal size={17} /></button>
-            <button type="button" className="theme-toggle alert-button" title="Просроченные задачи" aria-label="Просроченные задачи" aria-pressed={lateOnly} onClick={() => { setLateOnly(!lateOnly); setStatus(''); }}><Clock3 size={18} />{scoped.some(overdue) && <i />}</button>
-            <Link className="theme-toggle notification-trigger" href="/notifications" aria-label={`Уведомления${unread ? `: ${unread} непрочитанных` : ''}`} title="Уведомления"><Bell size={18} />{unread > 0 && <i />}</Link>
-            <ThemeToggle />
-            {isBuyer && <Link href="/tasks/new" className="theme-toggle header-create" title="Новая задача" aria-label="Новая задача"><Plus size={20} /></Link>}
-          </div>
-          <div className="board-account">{account}</div>
-        </div>
+        <div className="header-breadcrumb">Рабочее пространство <span>/</span> <strong>Производство</strong></div>
+        <div className="board-header-actions"><ThemeToggle /></div>
       </div>
     </header>
     <div className="board-main">
@@ -226,6 +212,13 @@ export function Board({ tasks, metrics, person, mine, now, selectedId, defaultDr
       ['board', 'Доска', Columns3], ['list', 'Список', List], ['calendar', 'Календарь', CalendarDays], ['workload', 'Загрузка', Users], ['archive', 'Архив', Archive],
     ] as const).map(([id, label, Icon]) => <button key={id} type="button" aria-pressed={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><Icon size={15} aria-hidden="true" />{label}</button>)}</div>
     <div className="board-quick-tabs production-filters" aria-label="Быстрые фильтры">
+    <div className="board-local-search">        <div className="search" role="search" aria-label="Поиск по задачам">
+          <Search className="search-icon" size={16} aria-hidden="true" />
+          <input ref={searchInput} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по задачам, офферу или ID" aria-label="Поиск по офферу" aria-keyshortcuts="Control+K Meta+K" />
+          {query ? <button className="search-clear" type="button" aria-label="Очистить поиск" onClick={() => { setQuery(''); searchInput.current?.focus(); }}><X size={16} aria-hidden="true" /></button>
+            : <kbd className="search-shortcut" aria-hidden="true">Ctrl K</kbd>}
+        </div>
+</div>
       <button type="button" className={quick === 'all' && !lateOnly ? 'active' : ''} aria-pressed={quick === 'all' && !lateOnly} onClick={() => { setQuick('all'); setLateOnly(false); }}>Все задачи <span>{scoped.length}</span></button>
       <button type="button" className={quick === 'mine' ? 'active' : ''} aria-pressed={quick === 'mine'} onClick={() => { setQuick(quick === 'mine' ? 'all' : 'mine'); setLateOnly(false); }}>Мои <span>{scoped.filter(own).length}</span></button>
       <button type="button" className={quick === 'today' ? 'active' : ''} aria-pressed={quick === 'today'} onClick={() => { setQuick(quick === 'today' ? 'all' : 'today'); setLateOnly(false); }}>Сегодня <span>{scoped.filter(today).length}</span></button>

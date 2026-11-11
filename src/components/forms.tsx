@@ -97,7 +97,7 @@ export function BriefForm({ initial }: { initial?: Brief } = {}) {
 
 const buttonText = { claim: 'Взять в работу', submit: 'Сдать результат', revise: 'Отправить на правки', accept: 'Принять работу' } as const;
 
-export function TaskAction({ task, version, action, returnTo, compact = false }: { task: number; version: number; action: Action; returnTo?: string; compact?: boolean }) {
+export function TaskAction({ task, version, action, returnTo, compact = false, acceptRound }: { task: number; version: number; action: Action; returnTo?: string; compact?: boolean; acceptRound?: number }) {
   const [noAi, setNoAi] = useState(false);
   const [fileCount, setFileCount] = useState(0);
   const [review, setReview] = useState(false);
@@ -114,7 +114,7 @@ export function TaskAction({ task, version, action, returnTo, compact = false }:
     <div className="form-buttons">
       {action === 'revise' && <button type="button" className="button secondary" onClick={() => setReview(false)}>Отмена</button>}
       <button className={`button ${action === 'revise' ? 'secondary' : 'primary'}${compactAccept ? ' review-accept' : ''}`} type="submit">
-        {compactAccept ? <>{busy ? <LoaderCircle className="spin" size={16} /> : <Check size={16} aria-hidden="true" />}Принять</> : <>{buttonText[action]} {busy ? <LoaderCircle className="spin" size={16} /> : <ArrowRight size={16} />}</>}
+        {compactAccept ? <>{busy ? <LoaderCircle className="spin" size={16} /> : <Check size={16} aria-hidden="true" />}Принять{acceptRound ? ` v${acceptRound}` : ''}</> : <>{buttonText[action]} {busy ? <LoaderCircle className="spin" size={16} /> : <ArrowRight size={16} />}</>}
       </button>
     </div>
   </fieldset>}</RequestForm>;

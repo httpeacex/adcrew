@@ -13,7 +13,7 @@ test('Pages keeps a two-round task, files and credits after reloading and switch
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
   await page.getByRole('button', { name: /Покупатель/ }).click();
-  await page.getByRole('link', { name: 'Новая задача', exact: true }).click();
+  await page.getByRole('link', { name: 'Создать задачу', exact: true }).click();
   const offer = `Pages ${Date.now()}`;
   await page.getByLabel('Оффер', { exact: true }).fill(offer);
   await page.getByLabel('GEO').fill('NL');
@@ -46,6 +46,16 @@ test('Pages keeps a two-round task, files and credits after reloading and switch
   await page.getByRole('button', { name: 'Сдать результат', exact: true }).click();
   await expect(page.locator('.detail-title .status-pill')).toHaveText('На проверке');
   await role(page, 'Анна Волкова');
+  await page.goto(task);
+  const taskId = task.match(/tasks\/(\d+)/)![1];
+  await page.goto(`./#/board?task=${taskId}`);
+  const inspector = page.locator('.approved-inspector');
+  await inspector.getByLabel('Версия результата').selectOption({ label: 'Версия 1' });
+  await expect(inspector.getByRole('button', { name: /^Принять v/ })).toHaveCount(0);
+  await expect(inspector.getByRole('heading', { name: 'Обсуждение версии 1', exact: true })).toBeVisible();
+  await inspector.getByRole('button', { name: 'К текущей версии', exact: true }).click();
+  await expect(inspector.getByRole('button', { name: 'Принять v2', exact: true })).toBeVisible();
+  await expect(inspector.getByRole('heading', { name: 'Обсуждение версии 2', exact: true })).toBeVisible();
   await page.goto(task);
   await page.getByRole('button', { name: 'Принять работу', exact: true }).click();
   await expect(page.locator('.detail-title .status-pill')).toHaveText('Готово');
@@ -122,7 +132,7 @@ test('Pages serializes delayed cross-tab refreshes with task mutations', async (
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
   await page.getByRole('button', { name: /Покупатель/ }).click();
-  await expect(page.getByRole('button', { name: 'Принять', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Принять v\d+$/ })).toBeVisible();
 
   // Hold one already-read snapshot at the IndexedDB callback boundary, as can
   // happen when background tab work overlaps a task mutation in this tab.
@@ -151,7 +161,7 @@ test('Pages serializes delayed cross-tab refreshes with task mutations', async (
     state.refreshChannel.postMessage('updated');
   });
   await page.waitForFunction(() => typeof (window as typeof window & { releaseSnapshot?: () => void }).releaseSnapshot === 'function');
-  await page.getByRole('button', { name: 'Принять', exact: true }).click();
+  await page.getByRole('button', { name: /^Принять v\d+$/ }).click();
   // A correct implementation queues the mutation behind the refresh. The
   // original implementation completes it while the old snapshot is held.
   await page.waitForFunction(async () => {
