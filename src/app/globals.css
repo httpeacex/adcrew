@@ -1856,3 +1856,28 @@ body::before { background: none; }
 .approved-inspector .compact-comment-form textarea { resize: none; }
 .approved-inspector .compact-comment-form .quick-phrases > div { grid-template-columns: max-content max-content; column-gap: 8px; }
 @media(max-width: 390px) { .approved-inspector .compact-comment-form .quick-phrases > div { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+.integration-logo {
+  flex: 0 0 49px;
+  height: 49px;
+  border: 1px solid #393a3c;
+  border-radius: 11px;
+  background: #161616 url('/reference/integration-logos.png') 50% 50% / 500% auto no-repeat;
+}
+.integration-logo.telegram { background-position-x: 8.2%; }
+.integration-logo.slack { background-position-x: 91.8%; }
+.integration-map path.integration-pulse {
+  stroke: #8bc3a8;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 7 93;
+  stroke-dashoffset: 100;
+  opacity: 0;
+  animation: integration-signal 3.8s linear infinite;
+}
+@keyframes integration-signal {
+  0% { opacity: 0; stroke-dashoffset: 100; }
+  12% { opacity: .85; }
+  82% { opacity: .85; }
+  100% { opacity: 0; stroke-dashoffset: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .integration-map path.integration-pulse { animation: none; } }
