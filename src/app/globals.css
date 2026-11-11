@@ -1531,3 +1531,4 @@ body::before { background: none; }
  .production-filters .board-local-search { flex-basis: 300px; }
 }
 @media (max-width: 650px) { .board-main .kanban { grid-template-columns: none; grid-auto-columns: minmax(265px,85%); } .board-main .column { min-height: 65dvh; } }
+@media (min-width: 1200px) { .board-main .kanban { grid-template-columns: repeat(5,minmax(300px,calc((100% - 32px)/3))); } }
