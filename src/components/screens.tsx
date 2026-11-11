@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
 import { Bell, FileText, Puzzle, ArrowDownToLine, ArrowLeft, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, MoreVertical, ClipboardList, Clock3, Columns3, FileImage, Film, Flag, History, Layers3, ListTodo, LogOut, Play, Plus, Settings2, Sparkles, Users } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { demoProfiles } from '@/lib/demo-profiles';
 import type { Store } from '@/lib/store';
 import type { ProductStore } from '@/lib/product-store';
@@ -12,7 +12,7 @@ import { deliveryMetrics } from '@/lib/metrics';
 import { actionsFor, actionLabels, duration, formatCredits, formatDate, formats, intervals, isOverdue, priorities, roles, statuses, zoneLabel, type Event, type Profile, type Submission, type Task } from '@/lib/workflow';
 import { Avatar, FormatMark } from './board';
 import { BriefForm, SessionForm, TaskAction } from './forms';
-import { ThemeToggle } from './theme';
+import { ThemeSelector, ThemeToggle } from './theme';
 import { DemoLogin, LoginCredentials } from './login-controls';
 import loginStyles from './login.module.css';
 
@@ -67,13 +67,14 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
         <strong>Создавай креативы быстрее в одной системе</strong>
         <Link href={person.role === 'buyer' ? '/tasks/new' : '/how-it-works'} className="sidebar-promo-link">Попробовать <ArrowUpRight size={15} aria-hidden="true" /></Link>
       </div>
+      <div className="sidebar-theme"><ThemeSelector /></div>
       <div className="sidebar-account"><AccountMenu person={person} demo={demo} /></div>
     </aside>
     <div className="workspace-body">
       {!isBoard && <header className="board-heading">
         <div className="header-toolbar">
           <Link className="header-breadcrumb" href="/board"><ArrowLeft size={17} aria-hidden="true" /> К доске задач</Link>
-          <div className="board-header-actions"><div className="header-tools"><ThemeToggle /></div></div>
+
         </div>
       </header>}
       <main className="workspace-main" id="workspace-main" tabIndex={-1}>
@@ -91,11 +92,10 @@ export function Settings({ person }: { person: Profile }) {
 }
 
 export function WorkspaceHistory({ events }: { events: ReturnType<Store['workspaceHistory']> }) {
-  return <div className="analytics-page"><p className="section-description">Последние 100 событий по задачам отдела</p>
-    <section className="panel report-table"><table><thead><tr><th>Задача</th><th>Действие</th><th>Участник</th><th>Время</th></tr></thead><tbody>
-      {events.map((event) => <tr key={event.id}><td><Link href={`/board?task=${event.taskId}`}>{event.offer}</Link></td><td>{actionLabels[event.action]}</td><td>{event.actorName}</td><td>{formatDate(event.at, true)}</td></tr>)}
-    </tbody></table>{!events.length && <p className="muted">Событий пока нет.</p>}</section>
-  </div>;
+  return <div className="activity-page"><p className="section-description">Последние 100 событий по задачам отдела</p><ol className="activity-log">{events.map(event => {
+    const Icon = event.action === 'accept' ? Check : event.action === 'submit' ? FileText : event.action === 'revise' ? History : event.action === 'create' ? Plus : Users;
+    return <li key={event.id}><span className={`activity-icon ${event.toStatus}`}><Icon size={16}/></span><div className="activity-content"><header><span className="avatar tiny">{event.actorName.split(' ').map(word=>word[0]).slice(0,2).join('')}</span><strong>{event.actorName}</strong><span>{actionLabels[event.action]}</span><time dateTime={new Date(event.at).toISOString()}>{formatDate(event.at,true)}</time></header><Link className="activity-task" href={`/board?task=${event.taskId}`}><span><small>КР-{String(event.taskId).padStart(3,'0')}{event.round ? ` · Версия ${event.round}` : ''}</small><strong>{event.offer}</strong></span><span className={`status-pill ${event.toStatus}`}>{statuses.find(status=>status.id===event.toStatus)?.label}</span><ArrowUpRight size={16}/></Link></div></li>;
+  })}</ol>{!events.length && <p className="empty-panel">Событий пока нет.</p>}</div>;
 }
 
 export function Login({ demo }: { demo: boolean }) {
@@ -193,16 +193,19 @@ function AnalyticsOverview({ result }: { result: Report }) {
   const byService = new Map<string, number>();
   for (const item of result.usage) byService.set(item.service, (byService.get(item.service) ?? 0) + item.units);
   const services = [...byService].sort((a, b) => a[0].localeCompare(b[0]));
+  const totalOpen = result.workload.reduce((n,item)=>n+item.progress+item.revision+item.review,0);
+  const review = result.workload.reduce((n,item)=>n+item.review,0);
+  const loadMax = Math.max(1,...result.workload.map(item=>item.progress+item.revision+item.review));
   return <section className="analytics-overview" aria-labelledby="analytics-overview-title">
-    <h2 id="analytics-overview-title" className="overview-title">Сводка аналитики</h2>
+    <div className="analytics-hero"><h2 id="analytics-overview-title" className="overview-title">Производство в цифрах</h2><p className="overview-caption">Результаты команды за выбранный период</p>
     <dl className="overview-metrics">{[
       { label: 'Создано за период', value: result.created, Icon: Layers3 },
       { label: 'Завершено за период', value: result.completed, Icon: Check },
       { label: 'Средний цикл', value: duration(result.average.cycle), Icon: Clock3 },
       { label: 'Открытые просрочки', value: result.openOverdue.length, Icon: Flag },
       { label: 'AI-сервисов', value: services.length, Icon: Sparkles },
-    ].map(({ label, value, Icon }) => <div className="overview-metric metric-tile" key={label}><i className="metric-icon" aria-hidden="true"><Icon size={16} /></i><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-    <div className="overview-graphs"><section><h3>AI-расходы по сервисам</h3><p className="overview-caption">Кредиты учитываются отдельно: единицы разных сервисов имеют разную стоимость.</p>
+    ].map(({ label, value, Icon }) => <div className="overview-metric metric-tile" key={label}><i className="metric-icon" aria-hidden="true"><Icon size={16} /></i><dt>{label}</dt><dd>{value}</dd></div>)}</dl></div>
+    <div className="overview-graphs"><section><h3>Задачи на проверке</h3><p className="overview-caption">Среди текущих задач команды</p><div className="team-donut" style={{'--completion': `${totalOpen ? review/totalOpen*100 : 0}%`} as CSSProperties}><div><span>На проверке</span><strong>{review}</strong><small>из {totalOpen} открытых</small></div></div></section><section><h3>Загрузка команды</h3><p className="overview-caption">Текущие незавершённые задачи</p><div className="analytics-bars">{result.workload.map(item=><div key={item.id}><strong>{item.progress+item.revision+item.review}</strong><i style={{height:`${(item.progress+item.revision+item.review)/loadMax*115}px`}}/><span title={item.name}>{item.name.split(' ')[0]}</span></div>)}</div></section><section><h3>AI-расходы по сервисам</h3><p className="overview-caption">Кредиты учитываются отдельно: единицы разных сервисов имеют разную стоимость.</p>
       {services.length ? <ul className="service-credit-list">{services.map(([service, units]) => <li key={service}><Sparkles size={16} /><span>{service}</span><strong>{formatCredits(units)} кр.</strong></li>)}</ul> : <p className="muted">За период расходов нет.</p>}
     </section></div>
   </section>;

@@ -105,7 +105,7 @@ test('lead assigns an actual task and creates a teammate who can sign in', async
   await page.getByLabel('Роль', { exact: true }).selectOption('creative');
   await page.getByLabel('Пароль', { exact: true }).fill('ProductTest2026!');
   await page.getByRole('button', { name: 'Создать аккаунт', exact: true }).click();
-  const row = page.getByRole('row').filter({ hasText: email });
+  const row = page.locator('.team-member').filter({ hasText: email });
   await expect(row).toContainText(person);
   await expect(row).toContainText('Креативщик');
   await page.reload();

@@ -24,6 +24,14 @@ export class ProductStore extends Store {
  CREATE TABLE IF NOT EXISTS product_assignments(id INTEGER PRIMARY KEY,taskId INTEGER NOT NULL,actorId INTEGER NOT NULL,creativeId INTEGER NOT NULL,fromStatus TEXT NOT NULL,toStatus TEXT NOT NULL,at INTEGER NOT NULL,version INTEGER NOT NULL) STRICT;
  CREATE TABLE IF NOT EXISTS product_requests(actorId INTEGER NOT NULL,requestId TEXT NOT NULL,fingerprint TEXT NOT NULL,path TEXT NOT NULL,PRIMARY KEY(actorId,requestId)) STRICT;
  `);}
+ override list(actor:Actor){
+  const counts = new Map(this.db.prepare(`SELECT t.id,
+    (SELECT COUNT(*) FROM product_comments c WHERE c.taskId=t.id) AS commentCount,
+    (SELECT COUNT(*) FROM task_files f JOIN submissions s ON s.id=f.submissionId WHERE s.taskId=t.id) AS fileCount,
+    (SELECT COUNT(*) FROM product_checks c WHERE c.taskId=t.id AND c.checked=1) AS checkedCount
+    FROM tasks t`).all().map(row=>[Number(row.id),row]));
+  return super.list(actor).map(task=>({...task,commentCount:Number(counts.get(task.id)?.commentCount??0),fileCount:Number(counts.get(task.id)?.fileCount??0),checkedCount:Number(counts.get(task.id)?.checkedCount??0)}));
+ }
  override profile(id:number){const profile=super.profile(id);return profile?{...profile}:undefined;}
  private members(){return (this.db.prepare('SELECT id,email,name,initials,color,role FROM profiles ORDER BY name').all() as Profile[]).map(row=>({...row}));}
  private readable(actor:Actor,id:number){const detail=super.task(actor,id);if(!detail)throw new InputError('Задача не найдена.',404);return detail;}

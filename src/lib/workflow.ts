@@ -31,6 +31,7 @@ export type Task = Brief & {
   createdAt: number; claimedAt: number | null; submittedAt: number | null; completedAt: number | null;
   buyerName: string; creativeName: string | null; creativeInitials: string | null; creativeColor: string | null;
   coverId?: number | null;
+  commentCount?: number; fileCount?: number; checkedCount?: number;
 };
 export type Event = { id: number; actorName: string; action: keyof typeof actionLabels; fromStatus: Status | null; toStatus: Status; at: number; round: number | null };
 export type ResultFile = { id: number; name: string; type: string; size: number };

@@ -135,7 +135,7 @@ test('mobile board and history fit the viewport', async ({ page }) => {
   await page.getByLabel('Статус', { exact: true }).selectOption('done');
   await expect(page.getByRole('region', { name: 'Новые', exact: true })).toBeHidden();
   await page.getByRole('link', { name: /Пакет креативов для WeightLoss/ }).click();
-  await page.getByRole('button', { name: 'ТЗ', exact: true }).click();
+  await page.getByRole('button', { name: 'Детали', exact: true }).click();
   const description = page.getByRole('region', { name: 'Описание задачи' }).locator('p');
   await expect(description).toBeVisible();
   const typography = await description.evaluate((element) => ({ width: element.getBoundingClientRect().width, fontWeight: Number(getComputedStyle(element).fontWeight) }));
@@ -158,9 +158,9 @@ test('theme changes across the board, drawer and analytics and survives reload',
   await expect(page.getByRole('complementary', { name: /Видео для Dating/ })).toBeVisible();
   await expect(page.locator('.drawer-summary > div')).toHaveCount(2);
   await expect(page.locator('.drawer-summary')).toContainText('Исполнитель');
-  await page.getByRole('button', { name: 'ТЗ', exact: true }).click();
+  await page.getByRole('button', { name: 'Детали', exact: true }).click();
   await expect(page.locator('.drawer-tab-body')).toContainText('Покупатель');
-  await page.getByRole('button', { name: 'Результат', exact: true }).click();
+  await page.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await expect(page.locator('.drawer-hero')).toBeVisible();
   await page.getByRole('button', { name: 'Включить светлую тему' }).click();
   await expect(html).toHaveAttribute('data-theme', 'light');

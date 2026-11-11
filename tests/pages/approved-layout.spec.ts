@@ -18,9 +18,9 @@ test('approved workspace keeps account and alerts in sidebar and searches task I
   await expect(page.locator('.task-card')).toContainText('КР-009');
   await search.clear();
   const panel = page.locator('.task-drawer');
-  await expect(panel.getByRole('button', { name: 'Результат', exact: true })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Содержимое', exact: true })).toBeVisible();
   await expect(panel.getByLabel('Версия результата')).toBeVisible();
-  await panel.getByRole('button', { name: 'ТЗ', exact: true }).click();
+  await panel.getByRole('button', { name: 'Детали', exact: true }).click();
   await expect(panel.getByRole('heading', { name: 'Описание', exact: true })).toBeVisible();
   await page.locator('.sidebar .profile-menu summary').click();
   await expect(page.locator('.sidebar .profile-popup')).toBeVisible();
