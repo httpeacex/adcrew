@@ -1149,7 +1149,9 @@ body::before { background: var(--canvas-wash); }
 .workspace { --drawer-width: clamp(410px,31vw,510px); }
 .sidebar { overflow: visible; }
 .side-nav { min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
-.sidebar-account { margin-top: auto; flex-shrink: 0; border: 0; padding: 0; }
+.sidebar > .side-nav { display: flex; flex: 1 1 auto; flex-direction: column; }
+.side-group-system { margin-top: auto; }
+.sidebar-account { flex-shrink: 0; border: 0; padding: 0; }
 .sidebar-account .profile-menu { margin: 0; }
 .sidebar-account .profile-menu summary { min-height: 60px; padding: 10px; border: 0; border-radius: 14px; background: color-mix(in srgb,var(--accent) 7%,var(--surface)); gap: 9px; }
 .sidebar-account .profile-menu summary:hover { background: var(--raised); }

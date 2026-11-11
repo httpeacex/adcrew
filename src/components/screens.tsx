@@ -52,12 +52,12 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
             <Link href="/team" className={active === 'team' ? 'active' : ''} aria-current={active === 'team' ? 'page' : undefined} aria-label="Команда" title="Команда"><Users size={18} /><span>Команда</span></Link>
             <Link href="/ai-expenses" className={active === 'ai-expenses' ? 'active' : ''} aria-current={active === 'ai-expenses' ? 'page' : undefined} aria-label="AI-расходы" title="AI-расходы"><Layers3 size={18} /><span>AI-расходы</span></Link>
           </>}
-        </div>
-        <div className="side-group">
-          <p className="side-group-title">Система</p>
-          <Link href="/notifications" className={active === 'notifications' ? 'active' : ''} aria-current={active === 'notifications' ? 'page' : undefined} aria-label="Уведомления"><span className="sidebar-bell"><Bell size={18} />{unread > 0 && <i />}</span><span>Уведомления</span>{unread > 0 && <span className="side-count">{unread}</span>}</Link>
           {(person.role === 'buyer' || person.role === 'lead') && <Link href="/templates" className={active === 'templates' ? 'active' : ''} aria-current={active === 'templates' ? 'page' : undefined} aria-label="Шаблоны"><FileText size={18} /><span>Шаблоны ТЗ</span></Link>}
           <Link href="/integrations" className={active === 'integrations' ? 'active' : ''} aria-current={active === 'integrations' ? 'page' : undefined} aria-label="Интеграции"><Puzzle size={18} /><span>Интеграции</span></Link>
+        </div>
+        <div className="side-group side-group-system">
+          <p className="side-group-title">Система</p>
+          <Link href="/notifications" className={active === 'notifications' ? 'active' : ''} aria-current={active === 'notifications' ? 'page' : undefined} aria-label="Уведомления"><span className="sidebar-bell"><Bell size={18} />{unread > 0 && <i />}</span><span>Уведомления</span>{unread > 0 && <span className="side-count">{unread}</span>}</Link>
           {person.role === 'lead' && <Link href="/history" className={active === 'history' ? 'active' : ''} aria-current={active === 'history' ? 'page' : undefined} aria-label="История действий" title="История действий"><History size={18} /><span>История действий</span></Link>}
           <Link href="/settings" className={active === 'settings' ? 'active' : ''} aria-current={active === 'settings' ? 'page' : undefined} aria-label="Настройки" title="Настройки"><Settings2 size={18} /><span>Настройки</span></Link>
         </div>
