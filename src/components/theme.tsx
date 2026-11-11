@@ -24,3 +24,15 @@ export function ThemeToggle() {
     {theme === 'dark' ? <Sun size={18} /> : <Moon size={17} />}
   </button>;
 }
+
+export function ThemeSelector() {
+  const { theme, toggle } = useContext(ThemeContext);
+  return <div className="theme-selector" role="group" aria-label="Тема оформления">
+    <button type="button" aria-label="Включить светлую тему" aria-pressed={theme === 'light'} onClick={theme === 'dark' ? toggle : undefined}>
+      <Sun size={14} aria-hidden="true" /> Светлая
+    </button>
+    <button type="button" aria-label="Включить тёмную тему" aria-pressed={theme === 'dark'} onClick={theme === 'light' ? toggle : undefined}>
+      <Moon size={14} aria-hidden="true" /> Тёмная
+    </button>
+  </div>;
+}

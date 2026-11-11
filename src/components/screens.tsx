@@ -201,7 +201,7 @@ function AnalyticsOverview({ result }: { result: Report }) {
       { label: 'Средний цикл', value: duration(result.average.cycle), Icon: Clock3 },
       { label: 'Открытые просрочки', value: result.openOverdue.length, Icon: Flag },
       { label: 'AI-сервисов', value: services.length, Icon: Sparkles },
-    ].map(({ label, value, Icon }) => <div className="overview-metric" key={label}><i aria-hidden="true"><Icon size={18} /></i><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+    ].map(({ label, value, Icon }) => <div className="overview-metric metric-tile" key={label}><i className="metric-icon" aria-hidden="true"><Icon size={16} /></i><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
     <div className="overview-graphs"><section><h3>AI-расходы по сервисам</h3><p className="overview-caption">Кредиты учитываются отдельно: единицы разных сервисов имеют разную стоимость.</p>
       {services.length ? <ul className="service-credit-list">{services.map(([service, units]) => <li key={service}><Sparkles size={16} /><span>{service}</span><strong>{formatCredits(units)} кр.</strong></li>)}</ul> : <p className="muted">За период расходов нет.</p>}
     </section></div>

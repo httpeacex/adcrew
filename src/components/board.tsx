@@ -7,7 +7,7 @@ import { fileHref } from '@/lib/client-runtime';
 import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, Columns3, Film, Flag, ImageIcon, Layers3, List, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
 import { formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
 import type { productionMetrics } from '@/lib/metrics';
-import { ThemeToggle } from './theme';
+import { ThemeSelector } from './theme';
 
 const icons = { image: ImageIcon, video: Film, animation: Shapes, other: Layers3 };
 
@@ -53,7 +53,7 @@ function ProductionStats({ metrics }: { metrics: ReturnType<typeof productionMet
     { title: 'Апрув с первого раза', value: current.firstPass === null ? '—' : `${Math.round(current.firstPass)}%`, unit: '', delta: current.firstPass === null || previous.firstPass === null ? null : current.firstPass - previous.firstPass, goodUp: true, Icon: Check },
   ];
   const max = Math.max(1, ...trend);
-  return <section className="production-stats" aria-label="Показатели производства">{rows.map((row, index) => <article key={row.title} title="Последние 7 дней; изменение относительно предыдущих 7 дней. По доступным вам задачам, без фильтров доски."><span>{row.title}</span><row.Icon size={20} aria-hidden="true" /><div><strong>{row.value}</strong><small>{row.unit}</small>{row.delta !== null && <b className={(row.delta >= 0) === row.goodUp ? 'improving' : 'declining'}>{row.delta > 0 ? '+' : ''}{decimal(row.delta)}{index === 3 ? ' п.п.' : '%'}</b>}</div>{index === 0 && <svg className="production-sparkline" viewBox="0 0 100 36" role="img" aria-label="Завершённые задачи по дням за последнюю неделю"><polyline points={trend.map((n, i) => `${i * 16 + 2},${33 - n / max * 30}`).join(' ')} /></svg>}</article>)}</section>;
+  return <section className="production-stats" aria-label="Показатели производства">{rows.map((row, index) => <article className="metric-tile" key={row.title} title="Последние 7 дней; изменение относительно предыдущих 7 дней. По доступным вам задачам, без фильтров доски."><span>{row.title}</span><i className="metric-icon" aria-hidden="true"><row.Icon size={16} /></i><div><strong>{row.value}</strong><small>{row.unit}</small>{row.delta !== null && <b className={(row.delta >= 0) === row.goodUp ? 'improving' : 'declining'}>{row.delta > 0 ? '+' : ''}{decimal(row.delta)}{index === 3 ? ' п.п.' : '%'}</b>}</div>{index === 0 && <svg className="production-sparkline" viewBox="0 0 100 36" role="img" aria-label="Завершённые задачи по дням за последнюю неделю"><polyline points={trend.map((n, i) => `${i * 16 + 2},${33 - n / max * 30}`).join(' ')} /></svg>}</article>)}</section>;
 }
 
 function ProductionView({ view, tasks, now, boardPath }: { view: 'list' | 'calendar' | 'workload' | 'archive'; tasks: Task[]; now: number; boardPath: string }) {
@@ -197,16 +197,10 @@ export function Board({ tasks, metrics, person, mine, now, selectedId, defaultDr
   const hasFilters = lateOnly || quick !== 'all' || !!(query || geo || priority || assignee || status || format || offer);
   function resetFilters() { setLateOnly(false); setQuick('all'); setQuery(''); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); setFormat(''); setOffer(''); }
   return <div className={`board-layout${drawer ? ' with-drawer' : ''}${defaultDrawer ? ' default-drawer' : ''}`}>
-    <header className="board-heading" role="banner">
-      <div className="header-toolbar">
-        <div className="header-breadcrumb">Рабочее пространство <span>/</span> <strong>Производство</strong></div>
-        <div className="board-header-actions"><ThemeToggle /></div>
-      </div>
-    </header>
     <div className="board-main">
     <section className="board-intro" aria-label="Креативное производство">
       <div><p className="workspace-kicker">Производство</p><h1>{mine ? 'Мои задачи' : 'Доска задач'}</h1><p>Производство, согласование и результаты в одном месте.</p></div>
-      <div className="board-intro-actions"><Link href="/how-it-works" className="button secondary guide-link"><Play size={13} /> Как это работает</Link>{isBuyer && <Link href="/tasks/new" className="button primary"><Plus size={16} />Создать задачу</Link>}</div>
+      <div className="board-intro-actions"><ThemeSelector />{isBuyer && <Link href="/tasks/new" className="button primary"><Plus size={16} />Создать задачу</Link>}</div>
     </section>
     <div className="production-views" aria-label="Представления задач">{([
       ['board', 'Доска', Columns3], ['list', 'Список', List], ['calendar', 'Календарь', CalendarDays], ['workload', 'Загрузка', Users], ['archive', 'Архив', Archive],

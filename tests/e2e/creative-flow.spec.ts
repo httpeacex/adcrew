@@ -191,13 +191,12 @@ test('theme changes across the board, drawer and analytics and survives reload',
   await expect(html).toHaveAttribute('data-theme', 'dark');
 });
 
-test('sidebar and header keep their geometry between sections', async ({ page }) => {
+test('sidebar keeps its geometry between sections', async ({ page }) => {
   await page.setViewportSize({ width: 1800, height: 900 });
   await login(page, 'Руководитель');
   const measure = () => page.evaluate(() => {
     const sidebar = document.querySelector('.sidebar')!.getBoundingClientRect();
-    const header = document.querySelector('.board-heading')!.getBoundingClientRect();
-    return [Math.round(sidebar.width), Math.round(header.left), Math.round(header.height)];
+    return [Math.round(sidebar.width), Math.round(sidebar.right)];
   });
   const nav = page.getByRole('navigation');
   for (const theme of ['dark', 'light']) {
@@ -251,10 +250,11 @@ test('opening a task resizes the board progressively and keeps the panel inside 
   expect(await page.locator('.task-drawer').evaluate(el => getComputedStyle(el).animationName)).toBe('none');
 });
 
-test('the workflow guide opens from the board and follows the active theme', async ({ page }) => {
+test('the workflow guide opens from the account menu and follows the active theme', async ({ page }) => {
   await page.setViewportSize({ width: 1800, height: 900 });
   await login(page, 'Руководитель');
-  await page.getByRole('link', { name: 'Как это работает', exact: true }).click();
+  await page.locator('.sidebar-account summary').click();
+  await page.locator('.sidebar-account').getByRole('link', { name: 'Как это работает', exact: true }).click();
   await expect(page).toHaveURL('/how-it-works');
   await expect(page.getByRole('heading', { name: 'Как это работает', exact: true })).toBeVisible();
   const guide = page.getByRole('region', { name: 'От задачи до готового креатива' });

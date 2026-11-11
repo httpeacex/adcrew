@@ -102,7 +102,8 @@ test('Pages routes, covers and the mobile dialog fit the published project path'
   }
   const cover = page.locator('.card-cover img').first();
   await expect.poll(() => cover.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
-  await page.getByRole('link', { name: 'Как это работает', exact: true }).first().click();
+  await page.locator('.sidebar-account summary').click();
+  await page.locator('.sidebar-account').getByRole('link', { name: 'Как это работает', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Как это работает', exact: true })).toBeVisible();
   expect(failed).toEqual([]);
 });

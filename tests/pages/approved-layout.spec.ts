@@ -7,8 +7,11 @@ test('approved workspace keeps account and alerts in sidebar and searches task I
   await page.getByRole('dialog').getByRole('button', { name: /Покупатель/ }).click();
   await page.goto('./#/board');
   await expect(page.locator('.sidebar .profile-menu')).toBeVisible();
-  await expect(page.locator('.board-heading .profile-menu')).toHaveCount(0);
-  await expect(page.locator('.board-heading a[href*="notifications"]')).toHaveCount(0);
+  await expect(page.locator('.board-heading')).toHaveCount(0);
+  const themes = page.getByRole('group', { name: 'Тема оформления' });
+  await expect(themes.getByRole('button', { name: 'Включить тёмную тему' })).toHaveAttribute('aria-pressed', 'true');
+  await themes.getByRole('button', { name: 'Включить светлую тему' }).click();
+  await expect(themes.getByRole('button', { name: 'Включить светлую тему' })).toHaveAttribute('aria-pressed', 'true');
   const search = page.locator('.board-main').getByRole('searchbox');
   await search.fill('КР-009');
   await expect(page.locator('.task-card')).toHaveCount(1);
