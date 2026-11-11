@@ -21,16 +21,19 @@ export function Avatar({ initials, color, size = '' }: { initials: string; color
 
 function TaskCard({ task, now, href, selected }: { task: Task; now: number; href: string; selected: boolean }) {
   const overdue = isOverdue(task, now) && task.status !== 'done';
-  return <Link className={`task-card${overdue ? ' overdue-card' : ''}${selected ? ' is-selected' : ''}`} href={href} scroll={false} aria-current={selected ? 'true' : undefined}>
+  const statusLabel = statuses.find(status => status.id === task.status)!.label;
+  return <Link className={`task-card task-${task.status}${task.coverId ? ' has-cover' : ' compact-card'}${overdue ? ' overdue-card' : ''}${selected ? ' is-selected' : ''}`} href={href} scroll={false} aria-current={selected ? 'true' : undefined}>
     <div className="card-body"><div className="card-top">
       <span className="task-code">КР-{String(task.id).padStart(3, '0')}</span><span className={`priority ${task.priority}`} title={`Приоритет: ${priorities[task.priority]}`}><Flag size={11} /> {priorities[task.priority]}</span></div>
-    <h3>{task.offer}</h3>
     {task.coverId && <span className={`card-cover ${task.format}`}>
       <NextImage alt="" fill loading="lazy" unoptimized src={fileHref(task.coverId, true)} />
+      <span className="card-cover-status">{statusLabel}</span>
       {task.format === 'video' ? <span className="cover-play" aria-hidden="true"><Play size={14} fill="currentColor" /></span> : null}
       {task.status === 'done' && <span className="cover-accepted"><Check size={12} aria-hidden="true" /></span>}
     </span>}
-    <div className="card-tags"><FormatMark format={task.format} /><span>{formats[task.format]}</span><span className="card-separator" /><span>{task.quantity} шт.</span><span className="geo-tag">{task.geo}</span></div>
+    <h3>{task.offer}</h3>
+    <div className="card-tags"><span className="card-format"><FormatMark format={task.format} />{formats[task.format]} · {task.quantity} шт.</span><span className="geo-tag">{task.geo}</span></div>
+    {task.status === 'done' && <span className="card-approved"><Check size={13} aria-hidden="true" />Согласовано</span>}
     <div className="card-footer"><span className={`due ${overdue ? 'late' : ''}`} title={overdue ? 'Дедлайн просрочен' : 'Дедлайн'}>{overdue ? <TriangleAlert size={13} /> : <Clock3 size={13} />}{formatDate(task.deadline)}</span>
       {task.creativeInitials ? <span className="card-person" title={task.creativeName || undefined}><span>{task.creativeName?.split(' ')[0]}</span><Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" /></span> : <span className="empty-avatar" title="Без исполнителя">Свободна</span>}
     </div></div>
