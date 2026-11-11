@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import NextImage from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChartNoAxesColumnIncreasing, Clock3, Columns3, Film, Flag, ImageIcon, Layers3, List, MessageSquare, Paperclip, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
+import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChartNoAxesColumnIncreasing, Columns3, Film, Flag, ImageIcon, Layers3, List, MessageSquare, Paperclip, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
 import { formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
 
 const icons = { image: ImageIcon, video: Film, animation: Shapes, other: Layers3 };
@@ -33,12 +33,16 @@ function TaskCard({ task, now, href, selected }: { task: Task; now: number; href
     <h3><ChartNoAxesColumnIncreasing size={14} className={`card-priority-mark ${task.priority}`} />{task.offer}<span className="card-ellipsis" aria-hidden="true">⋯</span></h3>
     <p className="card-description">{task.description}</p><div className="card-tags"><span className="card-format"><FormatMark format={task.format} />{formats[task.format]} · {task.quantity} шт.</span><span className="geo-tag">{task.geo}</span></div>
     {task.status === 'done' && <span className="card-approved"><Check size={13} aria-hidden="true" />Согласовано</span>}
-    <div className="card-footer"><span className={`due ${overdue ? 'late' : ''}`} title={overdue ? 'Дедлайн просрочен' : 'Дедлайн'}>{overdue ? <TriangleAlert size={13} /> : <Clock3 size={13} />}{formatDate(task.deadline)}</span>
-      {task.creativeInitials ? <span className="card-person" title={task.creativeName || undefined}><span>{task.creativeName?.split(' ')[0]}</span><Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" /></span> : <span className="empty-avatar" title="Без исполнителя">Свободна</span>}
-    </div><div className="card-counters" aria-label="Материалы и обсуждение">
+    <div className="card-footer"><span className={`due ${overdue ? 'late' : ''}`} title={overdue ? 'Дедлайн просрочен' : 'Дедлайн'}>{overdue ? <TriangleAlert size={13} /> : <CalendarDays size={14} />}{formatDate(task.deadline)}</span>
+    </div>
+    <div className="card-counters" aria-label="Участники, материалы и обсуждение">
+      <div className="card-participants" title={task.creativeName ? `${task.buyerName}, ${task.creativeName}` : `${task.buyerName} · без исполнителя`}>
+        <Avatar initials={task.buyerName.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()} color="violet" size="tiny" />
+        {task.creativeInitials && <Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" />}
+      </div>
       <span title="Комментарии"><MessageSquare size={12} />{task.commentCount ?? 0}</span>
       <span title="Файлы"><Paperclip size={12} />{task.fileCount ?? 0}</span>
-      <span title="Чек-лист приёмки"><i className="progress-ring" style={{ '--progress': `${(task.checkedCount ?? 0) / 3 * 100}%` } as React.CSSProperties} />{task.checkedCount ?? 0}/3</span><span className="card-format-label"><i/>{formats[task.format]}</span>
+      <span title="Чек-лист приёмки"><i className="progress-ring" style={{ '--progress': `${(task.checkedCount ?? 0) / 3 * 100}%` } as React.CSSProperties} />{task.checkedCount ?? 0}/3</span><span className={`card-format-label format-${task.format}`}><i/>{formats[task.format]}</span>
     </div></div>
   </Link>;
 }
@@ -184,7 +188,9 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   const boardPath = mine ? '/board?scope=mine&' : '/board?';
   const hasFilters = lateOnly || quick !== 'all' || !!(query || geo || priority || assignee || status || format || offer);
   function resetFilters() { setLateOnly(false); setQuick('all'); setQuery(''); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); setFormat(''); setOffer(''); }
-  const showAllStages = stages === 'all' || hasFilters || mine || scoped.some(task => task.id === selectedId && (task.status === 'new' || task.status === 'revision'));
+  const showAllStages = stages === 'all' || hasFilters || mine || scoped.some(task => task.id === selectedId && task.status === 'revision');
+  const primaryStages: Status[] = ['progress', 'review', 'done', 'new'];
+  const displayedStages = showAllStages ? statuses : primaryStages.map(id => statuses.find(stage => stage.id === id)!);
   return <div className={`board-layout${drawer ? ' with-drawer' : ''}${defaultDrawer ? ' default-drawer' : ''}`}>
     <div className="board-main">
     <header className="reference-topbar"><section className="board-intro" aria-label="Креативное производство">
@@ -225,7 +231,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
           {hasFilters && <button type="button" className="reset-filters" onClick={resetFilters}>Сбросить</button>}
         </div>
       </div>
-      {view === 'board' ? <div className={`kanban${showAllStages ? ' all-stages' : ''}`}>{statuses.filter(item => showAllStages || ['progress','review','done'].includes(item.id)).map(({ id, label, hint }) => {
+      {view === 'board' ? <div className={`kanban${showAllStages ? ' all-stages' : ''}`}>{displayedStages.map(({ id, label, hint }) => {
         const column = filtered.filter((task) => task.status === id);
         const share = filtered.length ? (column.length / filtered.length) * 100 : 0;
         const shareLabel = `${label}: ${new Intl.NumberFormat('ru', { maximumFractionDigits: 1 }).format(share)}% (${column.length} из ${filtered.length} задач)`;
