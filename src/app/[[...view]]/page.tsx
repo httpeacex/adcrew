@@ -1,3 +1,4 @@
+import { Studio } from '@/components/studio';
 import { notFound, redirect } from 'next/navigation';
 import { ReferenceBoard } from '@/components/reference-board';
 import { Board } from '@/components/board';
@@ -29,7 +30,12 @@ export default async function Page({ params, searchParams }: Props) {
   const unread = snapshot.notices.filter(item => !item.read).length;
   let screen;
   let active = view;
-  if (view === 'board' && route.length === 1) {
+  if (view === 'studio' && route.length === 1) {
+    const taskId = query.task;
+    const detail = taskId ? store.task(person, Number(taskId)) : null;
+    if (taskId && !detail) notFound();
+    else screen = <Studio key={detail?.task.id ?? 'blank'} task={detail?.task} />;
+  } else if (view === 'board' && route.length === 1) {
     const mine = query.scope === 'mine' && person.role === 'creative';
     active = mine ? 'mine' : 'board';
     const tasks = store.list(person);

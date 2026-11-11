@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowDownToLine, ArrowUpRight, CalendarDays, File, FileText, GitCompareArrows, X } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpRight, CalendarDays, File, FileText, GitCompareArrows, Sparkles, X } from 'lucide-react';
 import type { ProductStore } from '@/lib/product-store';
 import { actionsFor, actionLabels, formatDate, formats, isOverdue, priorities, statuses, type Event, type Profile, type Submission, type Task } from '@/lib/workflow';
 import { fileHref } from '@/lib/client-runtime';
@@ -42,6 +42,7 @@ export function TaskInspector({ task, events, submissions, person, now, closeHre
       <div className="drawer-tabs" aria-label="Разделы задачи">{[['result', 'Содержимое'], ['brief', 'Детали']].map(([id, label]) => <button type="button" key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}</div>
       <dl className="drawer-summary"><div><dt>Исполнитель</dt><dd>{task.creativeInitials && <Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" />}{task.creativeName ?? 'Свободна'}</dd></div><div><dt><CalendarDays size={13} />Дедлайн</dt><dd className={isOverdue(task, now) && task.status !== 'done' ? 'drawer-late' : undefined}>{formatDate(task.deadline, true)}</dd></div></dl>
       <div className="drawer-tab-body">
+        {task.creativeId === person.id && <Link className="button secondary inspector-studio" href={`/studio?task=${task.id}`}><Sparkles size={16} />Открыть в студии</Link>}
         {tab === 'result' && <>
           {selected ? <><div className="inspector-version"><select aria-label="Версия результата" value={selected.id} onChange={event => { setSelectedId(Number(event.target.value)); setFileId(undefined); }}>{submissions.map((item, index) => <option key={item.id} value={item.id}>Версия {item.round}{index === 0 ? ' · Текущая' : ''}</option>)}</select>{submissions.length > 1 && <button className="inspector-compare" type="button" aria-expanded={compare} onClick={() => setCompare(!compare)}><GitCompareArrows size={16} />Сравнить</button>}</div>
           {compare && <VersionComparison submissions={submissions} />}

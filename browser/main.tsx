@@ -1,3 +1,4 @@
+import { Studio } from '@/components/studio';
 import { useEffect, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ReferenceBoard } from '@/components/reference-board';
@@ -41,7 +42,12 @@ function App() {
   const unread = product.notices.filter(item => !item.read).length;
   let active = view;
   let screen: ReactNode;
-  if (view === 'board' && path.length === 1) {
+  if (view === 'studio' && path.length === 1) {
+    const taskId = route.searchParams.get('task');
+    const detail = taskId ? store.task(person, Number(taskId)) : null;
+    if (taskId && !detail) screen = <Missing />;
+    else screen = <Studio key={detail?.task.id ?? 'blank'} task={detail?.task} />;
+  } else if (view === 'board' && path.length === 1) {
     const mine = route.searchParams.get('scope') === 'mine' && person.role === 'creative';
     active = mine ? 'mine' : 'board';
     const tasks = store.list(person);

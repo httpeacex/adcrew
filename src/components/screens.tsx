@@ -46,6 +46,7 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
         <div className="side-group">
           <p className="side-group-title">Работа</p>
           <Link className={boardActive ? 'active' : ''} aria-label="Доска задач" aria-describedby="side-all-count" title="Доска задач" aria-current={active === 'board' ? 'page' : undefined} href="/board"><Columns3 size={18} /><span>Доска задач</span><span className="side-count" id="side-all-count">{counts.total}</span></Link>
+          <Link href="/studio" className={active === 'studio' ? 'active' : ''} aria-current={active === 'studio' ? 'page' : undefined} aria-label="ИИ-студия" title="ИИ-студия"><Sparkles size={18} /><span>ИИ-студия</span></Link>
           {person.role === 'creative' && <Link className={active === 'mine' ? 'active' : ''} aria-label="Мои задачи" aria-describedby="side-mine-count" title="Мои задачи" aria-current={active === 'mine' ? 'page' : undefined} href="/board?scope=mine"><ListTodo size={18} /><span>Мои задачи</span><span className="side-count" id="side-mine-count">{counts.mine}</span></Link>}
           {person.role === 'lead' && <>
             <Link className={active === 'analytics' ? 'active' : ''} aria-label="Аналитика" title="Аналитика" aria-current={active === 'analytics' ? 'page' : undefined} href="/analytics"><BarChart3 size={18} /><span>Аналитика</span></Link>
@@ -142,6 +143,7 @@ export function TaskScreen({ task, events, submissions, person, now, extras }: {
     <div className="page-title detail-title"><div><div className="section-label"><FormatMark format={task.format} /> КР-{String(task.id).padStart(3, '0')} / {formats[task.format]}</div><h1>{task.offer}</h1></div><span className={`status-pill ${state.id}`}><span className={`status-dot ${state.id}`} /> {state.label}</span></div>
     <div className="detail-grid">
       <div className="detail-main">
+        {task.creativeId === person.id && <Link className="button secondary" href={`/studio?task=${task.id}`}><Sparkles size={16} />Открыть в студии</Link>}
         <VersionComparison submissions={submissions} />
         <section className="panel"><div className="panel-title"><ClipboardList size={20} /><h2>Техническое задание</h2></div>
           <dl className="brief-meta"><div><dt>GEO</dt><dd><span className="geo-tag">{task.geo}</span></dd></div><div><dt>Формат</dt><dd>{formats[task.format]}</dd></div><div><dt>Количество</dt><dd>{task.quantity} шт.</dd></div><div><dt>Приоритет</dt><dd className={`priority ${task.priority}`}><Flag size={14} /> {priorities[task.priority]}</dd></div></dl>

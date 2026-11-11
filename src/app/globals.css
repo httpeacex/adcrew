@@ -1894,3 +1894,24 @@ body::before { background: none; }
 }
 @keyframes integration-rim { to { --integration-rim-angle: 360deg; } }
 @media (prefers-reduced-motion: reduce) { .integration-core { animation: none; } }
+.studio-header, .studio-editor > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.studio-header { margin-bottom: 20px; }
+.studio-header h1 { font-size: 25px; margin: 0; }
+.studio-back { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+.studio-grid { display: grid; grid-template-columns: minmax(170px,1fr) minmax(0,2fr) minmax(185px,1fr); gap: 12px; }
+.studio-panel { min-width: 0; padding: 15px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
+.studio-panel h2 { font-size: 15px; margin: 0 0 12px; }
+.studio-panel .field { margin-bottom: 12px; }
+.studio-panel .muted { font-size: 12px; line-height: 1.5; }
+.studio-upload { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.studio-upload input { width: 1px; height: 1px; position: absolute; opacity: 0; }
+.studio-upload:focus-within { outline: 1px solid var(--accent); }
+.studio-canvas { display: grid; place-items: center; padding: 14px; background: var(--well); border-radius: 8px; }
+.studio-canvas canvas { display: block; width: auto; max-width: 100%; height: auto; max-height: min(58vh,640px); object-fit: contain; }
+.studio-assistant { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.studio-assistant h2 { display: flex; align-items: center; gap: 8px; }
+.studio-assistant .button, .inspector-studio { margin-block: 8px; }
+@media (max-width: 1050px) { .studio-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .studio-editor { grid-row: 1; grid-column: 1 / -1; } }
+@media (max-width: 550px) { .studio-grid { grid-template-columns: minmax(0,1fr); } }
+.board-main .task-card h3 { align-items: flex-start; }
+.board-main .task-card h3 .card-priority-mark { flex: 0 0 14px; width: 14px; height: 14px; margin-top: max(0px, calc(.7em - 7px)); }
