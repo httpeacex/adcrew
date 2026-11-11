@@ -1,0 +1,72 @@
+.root {
+  container-type: inline-size;
+  padding: clamp(18px, 3vw, 36px);
+  border: 1px solid var(--rule);
+  border-radius: 13px;
+  background-color: var(--well);
+  background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--rule) 55%, transparent) 0 1px, transparent 1px 12px);
+}
+
+.head { margin: 0 auto 22px; max-width: 560px; text-align: center; }
+.head h2 { font-size: clamp(24px, 4cqw, 38px); font-weight: 650; letter-spacing: -.035em; line-height: 1.15; text-wrap: balance; }
+.head p { margin-top: 8px; color: var(--muted); font-size: 14px; }
+.bento { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.card { position: relative; min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid var(--rule); border-radius: 9px; background: var(--surface); box-shadow: var(--card-shadow); }
+.card h3 { font-size: 15px; font-weight: 640; letter-spacing: -.015em; }
+.flowCard { grid-column: 1 / -1; }
+.brackets { position: absolute; inset: -3px; pointer-events: none; }
+.brackets i { position: absolute; width: 8px; height: 8px; border: solid var(--accent); opacity: .7; border-width: 0; }
+.brackets i:nth-child(1) { inset: 0 auto auto 0; border-width: 1px 0 0 1px; }
+.brackets i:nth-child(2) { inset: 0 0 auto auto; border-width: 1px 1px 0 0; }
+.brackets i:nth-child(3) { inset: auto auto 0 0; border-width: 0 0 1px 1px; }
+.brackets i:nth-child(4) { inset: auto 0 0 auto; border-width: 0 1px 1px 0; }
+
+.flowDiagram { width: 100%; height: auto; border-radius: 7px; background: radial-gradient(ellipse at center, var(--accent-deep), var(--well) 72%); }
+.flowLine, .flowPacket { fill: none; stroke-linecap: round; }
+.flowLine { stroke: var(--rule-strong); stroke-width: 1.15; }
+.flowPacket { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 95; animation: sendPacket 3.4s linear infinite; }
+@keyframes sendPacket { to { stroke-dashoffset: -100; } }
+.node { fill: var(--surface); stroke: var(--rule-strong); }
+.stackBack { fill: var(--raised); stroke: var(--rule-strong); opacity: .75; }
+.orbit { fill: none; stroke: var(--accent); opacity: .48; }
+.roleMark { fill: var(--accent-deep); }
+.roleLetter, .svgBrand, .svgLabel, .svgMeta { fill: var(--text); font-weight: 600; }
+.roleLetter { font-size: 8px; fill: var(--accent-ink); }
+.svgLabel { font-size: 10px; }
+.svgBrand { font-size: 13px; }
+.svgMeta { fill: var(--muted); font-size: 7.5px; font-weight: 550; }
+.lightning { fill: var(--accent); }
+.sheetLines { stroke: var(--rule-strong); stroke-width: 2; stroke-linecap: round; }
+
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps button, .materialGrid button { min-height: 42px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 7px; background: var(--well); color: var(--muted); font-size: 12px; font-weight: 560; text-align: left; }
+.steps button:hover, .materialGrid button:hover { background: var(--raised); color: var(--text); }
+.steps button[aria-pressed='true'], .materialGrid button[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-deep); color: var(--accent-ink); }
+.explanation { min-height: 50px; padding: 10px 12px; border-left: 2px solid var(--accent); border-radius: 5px; background: var(--well); color: var(--muted); font-size: 13px; line-height: 1.5; }
+.explanation strong { display: block; margin-bottom: 3px; color: var(--text); font-size: 12px; }
+.materialGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.materialGrid button { display: flex; align-items: center; gap: 7px; }
+.materialGrid button svg { color: var(--accent-ink); }
+
+.cardHeading, .chartControl { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cardHeading > span { padding: 2px 7px; border-radius: 5px; background: var(--raised); color: var(--muted); font-size: 11px; }
+.chart { width: 100%; max-height: 135px; border-radius: 7px; background: var(--well); cursor: crosshair; }
+.gridLine { stroke: var(--rule); }
+.chartArea { fill: var(--accent-deep); }
+.chartLine { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; }
+.chartMarker { stroke: var(--muted); stroke-dasharray: 3 3; opacity: .65; }
+.chartPoint { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+.chartControl { color: var(--muted); font-size: 12px; }
+.chartControl output { color: var(--text); font-weight: 580; text-align: right; }
+.range { display: block; width: 100%; accent-color: var(--accent); cursor: pointer; }
+.chartNote { color: var(--muted); font-size: 11px; }
+
+@container (max-width: 540px) {
+  .bento { grid-template-columns: minmax(0, 1fr); }
+  .flowDiagram { display: none; }
+  .card { padding: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flowPacket { display: none; animation: none; }
+}

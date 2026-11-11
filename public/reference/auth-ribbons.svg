@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1000" fill="none">
+  <defs>
+    <linearGradient id="glass" x1="0" y1="800" x2="1650" y2="140" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b9dbfa" stop-opacity=".05"/>
+      <stop offset=".2" stop-color="#c7e3ff" stop-opacity=".38"/>
+      <stop offset=".42" stop-color="#6893c8" stop-opacity=".08"/>
+      <stop offset=".72" stop-color="#9dc2ee" stop-opacity=".12"/>
+      <stop offset=".92" stop-color="#d5ebff" stop-opacity=".52"/>
+      <stop offset="1" stop-color="#99bce4" stop-opacity=".05"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="100" y1="500" x2="1700" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f0f9ff" stop-opacity=".7"/>
+      <stop offset=".35" stop-color="#6b92c0" stop-opacity=".08"/>
+      <stop offset=".72" stop-color="#b7d8ff" stop-opacity=".1"/>
+      <stop offset="1" stop-color="#e2f2ff" stop-opacity=".75"/>
+    </linearGradient>
+  </defs>
+  <path d="M-140 782C128 112 407 280 779 622c368 338 756 68 1101-523-105 484-614 1106-1118 687C365 456 146 235-140 782Z" fill="url(#glass)"/>
+  <path d="M-140 782C128 112 407 280 779 622c368 338 756 68 1101-523" stroke="url(#rim)" stroke-width="2"/>
+  <path d="M-90 886C236 478 475 562 867 826c292 196 742 22 1055-188-182 294-699 554-1101 299C456 707 213 555-90 886Z" fill="url(#glass)" opacity=".6"/>
+  <path d="M-90 886C236 478 475 562 867 826c292 196 742 22 1055-188" stroke="url(#rim)" stroke-width="1.5" opacity=".6"/>
+</svg>

@@ -1,0 +1,47 @@
+{
+  "name": "creative-operations",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "node --disable-warning=ExperimentalWarning --test tests/*.test.ts",
+    "test:e2e": "playwright test",
+    "build:pages": "tsx scripts/export-demo.ts && vite build --config browser/vite.config.ts",
+    "preview:pages": "vite preview --config browser/vite.config.ts --host 127.0.0.1 --port 4173",
+    "test:pages": "playwright test --config playwright.pages.config.ts"
+  },
+  "dependencies": {
+    "@noble/hashes": "^2.4.0",
+    "buffer": "^6.0.3",
+    "lucide-react": "^1.71.0",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "sql.js": "^1.16.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/sql.js": "^1.4.11",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9",
+    "vite": "^8.3.8"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
+  }
+}
