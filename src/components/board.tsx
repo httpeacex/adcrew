@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import NextImage from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock3, Columns3, Film, Flag, ImageIcon, Layers3, List, MessageSquare, Paperclip, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
+import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChartNoAxesColumnIncreasing, Clock3, Columns3, Film, Flag, ImageIcon, Layers3, List, MessageSquare, Paperclip, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
 import { formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
 
 const icons = { image: ImageIcon, video: Film, animation: Shapes, other: Layers3 };
@@ -30,7 +30,7 @@ function TaskCard({ task, now, href, selected }: { task: Task; now: number; href
       {task.format === 'video' ? <span className="cover-play" aria-hidden="true"><Play size={14} fill="currentColor" /></span> : null}
       {task.status === 'done' && <span className="cover-accepted"><Check size={12} aria-hidden="true" /></span>}
     </span>}
-    <h3><Flag size={14} className={`card-priority-mark ${task.priority}`} />{task.offer}</h3>
+    <h3><ChartNoAxesColumnIncreasing size={14} className={`card-priority-mark ${task.priority}`} />{task.offer}<span className="card-ellipsis" aria-hidden="true">⋯</span></h3>
     <p className="card-description">{task.description}</p><div className="card-tags"><span className="card-format"><FormatMark format={task.format} />{formats[task.format]} · {task.quantity} шт.</span><span className="geo-tag">{task.geo}</span></div>
     {task.status === 'done' && <span className="card-approved"><Check size={13} aria-hidden="true" />Согласовано</span>}
     <div className="card-footer"><span className={`due ${overdue ? 'late' : ''}`} title={overdue ? 'Дедлайн просрочен' : 'Дедлайн'}>{overdue ? <TriangleAlert size={13} /> : <Clock3 size={13} />}{formatDate(task.deadline)}</span>
@@ -38,7 +38,7 @@ function TaskCard({ task, now, href, selected }: { task: Task; now: number; href
     </div><div className="card-counters" aria-label="Материалы и обсуждение">
       <span title="Комментарии"><MessageSquare size={12} />{task.commentCount ?? 0}</span>
       <span title="Файлы"><Paperclip size={12} />{task.fileCount ?? 0}</span>
-      <span title="Чек-лист приёмки"><i className="progress-ring" style={{ '--progress': `${(task.checkedCount ?? 0) / 3 * 100}%` } as React.CSSProperties} />{task.checkedCount ?? 0}/3</span>
+      <span title="Чек-лист приёмки"><i className="progress-ring" style={{ '--progress': `${(task.checkedCount ?? 0) / 3 * 100}%` } as React.CSSProperties} />{task.checkedCount ?? 0}/3</span><span className="card-format-label"><i/>{formats[task.format]}</span>
     </div></div>
   </Link>;
 }
@@ -186,9 +186,9 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   function resetFilters() { setLateOnly(false); setQuick('all'); setQuery(''); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); setFormat(''); setOffer(''); }
   return <div className={`board-layout${drawer ? ' with-drawer' : ''}${defaultDrawer ? ' default-drawer' : ''}`}>
     <div className="board-main">
-    <section className="board-intro" aria-label="Креативное производство">
+    <header className="reference-topbar"><section className="board-intro" aria-label="Креативное производство">
       <div><p className="workspace-kicker">Производство</p><h1>{mine ? 'Мои задачи' : 'Доска задач'}</h1><p>Производство, согласование и результаты в одном месте.</p></div>
-      <div className="board-intro-actions">{isBuyer && <Link href="/tasks/new" className="button primary"><Plus size={16} />Создать задачу</Link>}</div>
+
     </section>
     <div className="production-views" aria-label="Представления задач">{([
       ['board', 'Доска', Columns3], ['list', 'Список', List], ['calendar', 'Календарь', CalendarDays], ['workload', 'Загрузка', Users], ['archive', 'Архив', Archive],
@@ -212,9 +212,10 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
       <select aria-label="Исполнитель задач" value={assignee} onChange={e => setAssignee(e.target.value)}><option value="">Исполнитель</option><option value="free">Без исполнителя</option>{[...new Map(scoped.filter(t => t.creativeId).map(t => [t.creativeId!, t.creativeName])).entries()].map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
       <button type="button" className="quick-filter" aria-label="Настроить фильтры доски" aria-expanded={showFilters} onClick={() => setShowFilters(!showFilters)}><SlidersHorizontal size={14} />Фильтры</button>
     </div>
+    <div className="reference-create">{isBuyer && <Link href="/tasks/new" className="button primary"><Plus size={16}/>Создать задачу</Link>}</div></header>
     <section className={`board${isBuyer ? ' buyer-board' : ''}`} id="kanban" aria-label="Kanban-доска">
     <div className="board-toolbar" id="board-filters" hidden={!showFilters}>
-        <div className="board-view" aria-live="polite">{filtered.length} из {scoped.length}</div>
+        <div className="board-stage-filter"><select aria-label="Колонки доски" value={stages} onChange={event=>setStages(event.target.value)}><option value="production">Производство</option><option value="all">Все статусы</option></select></div><div className="board-view" aria-live="polite">{filtered.length} из {scoped.length}</div>
         <div className="board-filters">
           <select aria-label="GEO" value={geo} onChange={(event) => setGeo(event.target.value)}><option value="">Все GEO</option>{geos.map((value) => <option key={value}>{value}</option>)}</select>
           <select aria-label="Исполнитель" value={assignee} onChange={event => setAssignee(event.target.value)}><option value="">Все исполнители</option><option value="free">Без исполнителя</option>{[...new Map(scoped.filter(task => task.creativeId).map(task => [task.creativeId!, task.creativeName])).entries()].map(([id, name]) => <option value={id} key={id}>{name}</option>)}</select>

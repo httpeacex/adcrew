@@ -36,10 +36,11 @@ export function TaskInspector({ task, events, submissions, person, now, closeHre
       </div></div>
       <h2 className="drawer-title" id="drawer-title">{task.offer}</h2>
       <p className="inspector-context">{task.geo} · {formats[task.format]} · {task.quantity} шт.</p>
-      <dl className="drawer-summary"><div><dt>Исполнитель</dt><dd>{task.creativeInitials && <Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" />}{task.creativeName ?? 'Свободна'}</dd></div><div><dt><CalendarDays size={13} />Дедлайн</dt><dd className={isOverdue(task, now) && task.status !== 'done' ? 'drawer-late' : undefined}>{formatDate(task.deadline, true)}</dd></div></dl>
+
     </header>
     <div className="drawer-scroll">
       <div className="drawer-tabs" aria-label="Разделы задачи">{[['result', 'Содержимое'], ['brief', 'Детали']].map(([id, label]) => <button type="button" key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}</div>
+      <dl className="drawer-summary"><div><dt>Исполнитель</dt><dd>{task.creativeInitials && <Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" />}{task.creativeName ?? 'Свободна'}</dd></div><div><dt><CalendarDays size={13} />Дедлайн</dt><dd className={isOverdue(task, now) && task.status !== 'done' ? 'drawer-late' : undefined}>{formatDate(task.deadline, true)}</dd></div></dl>
       <div className="drawer-tab-body">
         {tab === 'result' && <>
           {selected ? <><div className="inspector-version"><select aria-label="Версия результата" value={selected.id} onChange={event => { setSelectedId(Number(event.target.value)); setFileId(undefined); }}>{submissions.map((item, index) => <option key={item.id} value={item.id}>Версия {item.round}{index === 0 ? ' · Текущая' : ''}</option>)}</select>{submissions.length > 1 && <button className="inspector-compare" type="button" aria-expanded={compare} onClick={() => setCompare(!compare)}><GitCompareArrows size={16} />Сравнить</button>}</div>
