@@ -30,8 +30,10 @@ jobs:
       - run: npm run build:pages
         env:
           PAGES_BASE: /${{ github.event.repository.name }}/
-      - run: npx playwright install --with-deps chromium --only-shell
+      - run: google-chrome --version
       - run: npm run test:pages
+        env:
+          PAGES_BROWSER_CHANNEL: chrome
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
