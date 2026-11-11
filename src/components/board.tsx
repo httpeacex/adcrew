@@ -198,7 +198,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
     <div className="board-quick-tabs production-filters" aria-label="Быстрые фильтры">
     <div className="board-local-search">        <div className="search" role="search" aria-label="Поиск по задачам">
           <Search className="search-icon" size={16} aria-hidden="true" />
-          <input ref={searchInput} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск по задачам, офферу или ID" aria-label="Поиск по офферу" aria-keyshortcuts="Control+K Meta+K" />
+          <input ref={searchInput} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск задач" aria-label="Поиск задач" aria-keyshortcuts="Control+K Meta+K" />
           {query ? <button className="search-clear" type="button" aria-label="Очистить поиск" onClick={() => { setQuery(''); searchInput.current?.focus(); }}><X size={16} aria-hidden="true" /></button>
             : <kbd className="search-shortcut" aria-hidden="true">Ctrl K</kbd>}
         </div>
@@ -227,12 +227,14 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
       </div>
       {view === 'board' ? <div className={`kanban${showAllStages ? ' all-stages' : ''}`}>{statuses.filter(item => showAllStages || ['progress','review','done'].includes(item.id)).map(({ id, label, hint }) => {
         const column = filtered.filter((task) => task.status === id);
+        const share = filtered.length ? (column.length / filtered.length) * 100 : 0;
+        const shareLabel = `${label}: ${new Intl.NumberFormat('ru', { maximumFractionDigits: 1 }).format(share)}% (${column.length} из ${filtered.length} задач)`;
         const limit = 3;
         const shown = column.slice(0, limit);
         const selected = column.find((task) => task.id === selectedId);
         const visible = expanded[id] || hasFilters ? column : selected && !shown.includes(selected) ? [selected, ...shown.slice(0, limit - 1)] : shown;
         return <section className={`column ${id} ${status && status !== id ? 'mobile-hidden' : ''}`} key={id} aria-label={label}>
-          <header className="column-head"><span className="column-dot" aria-hidden="true" /><h3>{label}</h3><span className="column-count">{column.length}</span><span className="column-tools" aria-hidden="true">⋯ ＋</span></header>
+          <header className="column-head"><span className="column-dot" role="img" aria-label={shareLabel} title={shareLabel} style={{ '--column-share': `${share}%` } as React.CSSProperties} /><h3>{label}</h3><span className="column-count">{column.length}</span><span className="column-tools" aria-hidden="true">⋯ ＋</span></header>
           <div className="column-body">{visible.map((task) => <TaskCard key={task.id} task={task} now={now} href={`${boardPath}task=${task.id}`} selected={selectedId === task.id} />)}
             {column.length === 0 && <div className="empty-column"><span>Нет задач</span><small>{isBuyer && id === 'review' ? 'Здесь появятся задачи для вашей проверки' : hint}</small></div>}
             {!hasFilters && column.length > limit && <button className="column-more" type="button" aria-expanded={!!expanded[id]} onClick={() => setExpanded({ ...expanded, [id]: !expanded[id] })}>{expanded[id] ? 'Свернуть' : `Ещё ${column.length - limit}`}<ChevronDown size={13} aria-hidden="true" /></button>}

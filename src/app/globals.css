@@ -1732,3 +1732,9 @@ body::before { background: none; }
   .board-workspace .board-intro p:not(.workspace-kicker) { font-size: 13px; }
   .board-workspace .reference-topbar { grid-template-columns: minmax(155px,1fr) auto auto auto; }
 }
+.board-main .column-dot {
+  border: 0;
+  color: var(--done);
+  background: conic-gradient(currentColor var(--column-share, 0%), var(--rule-strong) 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+}
