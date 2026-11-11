@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { Bell, FileText, Puzzle, ArrowDownToLine, ArrowLeft, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, MoreVertical, ClipboardList, Clock3, Columns3, FileImage, Film, Flag, History, Layers3, ListTodo, LogOut, Play, Plus, Settings2, Sparkles, Users } from 'lucide-react';
+import { Bell, FileText, Puzzle, ArrowDownToLine, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, MoreVertical, ClipboardList, Clock3, Columns3, FileImage, Film, Flag, History, Layers3, ListTodo, LogOut, Play, Plus, Settings2, Sparkles, Users } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { demoProfiles } from '@/lib/demo-profiles';
 import type { Store } from '@/lib/store';
@@ -71,12 +71,6 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
       <div className="sidebar-account"><AccountMenu person={person} demo={demo} /></div>
     </aside>
     <div className="workspace-body">
-      {!isBoard && <header className="board-heading">
-        <div className="header-toolbar">
-          <Link className="header-breadcrumb" href="/board"><ArrowLeft size={17} aria-hidden="true" /> К доске задач</Link>
-
-        </div>
-      </header>}
       <main className="workspace-main" id="workspace-main" tabIndex={-1}>
         {isBoard ? children : <div className="workspace-page" data-view={active}>
           {sectionNames[active] && !['templates', 'notifications', 'team', 'ai-expenses', 'integrations'].includes(active) && <h1 className="workspace-title">{sectionNames[active]}</h1>}
