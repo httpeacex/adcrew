@@ -1,21 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef } from 'react';
+import { useRef, type CSSProperties } from 'react';
 import { X } from 'lucide-react';
 import { DemoLogin, LoginCredentials } from './login-controls';
 import { ThemeToggle } from './theme';
 import './landing.css';
 
 const artwork = [
-  ['Мода в терракотовых тонах', '1% 27%, 2% 25%, 16% 16%, 19% 86%, 6% 94%, 4.8% 94%, 4.4% 92%'],
-  ['Сиреневые кроссовки', '15.6% 14%, 16.4% 12.5%, 28.5% 6.5%, 29% 8%, 30.6% 81%, 19% 87%'],
-  ['Спортивная кампания', '28.1% 13%, 28.6% 10%, 42% 5.5%, 42% 77.5%, 31% 81%, 30.1% 79.5%'],
-  ['Реклама лимонада', '41.5% 5%, 42.4% 1.8%, 56.7% 1.8%, 57.8% 4%, 56% 78.8%, 42.3% 79%, 41.7% 76%'],
-  ['Косметика на персиковом фоне', '57% 6%, 58% 3.8%, 71.3% 8.7%, 72% 11%, 69% 84%, 55.2% 78.5%, 54.8% 76%'],
-  ['Красный печатный портрет', '71.2% 10%, 72% 8.8%, 84.5% 14.6%, 85% 16.5%, 81% 88.7%, 69.1% 83.8%, 68.6% 82%'],
-  ['Мода в зелёных тонах', '84.8% 17%, 98.5% 26.7%, 99.3% 29.2%, 95.2% 96.6%, 94.4% 97.8%, 80.9% 88.1%'],
-];
+  ['Мода в терракотовых тонах', 10.3, 55, -11],
+  ['Сиреневые кроссовки', 23.1, 46.5, -9],
+  ['Спортивная кампания', 35, 43, -5],
+  ['Реклама лимонада', 49, 40.5, 0],
+  ['Косметика на персиковом фоне', 63, 43.5, 6],
+  ['Красный печатный портрет', 76.8, 48.5, 8],
+  ['Мода в зелёных тонах', 90, 57, 11],
+] as const;
 
 export function Landing({ demo, signedIn = false }: { demo: boolean; signedIn?: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -28,7 +28,9 @@ export function Landing({ demo, signedIn = false }: { demo: boolean; signedIn?: 
       <section className="landing-hero" id="adcrew-home" aria-labelledby="landing-title">
         <h1 id="landing-title">Рекламные креативы<br />от ТЗ до запуска</h1>
         <div className="landing-gallery" aria-label="Примеры рекламных креативов">
-          {artwork.map(([label, shape]) => <div key={label} role="img" aria-label={label} className="landing-art" style={{ clipPath: `polygon(${shape})` }} />)}
+          {artwork.map(([label, x, y, angle], index) => <div key={label} role="img" aria-label={label} className="landing-art" style={{ '--x': x, '--y': y, '--angle': `${angle}deg`, '--index': index } as CSSProperties}>
+            <div className="landing-art-face"><div className="landing-art-image" /></div>
+          </div>)}
         </div>
         <p>Управление задачами и согласованием креативов.</p>
         <div className="landing-actions">
