@@ -1607,7 +1607,7 @@ body::before { background: none; }
 .approved-inspector .drawer-overview .acceptance-checks .product-panel { background: transparent; border: 0; padding: 0; }
 .approved-inspector .drawer-overview .acceptance-checks h2 { font-size: 13px; color: var(--muted); font-weight: 500; }
 .approved-inspector .drawer-overview .checklist-button { padding: 7px 0; font-size: 13px; }
-.approved-inspector .drawer-overview .task-collaboration > section { background: var(--well); }
+.approved-inspector .drawer-overview .task-collaboration > section:not(.compact-discussion) { background: var(--well); }
 @media (min-width: 1400px) { .board-main:has(.quick-filter[aria-expanded=true]) .production-views button { display: inline-flex; } .board-main:has(.quick-filter[aria-expanded=true]) .production-views { margin: 0 0 8px; align-self: flex-start; max-width: 100%; } }
 @media (min-width: 1400px) { .workspace { --sidebar-width: 16vw; --drawer-width: 26vw; } .board-local-search .search { width: calc(16vw - 28px) !important; } .board-main .task-card h3 { font-size: clamp(15px,1vw,18px); } .board-main .card-description { font-size: clamp(13px,.9vw,16px); } .board-main .column-head h3 { font-size: clamp(16px,1.1vw,20px); } }
 /* Reference alignment: a single toolbar, compact cards and a fitted inspector. */
@@ -1833,8 +1833,9 @@ body::before { background: none; }
   background: transparent;
   box-shadow: none;
 }
-.approved-inspector .compact-discussion .product-section-title {
-  padding: 0 0 4px;
+.approved-inspector .task-collaboration .compact-discussion > .product-section-title {
+  margin: 0 0 8px;
+  padding: 0;
   border: 0;
   background: transparent;
 }
@@ -1849,11 +1850,12 @@ body::before { background: none; }
 }
 .compact-discussion .comment-avatar { grid-row: 1 / 3; background: var(--raised); color: var(--text); }
 .compact-discussion .comment-entry p { grid-column: 2; }
-.approved-inspector .compact-comment-form { margin-top: 4px; }
-.approved-inspector .compact-comment-form fieldset { gap: 4px; }
+.approved-inspector .compact-comment-form fieldset { margin: 0; gap: 6px; }
+.approved-inspector .compact-comment-form .comment-compose { padding: 4px 5px; gap: 8px; }
 .approved-inspector .compact-comment-form .comment-compose:focus-within { outline: 1px solid var(--rule-strong); }
-.approved-inspector .compact-comment-form .comment-compose .button { background: var(--rail); color: var(--text); border-color: transparent; }
-.approved-inspector .compact-comment-form textarea { resize: none; }
+.approved-inspector .compact-comment-form .comment-compose .button { min-height: 28px; padding-inline: 10px; background: var(--rail); color: var(--text); border-color: transparent; }
+.approved-inspector .compact-comment-form textarea { display: block; height: 30px; min-height: 30px; padding: 6px 0; line-height: 18px; resize: none; }
+.approved-inspector .compact-comment-form .mention-picker summary { width: fit-content; padding: 3px 0; }
 .integration-logo {
   flex: 0 0 49px;
   height: 49px;
