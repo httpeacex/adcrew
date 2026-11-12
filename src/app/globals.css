@@ -1440,8 +1440,8 @@ body::before { background: none; }
 .overview-graphs .service-credit-list strong { margin-left: auto; white-space: nowrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 /* Match the approved component proportions. */
-.board-main .kanban { grid-template-columns: repeat(5,minmax(285px,1fr)); overflow-x: auto; align-items: stretch; padding: 3px 3px 14px; scroll-snap-type: x proximity; }
-.board-main .column { scroll-snap-align: start; min-height: calc(100dvh - 220px); padding: 10px; }
+.board-main .kanban { grid-template-columns: repeat(5,minmax(285px,1fr)); overflow-x: auto; align-items: start; padding: 3px 3px 14px; scroll-snap-type: x proximity; }
+.board-main .column { scroll-snap-align: start; padding: 10px; }
 .board-main .column-head { padding: 6px 3px 15px; }
 .board-main .column-head h3 { font-size: 16px; }
 .board-main .card-body { padding: 16px 13px 12px; }
@@ -1481,7 +1481,7 @@ body::before { background: none; }
  .board-intro:has(.button) + .production-views { margin-top: 0; align-self: flex-start; max-width: 100%; }
  .production-filters .board-local-search { flex-basis: 300px; }
 }
-@media (max-width: 650px) { .board-main .kanban { grid-template-columns: none; grid-auto-columns: minmax(265px,85%); } .board-main .column { min-height: 65dvh; } }
+@media (max-width: 650px) { .board-main .kanban { grid-template-columns: none; grid-auto-columns: minmax(265px,85%); } }
 @media (min-width: 1200px) { .board-main .kanban { grid-template-columns: repeat(5,minmax(300px,calc((100% - 32px)/3))); } }
 /* Reference component anatomy: text cards and search inside the left rail. */
 .board-main .card-cover, .board-main .card-top { display: none; }
@@ -1508,12 +1508,10 @@ body::before { background: none; }
  .board-local-search .search { position: fixed; left: 14px; top: 76px; width: 222px !important; z-index: 20; border-radius: 5px; height: 42px; background: var(--well); }
  .production-filters .board-local-search { flex: 0 0 0; width: 0; }
  .board-intro { min-height: 54px; }
- .board-main .column { min-height: calc(100dvh - 175px); }
 }
 /* Approved reference layout, with neutral selection and buttons. */
 .board-main .kanban { grid-template-columns: repeat(3,minmax(0,1fr)); overflow-x: visible; }
 .board-main .kanban.all-stages { grid-template-columns: repeat(5,minmax(285px,1fr)); overflow-x: auto; }
-.board-main .column { min-height: calc(100dvh - 135px); }
 .column-tools { margin-left: auto; font-size: 19px; color: var(--muted); white-space: nowrap; }
 .board-main .column-head .column-count { margin-left: 2px; }
 .board-main .column-head { gap: 8px; }
@@ -1604,7 +1602,7 @@ body::before { background: none; }
 .reference-create .button { font-size: 11px; min-height: 34px; padding: 7px 12px; border-radius: 7px; white-space: nowrap; }
 .reference-topbar .board-local-search { width: 0; flex: 0 0 0; margin: 0; }
 .board-main .board { padding-top: 0; }
-.board-main .column { padding: 8px; border-color: #252527; background: var(--well); min-height: calc(100dvh - 110px); border-radius: 10px; }
+.board-main .column { padding: 8px; border-color: #252527; background: var(--well); border-radius: 10px; }
 .board-main .column-head { padding: 3px 0 12px; min-height: 33px; gap: 8px; }
 .board-main .column-head h3 { font-size: 14px; font-weight: 550; }
 .board-main .column-dot { width: 17px; height: 17px; border-color: var(--done); border-right-color: var(--rule); }
@@ -1742,7 +1740,6 @@ body::before { background: none; }
 .board-main .card-counters { row-gap: 4px; }
 @media (max-width: 1100px) {
   .board-main .kanban:not(.all-stages) { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .board-main .kanban:not(.all-stages) .column { min-height: 0; }
 }
 @media (max-width: 480px) {
   .board-main .kanban:not(.all-stages) { grid-template-columns: minmax(0,1fr); }
