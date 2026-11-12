@@ -15,6 +15,7 @@ import { BriefForm, SessionForm, TaskAction } from './forms';
 import { ThemeSelector, ThemeToggle } from './theme';
 import { DemoLogin, LoginCredentials } from './login-controls';
 import loginStyles from './login.module.css';
+import './analytics.css';
 
 function Brand() {
   return <div className="brand"><span className="brand-mark" aria-hidden="true" /><strong>AdCrew</strong></div>;
@@ -185,28 +186,64 @@ export { TaskInspector as TaskDrawer } from './task-inspector';
 
 type Report = ReturnType<Store['analytics']>;
 
-function AnalyticsOverview({ result }: { result: Report }) {
+const workloadStages = [
+  { id: 'progress', label: 'В работе' },
+  { id: 'review', label: 'На проверке' },
+  { id: 'revision', label: 'Правки' },
+] as const;
+
+function AnalyticsOverview({ result, delivery }: { result: Report; delivery?: ReturnType<typeof deliveryMetrics> }) {
   const byService = new Map<string, number>();
   for (const item of result.usage) byService.set(item.service, (byService.get(item.service) ?? 0) + item.units);
   const services = [...byService].sort((a, b) => a[0].localeCompare(b[0]));
-  const totalOpen = result.workload.reduce((n,item)=>n+item.progress+item.revision+item.review,0);
-  const review = result.workload.reduce((n,item)=>n+item.review,0);
-  const loadMax = Math.max(1,...result.workload.map(item=>item.progress+item.revision+item.review));
-  return <section className="analytics-overview" aria-labelledby="analytics-overview-title">
-    <div className="analytics-hero"><h2 id="analytics-overview-title" className="overview-title">Производство в цифрах</h2><p className="overview-caption">Результаты команды за выбранный период</p>
-    <dl className="overview-metrics">{[
-      { label: 'Создано за период', value: result.created, Icon: Layers3 },
-      { label: 'Завершено за период', value: result.completed, Icon: Check },
-      { label: 'Средний цикл', value: duration(result.average.cycle), Icon: Clock3 },
-      { label: 'Открытые просрочки', value: result.openOverdue.length, Icon: Flag },
-      { label: 'AI-сервисов', value: services.length, Icon: Sparkles },
-    ].map(({ label, value, Icon }) => <div className="overview-metric metric-tile" key={label}><i className="metric-icon" aria-hidden="true"><Icon size={16} /></i><dt>{label}</dt><dd>{value}</dd></div>)}</dl></div>
-    <div className="overview-graphs"><section><h3>Задачи на проверке</h3><p className="overview-caption">Среди текущих задач команды</p><div className="team-donut" style={{'--completion': `${totalOpen ? review/totalOpen*100 : 0}%`} as CSSProperties}><div><span>На проверке</span><strong>{review}</strong><small>из {totalOpen} открытых</small></div></div></section><section><h3>Загрузка команды</h3><p className="overview-caption">Текущие незавершённые задачи</p><div className="analytics-bars">{result.workload.map(item=><div key={item.id}><strong>{item.progress+item.revision+item.review}</strong><i style={{height:`${(item.progress+item.revision+item.review)/loadMax*115}px`}}/><span title={item.name}>{item.name.split(' ')[0]}</span></div>)}</div></section><section><h3>AI-расходы по сервисам</h3><p className="overview-caption">Кредиты учитываются отдельно: единицы разных сервисов имеют разную стоимость.</p>
-      {services.length ? <ul className="service-credit-list">{services.map(([service, units]) => <li key={service}><Sparkles size={16} /><span>{service}</span><strong>{formatCredits(units)} кр.</strong></li>)}</ul> : <p className="muted">За период расходов нет.</p>}
-    </section></div>
+  const totals = workloadStages.map(stage => ({ ...stage, count: result.workload.reduce((sum, item) => sum + item[stage.id], 0) }));
+  const total = totals.reduce((sum, stage) => sum + stage.count, 0);
+  const max = Math.max(1, ...result.workload.flatMap(item => workloadStages.map(stage => item[stage.id])));
+  const axis = Array.from({ length: 5 }, (_, index) => Math.ceil(max / 4) * (4 - index));
+  const segments = totals.map((stage, index) => ({
+    ...stage,
+    share: total ? stage.count / total * 100 : 0,
+    offset: total ? totals.slice(0, index).reduce((sum, previous) => sum + previous.count / total * 100, 0) : 0,
+  }));
+  return <section className="analytics-dashboard" aria-label="Сводка аналитики">
+    <dl className="analytics-kpis">{[
+      { label: 'Создано задач', value: result.created, note: 'За выбранный период', Icon: Layers3, tone: 'progress' },
+      { label: 'Завершено задач', value: result.completed, note: 'За выбранный период', Icon: Check, tone: 'done' },
+      { label: 'Средний цикл', value: duration(result.average.cycle), note: 'От публикации до приёмки', Icon: Clock3, tone: 'review' },
+      { label: 'Открытые просрочки', value: result.openOverdue.length, note: 'На текущий момент', Icon: Flag, tone: 'revision' },
+    ].map(({ label, value, note, Icon, tone }) => <div className="analytics-card analytics-kpi" data-tone={tone} key={label}><dt>{label}<span aria-hidden="true"><Icon size={17} /></span></dt><dd>{value}<small>{note}</small></dd></div>)}</dl>
+    <div className="analytics-layout">
+      <section className="analytics-card analytics-workload"><header><div><h2>Загрузка команды</h2><p>Текущие задачи по исполнителям</p></div><Link href="/team" className="analytics-card-link" aria-label="Открыть команду"><ArrowUpRight size={16} /></Link></header>
+        <ul className="analytics-legend">{workloadStages.map(stage => <li data-tone={stage.id} key={stage.id}>{stage.label}</li>)}</ul>
+        {result.workload.length ? <div className="analytics-chart">
+          <div className="analytics-axis" aria-hidden="true">{axis.map(value => <span key={value}>{value}</span>)}</div>
+          <div className="analytics-plot"><div className="analytics-gridlines" aria-hidden="true">{axis.map(value => <i key={value} />)}</div><div className="analytics-groups">
+            {result.workload.map(item => <div className="analytics-group" key={item.id}>
+              <div className="analytics-columns">{workloadStages.map(stage => <div key={stage.id} data-tone={stage.id} title={`${item.name} · ${stage.label}: ${item[stage.id]}`} style={{ '--bar-height': `${item[stage.id] / axis[0] * 100}%` } as CSSProperties}><span>{item[stage.id] || null}</span></div>)}</div>
+              <span title={item.name}>{item.name.split(' ')[0]}</span>
+            </div>)}
+          </div></div>
+        </div> : <p className="analytics-empty">Пока нет исполнителей с задачами.</p>}
+      </section>
+      <section className="analytics-card analytics-distribution"><header><div><h2>Статусы задач</h2><p>Текущие задачи с исполнителем</p></div></header>
+        <div className="analytics-donut-layout">
+          <div className="analytics-donut"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="49" /><g transform="rotate(-90 60 60)">{segments.filter(stage => stage.share > 0).map(stage => <circle key={stage.id} data-tone={stage.id} cx="60" cy="60" r="49" pathLength="100" strokeDasharray={`${Math.max(0.01, stage.share - Math.min(1.6, stage.share / 4))} 100`} strokeDashoffset={-stage.offset} />)}</g></svg><div><strong>{total}</strong><span>всего</span></div></div>
+          <ul className="analytics-legend">{totals.map(stage => <li data-tone={stage.id} key={stage.id}>{stage.label}<b>{stage.count}</b></li>)}</ul>
+        </div>
+      </section>
+      <OverdueReport result={result} />
+      {delivery && <section className="analytics-card analytics-quality" aria-label="Качество производства"><header><div><h2>Качество производства</h2><p>Принято задач за период: {delivery.count}</p></div></header>
+        {[['Принято с первого раза', delivery.firstPass], ['Принято в срок', delivery.onTime]].map(([label, value]) => <div className="analytics-quality-item" key={label}><div><span>{label}</span><strong>{typeof value === 'number' ? `${Math.round(value)}%` : '—'}</strong></div><div className="analytics-progress" aria-hidden="true"><i style={{ width: `${typeof value === 'number' ? value : 0}%` }} /></div></div>)}
+        <dl className="analytics-quality-facts"><div><dt>Правок на задачу</dt><dd>{delivery.revisions === null ? '—' : delivery.revisions.toLocaleString('ru', { maximumFractionDigits: 1 })}</dd></div><div><dt>Утверждено материалов</dt><dd>{delivery.materials}</dd></div><div><dt>В работе и на правках</dt><dd>{duration(result.average.production)}</dd></div><div><dt>На проверке</dt><dd>{duration(result.average.review)}</dd></div></dl>
+      </section>}
+      <CreditReport usage={result.usage} />
+      <section className="analytics-card analytics-services"><header><div><h2>AI-расходы по сервисам</h2><p>Кредиты за выбранный период</p></div><Link href="/ai-expenses" className="analytics-card-link" aria-label="Открыть AI-расходы"><ArrowUpRight size={16} /></Link></header>
+        <p className="analytics-service-count"><span>AI-сервисов</span><strong>{services.length}</strong></p>
+        {services.length ? <ul className="service-credit-list">{services.map(([service, units]) => <li key={service}><Sparkles size={15} /><span>{service}</span><strong>{formatCredits(units)} кр.</strong></li>)}</ul> : <p className="analytics-empty">За период расходов нет.</p>}
+      </section>
+    </div>
   </section>;
 }
-
 function ReportTeam({ workload }: { workload: Report['workload'] }) {
   const maximum = Math.max(1, ...workload.map((item) => item.progress + item.revision + item.review));
   return <section className="panel" id="team"><div className="panel-title"><Users size={19} /><h2>Загрузка команды</h2></div><p className="muted">Текущие незавершённые задачи по исполнителям.</p>
@@ -222,15 +259,16 @@ function CreditReport({ usage }: { usage: Report['usage'] }) {
 }
 
 function OverdueReport({ result }: { result: Report }) {
-  const groups = [{ label: 'Открытые сейчас', rows: result.openOverdue }, { label: 'Приняты с опозданием', rows: result.lateCompleted }];
-  return <section className="panel"><div className="panel-title"><Flag size={19} /><h2>Просрочки</h2></div>
-    <div className="report-overdue">{groups.map(({ label, rows }) => <section key={label} className="overdue-group">
-      <header><h3>{label}</h3><b>{rows.length}</b></header>
-      {rows.length ? <ul>{rows.toSorted((a, b) => a.deadline - b.deadline).map((task) => <li key={task.id}><Link href={`/tasks/${task.id}`}><strong>{task.offer}</strong><span><time dateTime={new Date(task.deadline).toISOString()}>{formatDate(task.deadline, true)}</time><ArrowUpRight size={15} /></span></Link></li>)}</ul> : <p className="muted">Нет просроченных задач.</p>}
-    </section>)}</div>
+  const rows = [
+    ...result.openOverdue.map(task => ({ task, label: 'Открыта' })),
+    ...result.lateCompleted.map(task => ({ task, label: 'Принята с опозданием' })),
+  ].toSorted((a, b) => a.task.deadline - b.task.deadline);
+  return <section className="analytics-card analytics-overdue"><header><div><h2>Просрочки</h2><p>Открытые сейчас: {result.openOverdue.length} · Приняты с опозданием: {result.lateCompleted.length}</p></div></header>
+    {rows.length ? <div className="report-table"><table><thead><tr><th>Задача</th><th>Дедлайн</th><th>Состояние</th></tr></thead><tbody>
+      {rows.map(({ task, label }) => <tr key={task.id}><td><Link href={`/tasks/${task.id}`}>{task.offer}<ArrowUpRight size={13} aria-hidden="true" /></Link></td><td><time dateTime={new Date(task.deadline).toISOString()}>{formatDate(task.deadline, true)}</time></td><td>{label}</td></tr>)}
+    </tbody></table></div> : <p className="analytics-empty">Просроченных задач нет.</p>}
   </section>;
 }
-
 export function Analytics({ result, start, end, error, section, delivery }: { result: Report | null; start: string; end: string; error?: string; section: 'analytics' | 'team' | 'ai-expenses'; delivery?: ReturnType<typeof deliveryMetrics> }) {
   const descriptions = { analytics: 'Сроки производства, загрузка команды и AI-расходы', team: 'Текущая загрузка креативщиков', 'ai-expenses': 'Расход по сервисам и исполнителям за выбранный период' };
   return <div className="analytics-page">
@@ -244,18 +282,7 @@ export function Analytics({ result, start, end, error, section, delivery }: { re
     {result && <>
       {section === 'team' && <ReportTeam workload={result.workload} />}
       {section === 'ai-expenses' && <CreditReport usage={result.usage} />}
-      {section === 'analytics' && <>
-        <AnalyticsOverview result={result} />
-        {delivery && <section className="delivery-summary panel" aria-label="Качество производства"><h2>Качество производства</h2><p className="muted">По {delivery.count} принятым задачам за выбранный период</p><dl>{[
-          ['Принято с первого раза', delivery.firstPass === null ? '—' : `${Math.round(delivery.firstPass)}%`],
-          ['Принято в срок', delivery.onTime === null ? '—' : `${Math.round(delivery.onTime)}%`],
-          ['Раундов правок на задачу', delivery.revisions === null ? '—' : delivery.revisions.toLocaleString('ru', { maximumFractionDigits: 1 })],
-          ['Утверждено материалов', delivery.materials],
-        ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>}
-        <div className="report-grid"><ReportTeam workload={result.workload} /><section className="panel"><div className="panel-title"><Clock3 size={19} /><h2>Среднее время</h2></div><p className="muted">По задачам, принятым за период.</p><dl className="facts report-facts"><div><dt>Полный цикл</dt><dd>{duration(result.average.cycle)}</dd></div><div><dt>В работе и на правках</dt><dd>{duration(result.average.production)}</dd></div><div><dt>На проверке</dt><dd>{duration(result.average.review)}</dd></div></dl></section></div>
-        <CreditReport usage={result.usage} />
-        <OverdueReport result={result} />
-      </>}
+      {section === 'analytics' && <AnalyticsOverview result={result} delivery={delivery} />}
     </>}
   </div>;
 }
