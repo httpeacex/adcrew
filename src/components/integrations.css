@@ -1,0 +1,41 @@
+.integration-catalog { container-type: inline-size; min-width: 0; }
+.integration-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.integration-categories { display: flex; flex-wrap: wrap; gap: 3px; padding: 4px; border: 1px solid var(--rule); border-radius: 9px; background: var(--well); }
+.integration-categories button { min-height: 34px; padding: 5px 11px; border: 1px solid transparent; border-radius: 6px; color: var(--muted); font-size: 12px; }
+.integration-categories button:hover { color: var(--text); }
+.integration-categories button[aria-pressed='true'] { color: var(--text); background: var(--rail); border-color: var(--rule); font-weight: 650; }
+.integration-search { display: flex; align-items: center; gap: 8px; flex: 0 1 245px; min-width: 0; padding: 0 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--rail); color: var(--muted); }
+.integration-search svg { flex-shrink: 0; }
+.integration-search input { width: 100%; min-width: 0; min-height: 40px; padding: 0; border: 0; background: transparent; box-shadow: none; font-size: 13px; }
+.integration-search:focus-within { border-color: var(--rule-strong); outline: 1px solid var(--rule-strong); }
+.integration-search input:focus-visible { outline: none; }
+.integration-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 15px; }
+.integration-node { --service-tone: #369fca; display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--rule); border-radius: 12px; background: var(--rail); }
+.integration-drive { --service-tone: #4eaf83; }
+.integration-slack { --service-tone: #b476a3; }
+.integration-card-body { flex: 1; padding: 17px; background: radial-gradient(ellipse at top right,color-mix(in srgb,var(--service-tone) 13%,transparent),transparent 65%); }
+.integration-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.integration-card-heading h2, .integration-dialog h2 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
+.integration-card-heading div > span { color: var(--muted); font-size: 12px; }
+.integration-card-body p, .integration-dialog p { margin: 14px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.integration-logo { flex: 0 0 47px; height: 47px; border-radius: 10px; background: #161616 url('/reference/integration-logos.png') 50% 50% / 560% auto no-repeat; }
+.integration-logo.telegram { background-position-x: 9.4%; }
+.integration-logo.slack { background-position-x: 90.6%; }
+.integration-node footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--rule); }
+.integration-node footer .button { min-height: 31px; padding: 4px 9px; font-size: 12px; gap: 5px; }
+.integration-status { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.integration-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); opacity: .75; }
+.integration-empty { padding: 22px 16px; border: 1px dashed var(--rule); border-radius: 10px; color: var(--muted); font-size: 13px; text-align: center; }
+.integration-dialog { width: min(420px,calc(100% - 32px)); margin: auto; padding: 0; border: 1px solid var(--rule-strong); border-radius: 14px; color: var(--text); background: var(--rail); }
+.integration-dialog::backdrop { background: #11101899; }
+.integration-dialog-body { padding: 20px; }
+.integration-dialog header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.integration-dialog header button { margin-left: auto; padding: 5px; }
+@container (max-width: 790px) { .integration-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@container (max-width: 620px) { .integration-search { flex-basis: 100%; } }
+@container (max-width: 520px) { .integration-grid { grid-template-columns: minmax(0,1fr); } }
+@media (prefers-reduced-motion: no-preference) {
+  .integration-node { transition: border-color .2s ease, transform .24s ease; }
+  .integration-node:is(:hover,:focus-within) { transform: translateY(-2px); border-color: var(--rule-strong); }
+  .integration-dialog[open] { animation: interface-enter .2s ease-out; }
+}
