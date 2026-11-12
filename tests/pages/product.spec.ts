@@ -112,9 +112,11 @@ test('lead assigns an actual task and creates a teammate who can sign in', async
   await expect(row).toBeVisible();
   await page.locator('.profile-menu summary').click();
   await page.getByRole('button', { name: 'Выйти', exact: true }).click();
-  await page.getByLabel('Эл. почта', { exact: true }).fill(email);
-  await page.getByLabel('Пароль', { exact: true }).fill('ProductTest2026!');
-  await page.getByRole('button', { name: 'Войти в аккаунт', exact: true }).click();
+  await page.getByRole('button', { name: 'Войти', exact: true }).click();
+  const loginDialog = page.getByRole('dialog', { name: 'Вход в AdCrew' });
+  await loginDialog.getByLabel('Эл. почта', { exact: true }).fill(email);
+  await loginDialog.getByLabel('Пароль', { exact: true }).fill('ProductTest2026!');
+  await loginDialog.getByRole('button', { name: 'Войти в аккаунт', exact: true }).click();
   await expect(page.getByLabel(`Учётная запись: ${person}, Креативщик`)).toBeVisible();
   await page.reload();
   await expect(page.getByLabel(`Учётная запись: ${person}, Креативщик`)).toBeVisible();
