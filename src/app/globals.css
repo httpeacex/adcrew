@@ -885,7 +885,6 @@ body::before { background: var(--canvas-wash); }
 .side-nav a { border-radius: 8px; font-size: 13px; min-height: 42px; }
 .side-group-title { font-size: 10px; letter-spacing: .09em; font-weight: 600; opacity: .75; }
 .sidebar-promo { display: none; }
-.side-count { background: color-mix(in srgb,var(--text) 8%,transparent); border-radius: 5px; }
 .header-toolbar { border-radius: 9px; min-height: 54px; background: var(--rail); box-shadow: none; }
 .sidebar, .header-toolbar, .board, .task-drawer, .brief-form { backdrop-filter: none; -webkit-backdrop-filter: none; }
 .board-main { padding-top: 18px; }
