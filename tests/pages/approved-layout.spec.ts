@@ -4,7 +4,7 @@ test('approved workspace keeps account and alerts in sidebar and searches task I
   await page.setViewportSize({ width: 1664, height: 946 });
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: /Покупатель/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /Заказчик/ }).click();
   await page.goto('./#/board');
   await expect(page.locator('.sidebar .profile-menu')).toBeVisible();
   await expect(page.locator('.board-heading')).toHaveCount(0);

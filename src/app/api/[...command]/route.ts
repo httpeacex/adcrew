@@ -106,7 +106,7 @@ export async function POST(request: Request, { params }: Context) {
       return NextResponse.json(result);
     }
     if (collection === 'tasks' && route.length === 1) {
-      if (person.role !== 'buyer') throw new InputError('Создать задачу может покупатель.', 403);
+      if (person.role !== 'buyer') throw new InputError('Создать задачу может заказчик.', 403);
       const form = await formBody(request, smallRequest);
       const id = getStore().create(person, validateBrief(Object.fromEntries(form), 0), requestId(form));
       return NextResponse.json({ path: `/tasks/${id}` });

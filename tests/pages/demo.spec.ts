@@ -12,7 +12,7 @@ test('Pages keeps a two-round task, files and credits after reloading and switch
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
-  await page.getByRole('button', { name: /Покупатель/ }).click();
+  await page.getByRole('button', { name: /Заказчик/ }).click();
   await page.getByRole('link', { name: 'Создать задачу', exact: true }).click();
   const offer = `Pages ${Date.now()}`;
   await page.getByLabel('Оффер', { exact: true }).fill(offer);
@@ -132,7 +132,7 @@ test('Pages keeps existing file links usable after a rejected submission', async
 test('Pages serializes delayed cross-tab refreshes with task mutations', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
-  await page.getByRole('button', { name: /Покупатель/ }).click();
+  await page.getByRole('button', { name: /Заказчик/ }).click();
   await expect(page.getByRole('button', { name: /^Принять v\d+$/ })).toBeVisible();
 
   // Hold one already-read snapshot at the IndexedDB callback boundary, as can

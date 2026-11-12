@@ -157,7 +157,7 @@ export class Store {
   }
 
   create(actor: Actor, brief: Brief, requestId: string, now = Date.now()) {
-    if (actor.role !== 'buyer') throw new InputError('Создать задачу может покупатель.', 403);
+    if (actor.role !== 'buyer') throw new InputError('Создать задачу может заказчик.', 403);
     const fingerprint = digest(JSON.stringify(['create', brief]));
     return this.atomic(() => {
       const previous = this.replay(actor, requestId, fingerprint);

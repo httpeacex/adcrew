@@ -4,7 +4,7 @@ test('task panel shows media and versions in both themes and saves discussion an
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: /Покупатель/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: /Заказчик/ }).click();
   await page.goto('./#/board');
   const panel = page.locator('.task-drawer');
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();

@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-async function login(page: Page, name: 'Покупатель' | 'Руководитель') {
+async function login(page: Page, name: 'Заказчик' | 'Руководитель') {
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: new RegExp(name) }).click();
@@ -17,7 +17,7 @@ async function route(page: Page, path: string) {
 }
 
 test('buyer saves a reusable brief, duplicates it, and checks acceptance persistently', async ({ page }) => {
-  await login(page, 'Покупатель');
+  await login(page, 'Заказчик');
   await route(page, 'tasks/1');
   const template = `Запуск ${Date.now()}`;
   const taskTitle = await page.locator('.detail-title h1').innerText();
@@ -47,7 +47,7 @@ test('buyer saves a reusable brief, duplicates it, and checks acceptance persist
 });
 
 test('version comments notify a real teammate and remain attached to the selected round', async ({ page }) => {
-  await login(page, 'Покупатель');
+  await login(page, 'Заказчик');
   await route(page, 'tasks/14');
   const comparison = page.getByRole('region', { name: 'Сравнение версий' });
   await expect(comparison).toBeVisible();

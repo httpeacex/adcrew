@@ -1,14 +1,14 @@
 export const statuses = [
   { id: 'new', label: 'Новые', hint: 'Можно взять в работу' },
   { id: 'progress', label: 'В работе', hint: 'Креативы в производстве' },
-  { id: 'review', label: 'На проверке', hint: 'Ждут решения покупателя' },
+  { id: 'review', label: 'На проверке', hint: 'Ждут решения заказчика' },
   { id: 'revision', label: 'Правки', hint: 'Требуют доработки' },
   { id: 'done', label: 'Готово', hint: 'Работа принята' },
 ] as const;
 
 export const formats = { image: 'Статика', video: 'Видео', animation: 'Анимация', other: 'Другой формат' } as const;
 export const priorities = { low: 'Низкий', normal: 'Обычный', high: 'Высокий', urgent: 'Срочно' } as const;
-export const roles = { buyer: 'Покупатель', creative: 'Креативщик', lead: 'Руководитель' } as const;
+export const roles = { buyer: 'Заказчик', creative: 'Креативщик', lead: 'Руководитель' } as const;
 export const actionLabels = { create: 'Создана задача', claim: 'Взята в работу', submit: 'Сдан результат', revise: 'Запрошены правки', accept: 'Работа принята', assign: 'Назначен исполнитель' } as const;
 export const aiServices = ['Midjourney', 'Runway', 'Kling', 'Adobe Firefly', 'ElevenLabs', 'ChatGPT', 'Другой сервис'] as const;
 export const fileTypes = ['image/png', 'image/jpeg', 'image/webp', 'video/mp4'];

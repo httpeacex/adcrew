@@ -1399,40 +1399,10 @@ body::before { background: none; }
 .quick-phrases button:hover { background: var(--raised); }
 .approved-inspector .inspector-collaboration .product-section-title { background: var(--raised); padding: 7px 8px; border-radius: 8px; margin-bottom: 8px; }
 .approved-inspector .inspector-collaboration .product-panel { border-radius: 13px; background: var(--well); }
-.team-directory { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 24px; align-items: start; }
-.team-toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
-.team-search { display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid var(--rule); background: var(--surface); border-radius: 9px; flex: 1; min-width: 0; }
-.team-search input { border: 0; background: none; min-width: 0; width: 100%; padding: 11px 0; outline-offset: 0; }
-.team-toolbar select { max-width: 180px; }
-.team-total { display: flex; gap: 6px; align-items: center; color: var(--muted); }
-.team-member-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
-.team-member { background: var(--surface); color: var(--text); border: 1px solid var(--rule); border-radius: 18px; padding: 24px 14px 15px; display: flex; flex-direction: column; align-items: center; min-width: 0; cursor: pointer; }
-.team-member:hover, .team-member[aria-pressed=true] { border-color: var(--accent); }
-.team-member > .avatar { width: 62px; height: 62px; border-radius: 50%; font-size: 21px; margin-bottom: 13px; }
-.team-member > strong { font-size: 13px; line-height: 1.5; }
-.member-role { color: var(--muted); font-size: 11px; margin-top: 5px; }
-.team-member dl { display: grid; grid-template-columns: repeat(3,1fr); width: 100%; gap: 5px; margin: 22px 0 14px; }
-.team-member dt { font-size: 10px; color: var(--quiet); }
-.team-member dd { font-size: 14px; font-weight: 600; margin-top: 6px; }
-.member-progress-label { font-size: 10px; color: var(--muted); }
-.member-progress { display: block; width: 100%; height: 3px; background: var(--well); margin-top: 9px; border-radius: 3px; overflow: hidden; }
-.member-progress i { display: block; height: 100%; background: var(--done); }
-.team-detail { border: 1px solid var(--rule); border-radius: 24px; padding: 24px; background: var(--surface); }
-.team-detail header { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
-.team-detail header strong { font-size: 13px; }
-.team-detail header small { display: block; font-size: 11px; color: var(--muted); margin-top: 5px; }
-.team-detail h2 { font-size: 14px; margin-bottom: 18px; font-weight: 600; }
 .team-donut { width: 166px; height: 166px; margin: 18px auto; padding: 7px; border-radius: 50%; background: conic-gradient(var(--done) var(--completion),var(--well) 0); }
 .team-donut > div { background: var(--surface); width: 100%; height: 100%; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
 .team-donut span, .team-donut small { font-size: 10px; color: var(--muted); }
 .team-donut strong { font-size: 31px; font-weight: 600; }
-.team-stat-note { font-size: 11px; line-height: 1.6; color: var(--muted); text-align: center; margin-bottom: 25px; }
-.member-tasks { display: grid; gap: 10px; }
-.member-tasks > a { padding: 12px; border-radius: 12px; background: var(--well); display: grid; gap: 9px; }
-.member-tasks .status-pill { justify-self: start; font-size: 9px; }
-.member-tasks strong { font-size: 12px; }
-.member-tasks small { display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; }
-.team-detail > .button { width: 100%; margin-top: 20px; }
 .analytics-hero { background: var(--well); border: 1px solid var(--rule); padding: 24px; border-radius: 18px; margin-bottom: 20px; }
 .analytics-hero .overview-metrics { margin-top: 20px; gap: 12px; }
 .analytics-hero .overview-metric.metric-tile { background: var(--surface); color: var(--text); border: 1px solid var(--rule); min-height: 100px; border-radius: 12px; }
@@ -1460,16 +1430,15 @@ body::before { background: none; }
 .activity-content header strong { color: var(--text); font-weight: 550; }.activity-content time { font-size: 11px; color: var(--quiet); margin-left: auto; }
 .activity-task { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 15px; margin-top: 10px; }
 .activity-task > span:first-child { flex: 1; min-width: 0; }.activity-task small { display: block; font-size: 10px; color: var(--quiet); margin-bottom: 6px; }.activity-task strong { font-size: 13px; }.activity-task:hover { border-color: var(--rule-strong); }
-@media (max-width: 1250px) { .team-member-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .overview-graphs { grid-template-columns: repeat(2,minmax(0,1fr)); } .overview-graphs > section:last-child { grid-column: 1 / -1; } }
-@media (max-width: 1100px) { .sidebar-theme .theme-selector { flex-direction: column; padding: 2px; } .sidebar-theme .theme-selector button { min-height: 28px; } .sidebar-theme .theme-selector button span { display: none; } .sidebar-theme { width: 100%; } .team-directory { grid-template-columns: minmax(0,1fr) 260px; gap: 16px; } }
-@media (max-width: 800px) { .team-directory { grid-template-columns: 1fr; } .team-detail { display: block; } .overview-graphs { grid-template-columns: 1fr; } .team-toolbar { flex-wrap: wrap; } }
-@media (max-width: 650px) { .activity-task { flex-wrap: wrap; } .notification-center { padding: 10px; } .notification-tabs button { font-size: 11px; padding: 10px 4px; } .team-member-grid { gap: 10px; } .team-member { padding: 18px 9px 12px; } .analytics-hero { padding: 16px; } }
-.member-email { font-size: 10px; color: var(--quiet); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 5px; }
+@media (max-width: 1250px) { .overview-graphs { grid-template-columns: repeat(2,minmax(0,1fr)); } .overview-graphs > section:last-child { grid-column: 1 / -1; } }
+@media (max-width: 1100px) { .sidebar-theme .theme-selector { flex-direction: column; padding: 2px; } .sidebar-theme .theme-selector button { min-height: 28px; } .sidebar-theme .theme-selector button span { display: none; } .sidebar-theme { width: 100%; } }
+@media (max-width: 800px) { .overview-graphs { grid-template-columns: 1fr; } }
+@media (max-width: 650px) { .activity-task { flex-wrap: wrap; } .notification-center { padding: 10px; } .notification-tabs button { font-size: 11px; padding: 10px 4px; } .analytics-hero { padding: 16px; } }
+@media (max-width: 480px) { .analytics-hero .metric-icon { display: none; } }
 .overview-graphs .service-credit-list { display: grid; grid-template-columns: 1fr; gap: 8px; }
 .overview-graphs .service-credit-list li { min-width: 0; display: flex; align-items: center; gap: 8px; }
 .overview-graphs .service-credit-list strong { margin-left: auto; white-space: nowrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.team-toolbar select { min-height: 42px; border: 1px solid var(--rule); border-radius: 9px; padding: 8px 12px; color: var(--text); background: var(--surface); }
 /* Match the approved component proportions. */
 .board-main .kanban { grid-template-columns: repeat(5,minmax(285px,1fr)); overflow-x: auto; align-items: stretch; padding: 3px 3px 14px; scroll-snap-type: x proximity; }
 .board-main .column { scroll-snap-align: start; min-height: calc(100dvh - 220px); padding: 10px; }
@@ -1819,24 +1788,7 @@ body::before { background: none; }
 .analytics-bars { border-bottom: 1px solid var(--rule); }
 .analytics-bars i { background: var(--section-progress); opacity: 1; }
 .analytics-bars strong { color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; }
-.team-directory .team-member { border-radius: 14px; padding-top: 20px; }
-.team-directory .team-member:hover { border-color: var(--rule-strong); }
-.team-directory .team-member[aria-pressed=true] {
-  border-color: var(--section-accent);
-  background: color-mix(in srgb,var(--section-accent) 11%,var(--surface));
-  box-shadow: inset 0 0 0 1px var(--section-accent);
-}
-.team-directory .team-member > strong { font-size: 14px; }
-.team-directory .team-member dl { padding-block: 12px; margin: 14px 0 10px; border-block: 1px solid var(--rule); }
-.team-directory .team-member dd { font-size: 16px; font-variant-numeric: tabular-nums; }
-.team-directory .member-progress { height: 4px; }
-.team-directory .member-progress i { background: var(--section-progress); }
-.workspace-page :is(.team-directory,.overview-graphs) .team-donut { background: conic-gradient(var(--section-progress) var(--completion),var(--well) 0); }
-.team-directory .team-detail { border-radius: 16px; }
-.team-directory .team-detail header { padding-bottom: 14px; margin-bottom: 16px; border-bottom: 1px solid var(--rule); }
-.team-directory .member-tasks > a { border: 1px solid var(--rule); }
-.team-directory .member-tasks > a:hover { border-color: var(--section-accent); }
-@media (max-width: 480px) { .team-directory .team-member dl { gap: 2px; } .analytics-hero .metric-icon { display: none; } }
+.workspace-page .overview-graphs .team-donut { background: conic-gradient(var(--section-progress) var(--completion),var(--well) 0); }
 .approved-inspector .task-collaboration .compact-discussion {
   padding: 0;
   border: 0;

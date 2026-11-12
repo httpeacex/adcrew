@@ -6,16 +6,16 @@ import { statuses } from '@/lib/workflow';
 import styles from './ink-orbit-features.module.css';
 
 const steps = [
-  { id: 'new', role: 'Покупатель', description: 'Покупатель создаёт ТЗ. Он указывает оффер, формат, количество креативов и дедлайн.' },
+  { id: 'new', role: 'Заказчик', description: 'Заказчик создаёт ТЗ. Он указывает оффер, формат, количество креативов и дедлайн.' },
   { id: 'progress', role: 'Креативщик', description: 'Креативщик берёт задачу. В карточке появляются исполнитель и время начала работы.' },
-  { id: 'review', role: 'Креативщик и покупатель', description: 'Креативщик прикрепляет файлы и указывает AI-кредиты за эту версию. Покупатель проверяет результат.' },
-  { id: 'revision', role: 'Покупатель и креативщик', description: 'Покупатель оставляет комментарий к правкам. Креативщик сдаёт новую версию, а предыдущая остаётся в истории.' },
-  { id: 'done', role: 'Покупатель', description: 'Покупатель принимает работу. Задача переходит в «Готово», а время завершения сохраняется в истории.' },
+  { id: 'review', role: 'Креативщик и заказчик', description: 'Креативщик прикрепляет файлы и указывает AI-кредиты за эту версию. Заказчик проверяет результат.' },
+  { id: 'revision', role: 'Заказчик и креативщик', description: 'Заказчик оставляет комментарий к правкам. Креативщик сдаёт новую версию, а предыдущая остаётся в истории.' },
+  { id: 'done', role: 'Заказчик', description: 'Заказчик принимает работу. Задача переходит в «Готово», а время завершения сохраняется в истории.' },
 ] as const;
 
 const materials = [
   { name: 'Техническое задание', icon: ClipboardList, description: 'Оффер, GEO, формат, количество креативов, референсы и дедлайн собраны в карточке.' },
-  { name: 'Версии файлов', icon: Files, description: 'Каждая сдача сохраняется отдельной версией. Покупатель может открыть её файлы и комментарии.' },
+  { name: 'Версии файлов', icon: Files, description: 'Каждая сдача сохраняется отдельной версией. Заказчик может открыть её файлы и комментарии.' },
   { name: 'AI-кредиты', icon: Sparkles, description: 'Креативщик записывает расход по каждому сервису при сдаче. Руководитель видит сводку в разделе AI-расходов.' },
   { name: 'История', icon: History, description: 'В журнале видны автор, время и действие для каждого перехода задачи.' },
 ] as const;
@@ -54,7 +54,7 @@ function Brackets() {
 }
 
 function FlowDiagram({ label, stage }: { label: string; stage: number }) {
-  const roles = [{ label: 'Покупатель', key: 'П' }, { label: 'Креативщик', key: 'К' }, { label: 'Руководитель', key: 'Р' }];
+  const roles = [{ label: 'Заказчик', key: 'З' }, { label: 'Креативщик', key: 'К' }, { label: 'Руководитель', key: 'Р' }];
   return <svg viewBox="0 0 640 168" className={styles.flowDiagram} aria-hidden="true">
     {routes.map((route, index) => <g key={route}>
       <path d={route} className={styles.flowLine} />
@@ -127,7 +127,7 @@ export default function InkOrbitFeatures() {
   const label = statuses.find(({ id }) => id === step.id)!.label;
   const heading = useId();
   return <section className={styles.root} aria-labelledby={heading}>
-    <div className={styles.head}><h2 id={heading}>От задачи до готового креатива</h2><p>Один рабочий процесс для покупателя, креативщика и руководителя.</p></div>
+    <div className={styles.head}><h2 id={heading}>От задачи до готового креатива</h2><p>Один рабочий процесс для заказчика, креативщика и руководителя.</p></div>
     <div className={styles.bento}>
       <section className={`${styles.card} ${styles.flowCard}`} aria-labelledby="guide-stages">
         <Brackets />

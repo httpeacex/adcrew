@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/components/theme';
 
 export const metadata: Metadata = {
   title: { default: 'AdCrew — креативный отдел', template: '%s · AdCrew' },
-  description: 'Рабочее пространство покупателей, креативщиков и руководителя.',
+  description: 'Рабочее пространство заказчиков, креативщиков и руководителя.',
   icons: { icon: '/auth-mark.svg' },
 };
 

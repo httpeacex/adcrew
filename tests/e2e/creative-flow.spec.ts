@@ -26,7 +26,7 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   const creative = await browser.newPage({ baseURL, viewport: { width: 1800, height: 900 } });
   const lead = await browser.newPage({ baseURL });
   const offer = `Тестовый оффер ${Date.now()}`;
-  await login(buyer, 'Покупатель');
+  await login(buyer, 'Заказчик');
   const initialCount = (await buyer.locator('.column-count').allTextContents()).reduce((sum, count) => sum + Number(count), 0);
   const nav = buyer.getByRole('navigation');
   await expect(nav.getByRole('link', { name: 'Доска задач' }).locator('.side-count')).toHaveText(String(initialCount));
@@ -111,7 +111,7 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   await expect(nav.getByRole('link', { name: 'Доска задач' }).locator('.side-count')).toHaveText(String(initialCount + 1));
   await buyer.locator('.profile-menu summary').click();
   await buyer.getByRole('button', { name: /Макс Соколов/ }).click();
-  await expect(buyer.getByLabel('Учётная запись: Макс Соколов, Покупатель')).toBeVisible();
+  await expect(buyer.getByLabel('Учётная запись: Макс Соколов, Заказчик')).toBeVisible();
   await buyer.goto(`/board?task=${task.split('/').at(-1)}`);
   await expect(buyer.getByRole('link', { name: new RegExp(offer) })).toHaveCount(0);
   await expect(buyer.getByRole('complementary', { name: offer })).toHaveCount(0);
@@ -159,7 +159,7 @@ test('theme changes across the board, drawer and analytics and survives reload',
   await expect(page.locator('.drawer-summary > div')).toHaveCount(2);
   await expect(page.locator('.drawer-summary')).toContainText('Исполнитель');
   await page.getByRole('button', { name: 'Детали', exact: true }).click();
-  await expect(page.locator('.drawer-tab-body')).toContainText('Покупатель');
+  await expect(page.locator('.drawer-tab-body')).toContainText('Заказчик');
   await page.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await expect(page.locator('.drawer-hero')).toBeVisible();
   await page.getByRole('button', { name: 'Включить светлую тему' }).click();

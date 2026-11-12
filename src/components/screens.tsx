@@ -95,7 +95,7 @@ export function WorkspaceHistory({ events }: { events: ReturnType<Store['workspa
 
 export function Login({ demo }: { demo: boolean }) {
   const steps = [
-    { title: 'Выберите роль', text: 'Покупатель, креативщик или руководитель — подстроим AdCrew под ваши задачи.', Icon: Users },
+    { title: 'Выберите роль', text: 'Заказчик, креативщик или руководитель — подстроим AdCrew под ваши задачи.', Icon: Users },
     { title: 'Настройте рабочее пространство', text: 'Соберите команду и управляйте задачами креативного отдела.', Icon: Layers3 },
     { title: 'Запустите задачи', text: 'Заказывайте креативы, управляйте работой и получайте результат в одном сервисе.', Icon: Play },
   ];
@@ -170,7 +170,7 @@ export function TaskScreen({ task, events, submissions, person, now, extras }: {
       <div className="detail-aside">
         {extras && <TaskCollaboration person={person} task={task} extras={extras} returnTo={`/tasks/${task.id}`} rounds={submissions.map(item => item.round)} />}
         <section className="panel"><div className="panel-title"><CalendarDays size={19} /><h2>Сроки и команда</h2></div>
-          <dl className="facts"><div><dt>Дедлайн</dt><dd className={isOverdue(task, now) ? 'late' : ''}>{formatDate(task.deadline, true)} {isOverdue(task, now) && <small>Просрочено</small>}</dd></div><div><dt>Покупатель</dt><dd>{task.buyerName}</dd></div><div><dt>Исполнитель</dt><dd>{task.creativeName ?? 'Свободна'}</dd></div>{time && <><div><dt>Полный цикл</dt><dd>{duration(time.cycle)}</dd></div><div><dt>В производстве</dt><dd>{duration(time.production)}</dd></div><div><dt>На проверке</dt><dd>{duration(time.review)}</dd></div></>}</dl>
+          <dl className="facts"><div><dt>Дедлайн</dt><dd className={isOverdue(task, now) ? 'late' : ''}>{formatDate(task.deadline, true)} {isOverdue(task, now) && <small>Просрочено</small>}</dd></div><div><dt>Заказчик</dt><dd>{task.buyerName}</dd></div><div><dt>Исполнитель</dt><dd>{task.creativeName ?? 'Свободна'}</dd></div>{time && <><div><dt>Полный цикл</dt><dd>{duration(time.cycle)}</dd></div><div><dt>В производстве</dt><dd>{duration(time.production)}</dd></div><div><dt>На проверке</dt><dd>{duration(time.review)}</dd></div></>}</dl>
           {actions.some((action) => action !== 'submit') && <div className="task-actions">{actions.filter((action) => action !== 'submit').toReversed().map((action) => <TaskAction task={task.id} version={task.version} action={action} key={action} />)}</div>}
         </section>
         <section className="panel"><div className="panel-title"><History size={19} /><h2>История задачи</h2></div>
