@@ -1934,3 +1934,9 @@ body::before { background: none; }
 .board-main .card-counters .card-format-label { min-width: 0; }
 .card-format-label i { flex-shrink: 0; }
 .card-format-text { overflow: hidden; text-overflow: ellipsis; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .24s; animation-timing-function: ease-in-out; }
+@media (prefers-reduced-motion: no-preference) {
+  .workspace-page .team-member, .workspace-page .member-tasks > a, .side-nav a {
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+  }
+}

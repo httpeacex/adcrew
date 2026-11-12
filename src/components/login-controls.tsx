@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { ArrowRight, Beaker, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, X } from 'lucide-react';
 import { demoProfiles } from '@/lib/demo-profiles';
 import { roles } from '@/lib/workflow';
@@ -29,14 +29,15 @@ export function LoginCredentials() {
 
 export function DemoLogin() {
   const dialog = useRef<HTMLDialogElement>(null);
+  const id = useId();
   return <>
     <button type="button" className={styles.demoTrigger} onClick={() => dialog.current?.showModal()}><Beaker size={16} aria-hidden="true" /> Тестовый вход</button>
-    <dialog className={styles.demoDialog} ref={dialog} aria-labelledby="demo-login-title" aria-describedby="demo-login-description" onClick={(event) => {
+    <dialog className={styles.demoDialog} ref={dialog} aria-labelledby={id + '-title'} aria-describedby={id + '-description'} onClick={(event) => {
       if (event.target === event.currentTarget) dialog.current?.close();
     }}>
       <div className={styles.dialogContent}>
-        <div className={styles.dialogHeader}><h2 id="demo-login-title">Выберите роль</h2><button className={styles.closeDialog} type="button" aria-label="Закрыть тестовый вход" onClick={() => dialog.current?.close()}><X size={20} /></button></div>
-        <p id="demo-login-description">Откройте демо AdCrew сразу, без почты и пароля.</p>
+        <div className={styles.dialogHeader}><h2 id={id + '-title'}>Выберите роль</h2><button className={styles.closeDialog} type="button" aria-label="Закрыть тестовый вход" onClick={() => dialog.current?.close()}><X size={20} /></button></div>
+        <p id={id + '-description'}>Откройте демо AdCrew сразу, без почты и пароля.</p>
         <SessionForm className={styles.demoForm}>{[demoProfiles[0], demoProfiles[2], demoProfiles[4]].map((person) => <button className={`demo-account ${styles.demoAccount}`} type="submit" name="demo" value={person.id} key={person.id}>
           <span className={styles.demoAvatar}>{person.initials}</span><span><strong>{roles[person.role]}</strong><small>{person.name}</small></span><ArrowRight size={18} aria-hidden="true" />
         </button>)}</SessionForm>

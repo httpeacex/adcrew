@@ -1,0 +1,81 @@
+.landing {
+  --landing-bg: #e6e5e8;
+  --landing-paper: #f7f6f4;
+  --landing-text: #151416;
+  --landing-muted: #57545d;
+  --landing-rim: #24212620;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: clamp(12px, 2.6vw, 44px) clamp(12px, 4vw, 64px);
+  color: var(--landing-text);
+  background: var(--landing-bg);
+}
+[data-theme='dark'] .landing {
+  --landing-bg: #111013;
+  --landing-paper: #1b191e;
+  --landing-text: #fbf9fc;
+  --landing-muted: #c0b9c6;
+  --landing-rim: #f5edff20;
+}
+.landing-frame {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 1440px);
+  padding: clamp(18px, 3vw, 44px) clamp(16px, 4vw, 62px) clamp(38px, 4vw, 56px);
+  border: 1px solid var(--landing-rim);
+  border-radius: clamp(16px, 2vw, 28px);
+  background: var(--landing-paper);
+  box-shadow: 0 24px 68px #12101520;
+}
+.landing-nav { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.landing-nav > :last-child { color: var(--landing-text); font-size: 14px; font-weight: 600; }
+.landing-brand { display: flex; gap: 8px; align-items: center; font-size: 23px; font-weight: 760; letter-spacing: -.045em; }
+.landing-brand i { width: 29px; height: 24px; background: #a68cc9; clip-path: polygon(0 100%,37% 0,65% 0,100% 100%,70% 100%,51% 43%,30% 100%); }
+.landing-hero { text-align: center; padding-top: clamp(26px, 3.5vw, 56px); }
+.landing-hero h1 { margin: 0; font-size: clamp(25px,5.75vw,88px); font-weight: 900; line-height: .98; letter-spacing: -.06em; }
+.landing-gallery { position: relative; width: min(100%,1200px); aspect-ratio: 1210 / 350; margin: clamp(16px,3vw,48px) auto 8px; }
+.landing-art {
+  position: absolute;
+  inset: 0;
+  background: url('/reference/landing-gallery.webp') 49.1% 62.8% / 126.942% auto no-repeat;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .landing-art { transition: transform .35s cubic-bezier(.22,1,.36,1), filter .3s ease; }
+  .landing-art:hover { z-index: 1; transform: translateY(-8px); filter: saturate(1.13) brightness(1.04); }
+}
+.landing-hero p { margin: 0 auto 16px; color: var(--landing-muted); font-size: clamp(13px,1.6vw,22px); }
+.landing-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.landing-cta, .landing-actions .landing-demo > button { display: inline-flex; align-items: center; justify-content: center; width: 174px; min-height: 46px; padding: 0 12px; border: 1px solid transparent; border-radius: 999px; font-size: 14px; font-weight: 650; }
+.landing-cta { background: var(--landing-text); color: var(--landing-paper); }
+.landing-cta:hover { opacity: .85; }
+.landing-actions .landing-demo > button { border-color: var(--landing-rim); background: transparent; color: var(--landing-text); }
+.landing-actions .landing-demo > button:hover { background: var(--landing-rim); }
+.landing-theme { position: absolute; bottom: 13px; left: 16px; }
+.landing-theme .theme-toggle { background: transparent; border-color: transparent; color: var(--landing-muted); opacity: .65; }
+.landing-theme .theme-toggle:hover, .landing-theme .theme-toggle:focus-visible { opacity: 1; }
+.landing-login {
+  margin: auto;
+  width: min(440px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0;
+  box-shadow: 0 22px 60px #0005;
+}
+.landing-login::backdrop { background: #14121aa0; }
+.landing-login-content { padding: clamp(17px,4vw,28px); }
+.landing-login header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.landing-login header h2 { margin: 0; }
+.landing-login header button { padding: 6px; }
+.landing-login-content > button { margin-top: 14px; min-height: 44px; border-radius: 10px; }
+@media (prefers-reduced-motion: no-preference) {
+  .landing-hero { animation: landing-in .55s cubic-bezier(.22,1,.36,1) both; }
+  .landing-login[open] { animation: landing-in .3s cubic-bezier(.22,1,.36,1) both; }
+  .landing-login[open]::backdrop { animation: landing-fade .23s ease both; }
+  .landing-cta, .landing-theme .theme-toggle { transition: opacity .2s ease; }
+}
+@keyframes landing-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes landing-fade { from { opacity: 0; } }

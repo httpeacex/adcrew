@@ -1,8 +1,9 @@
+import { Landing } from '@/components/landing';
 import { Studio } from '@/components/studio';
 import { notFound, redirect } from 'next/navigation';
 import { ReferenceBoard } from '@/components/reference-board';
 import { Board } from '@/components/board';
-import { AccountMenu, Analytics, Login, NewTask, Settings, TaskDrawer, TaskScreen, Workspace, WorkspaceHistory } from '@/components/screens';
+import { AccountMenu, Analytics, NewTask, Settings, TaskDrawer, TaskScreen, Workspace, WorkspaceHistory } from '@/components/screens';
 import InkOrbitFeatures from '@/components/ui/ink-orbit-features';
 import { demoMode, getStore, requestSnapshot } from '@/lib/data';
 import { ProductPage } from '@/components/product';
@@ -17,10 +18,10 @@ export default async function Page({ params, searchParams }: Props) {
   if (view === 'reference') return <ReferenceBoard />;
   const demo = demoMode();
   const { now, person } = await requestSnapshot();
-  if (!view) redirect(person ? '/board' : '/login');
+  if (!view) return <Landing demo={demo} signedIn={!!person} />;
   if (view === 'login' && route.length === 1) {
     if (person) redirect('/board');
-    return <Login demo={demo} />;
+    return <Landing demo={demo} />;
   }
   if (!person) redirect('/login');
 

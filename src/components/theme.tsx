@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { Monitor, Moon, Sun } from 'lucide-react';
 export type Theme = 'dark' | 'light';
 type Preference = Theme | 'auto';
@@ -16,7 +17,12 @@ export function ThemeProvider({initialTheme, children}: {initialTheme: Theme; ch
   function choose(value: Preference) {
     setPreference(value);
     try { localStorage.setItem('adcrew-theme', value); } catch { /* Theme still works without storage. */ }
-    apply(value === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : value);
+    const next = value === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : value;
+    if (next !== theme && document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.startViewTransition(() => flushSync(() => apply(next)));
+    } else {
+      apply(next);
+    }
   }
   useEffect(() => {
     let saved: string | null = null;

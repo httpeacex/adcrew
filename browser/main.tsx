@@ -1,9 +1,10 @@
+import { Landing } from '@/components/landing';
 import { Studio } from '@/components/studio';
 import { useEffect, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ReferenceBoard } from '@/components/reference-board';
 import { Board } from '@/components/board';
-import { AccountMenu, Analytics, Login, NewTask, Settings, TaskDrawer, TaskScreen, Workspace, WorkspaceHistory } from '@/components/screens';
+import { AccountMenu, Analytics, NewTask, Settings, TaskDrawer, TaskScreen, Workspace, WorkspaceHistory } from '@/components/screens';
 import InkOrbitFeatures from '@/components/ui/ink-orbit-features';
 import { ThemeProvider, type Theme } from '@/components/theme';
 import { setBrowserRuntime } from '@/lib/client-runtime';
@@ -30,10 +31,10 @@ function App() {
     changes.addEventListener('message', changed);
     return () => { window.removeEventListener('hashchange', update); changes.removeEventListener('message', changed); };
   }, []);
-  const route = new URL(snapshot.hash.slice(1) || '/board', 'https://adcrew.local');
+  const route = new URL(snapshot.hash.slice(1) || '/', 'https://adcrew.local');
   if (route.pathname === '/reference') return <ReferenceBoard />;
   const person = currentProfile();
-  if (!person) return <Login key="login" demo />;
+  if (!person || route.pathname === '/') return <Landing demo signedIn={!!person} />;
   const store = getStore();
   const path = route.pathname.split('/').filter(Boolean);
   const view = path[0] === 'login' ? 'board' : path[0];
@@ -105,7 +106,6 @@ document.addEventListener('click', event => {
 });
 
 initializeStore().then(() => {
-  if (!location.hash.startsWith('#/')) history.replaceState(null, '', `${location.pathname}${location.search}#/board`);
   createRoot(document.getElementById('root')!).render(<ThemeProvider initialTheme={initialTheme}><App /></ThemeProvider>);
 }).catch(() => {
   const root = document.getElementById('root')!;
