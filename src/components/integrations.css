@@ -1,7 +1,7 @@
 .integration-catalog { container-type: inline-size; min-width: 0; }
 .integration-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
 .integration-categories { display: flex; flex-wrap: wrap; gap: 3px; padding: 4px; border: 1px solid var(--rule); border-radius: 9px; background: var(--well); }
-.integration-categories button { min-height: 34px; padding: 5px 11px; border: 1px solid transparent; border-radius: 6px; color: var(--muted); font-size: 12px; }
+.integration-categories button { min-height: 34px; padding: 5px 11px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--muted); font-size: 12px; }
 .integration-categories button:hover { color: var(--text); }
 .integration-categories button[aria-pressed='true'] { color: var(--text); background: var(--rail); border-color: var(--rule); font-weight: 650; }
 .integration-search { display: flex; align-items: center; gap: 8px; flex: 0 1 245px; min-width: 0; padding: 0 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--rail); color: var(--muted); }
@@ -18,9 +18,10 @@
 .integration-card-heading h2, .integration-dialog h2 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
 .integration-card-heading div > span { color: var(--muted); font-size: 12px; }
 .integration-card-body p, .integration-dialog p { margin: 14px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
-.integration-logo { flex: 0 0 47px; height: 47px; border-radius: 10px; background: #161616 url('/reference/integration-logos.png') 50% 50% / 560% auto no-repeat; }
-.integration-logo.telegram { background-position-x: 9.4%; }
-.integration-logo.slack { background-position-x: 90.6%; }
+.integration-logo { flex: 0 0 47px; height: 47px; background: center / contain no-repeat; }
+.integration-logo.telegram { background-image: url('/reference/integration-telegram.webp'); }
+.integration-logo.drive { background-image: url('/reference/integration-drive.webp'); }
+.integration-logo.slack { background-image: url('/reference/integration-slack.webp'); }
 .integration-node footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--rule); }
 .integration-node footer .button { min-height: 31px; padding: 4px 9px; font-size: 12px; gap: 5px; }
 .integration-status { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap; }
