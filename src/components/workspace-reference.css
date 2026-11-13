@@ -249,3 +249,18 @@
 .operations-trend svg { min-height:160px; }
 @media(max-width:760px) { .operations-trend svg text { font-size:19px; } }
 @media(max-width:760px) { .operations-page .report-range input { font-size:12px; padding:9px 8px; }.operations-kpis > :last-child:nth-child(odd) { grid-column:1/-1; } }
+.reference-workspace .calendar-scroll { overflow:visible; }
+.reference-workspace .calendar-grid { min-width:0; width:100%; grid-template-columns:repeat(7,minmax(0,1fr)); }
+.reference-workspace .calendar-day { min-width:0; overflow-wrap:anywhere; }
+.reference-workspace .calendar-day > a { max-width:100%; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+@media(max-width:1100px) {
+ .reference-workspace .production-list { overflow:visible; }
+ .reference-workspace .production-list table,.reference-workspace .production-list tbody { display:block; min-width:0; width:100%; }
+ .reference-workspace .production-list thead { display:none; }
+ .reference-workspace .production-list tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid var(--rule); border-radius:18px; margin-bottom:12px; padding:14px; background:var(--surface); }
+ .reference-workspace .production-list td { display:block; min-width:0; width:auto; padding:8px; border:0; font-size:12px; overflow-wrap:anywhere; white-space:normal; }
+ .reference-workspace .production-list td:first-child { grid-column:1/-1; }
+ .reference-workspace .production-list td::before { display:block; font-size:10px; color:var(--quiet); margin-bottom:5px; }
+ .reference-workspace .production-list td:nth-child(2)::before { content:'Статус'; }.reference-workspace .production-list td:nth-child(3)::before { content:'Формат / GEO'; }.reference-workspace .production-list td:nth-child(4)::before { content:'Исполнитель'; }.reference-workspace .production-list td:nth-child(5)::before { content:'Дедлайн'; }
+}
+@media(max-width:760px) { .reference-workspace .calendar-grid { gap:2px; }.reference-workspace .calendar-grid > strong { font-size:9px; }.reference-workspace .calendar-day { min-height:70px; padding:5px 2px; font-size:10px; }.reference-workspace .calendar-day > a { font-size:8px; padding:4px 2px; }.reference-workspace .production-calendar header { flex-wrap:wrap; gap:12px; }.reference-workspace .production-calendar header h2 { font-size:16px; } }

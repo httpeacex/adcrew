@@ -37,4 +37,11 @@ test('board wraps columns without horizontal scrolling at phone tablet and deskt
  }
  await expect(page.locator('.board-local-search, .task-card .card-cover')).toHaveCount(0);
  await expect(page.locator('.ref-card-identity .generated-avatar').first()).toBeVisible();
+ await page.goto('./#/board?task=none');await page.setViewportSize({width:390,height:844});
+ for(const name of ['Список','Календарь','Загрузка','Архив']) {
+  await page.getByRole('button',{name,exact:true}).click();
+  const scrollbars=await page.locator('.board-main').evaluate(root=>[...root.querySelectorAll('*')].filter(e=>e.scrollWidth>e.clientWidth+3&&['auto','scroll'].includes(getComputedStyle(e).overflowX)).map(e=>e.className));
+  expect(scrollbars).toEqual([]);
+ }
+
 });
