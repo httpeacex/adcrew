@@ -96,7 +96,7 @@
 .reference-dashboard .reference-grid { grid-template-columns:5fr 3.5fr 3.5fr; }
 .reference-dashboard .button { font-weight:500; }
 .reference-stats.five-stats { grid-template-columns:repeat(5,minmax(0,1fr)); }
-.dashboard-role-grid { grid-template-rows:auto auto; }
+.dashboard-role-grid { grid-template-rows:none; align-items:start; }
 .dashboard-main-list { grid-column:span 2; }
 .dashboard-queue { grid-column:span 1; }
 .dashboard-attention .reference-task-row strong { white-space:normal; line-height:1.5; }
@@ -286,7 +286,6 @@
 .list-status.review::before { background:var(--review); }
 .list-status.done::before { background:var(--done); }
 
-.dashboard-role-grid { align-items:start; }
 .dashboard-task-list { max-height:none; overflow:visible; }
 .dashboard-task {
   display:grid;
@@ -402,3 +401,10 @@
   .expense-summary-table .expense-amount { width:31%; }
   .expense-summary-table .expense-unknown { width:27%; }
 }
+
+.dashboard-crew-panel { align-self:start; }
+.dashboard-crew-panel > header { margin-bottom:8px; }
+.dashboard-workload > div { padding:8px 0; }
+.dashboard-workload > div + div { border-top:1px solid var(--rule); }
+.dashboard-workload > div > :not(:first-child) { text-align:center; }
+.dashboard-workload > div:last-child { padding-bottom:0; }
