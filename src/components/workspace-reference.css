@@ -343,8 +343,21 @@
 @media(max-width:1300px) {
   .dashboard-task-creative .dashboard-task-action:empty { display:none; }
 }
-.dashboard-queue .dashboard-task { grid-template-columns:minmax(0,1fr) minmax(0,.8fr); }
-.dashboard-queue .dashboard-task > a:first-child { grid-column:1/-1; }
+.dashboard-queue-row {
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  min-height:40px;
+  padding:7px 0;
+  border-bottom:1px solid var(--rule);
+}
+.dashboard-queue-row:last-child { border-bottom:0; }
+.dashboard-queue-row > span { display:grid; gap:2px; overflow-wrap:anywhere; }
+.dashboard-queue-row strong { font-size:12px; font-weight:550; }
+.dashboard-queue-row small { color:var(--muted); font-size:10px; }
+.dashboard-queue-row > svg { color:var(--muted); }
+.dashboard-queue-row:hover strong { text-decoration:underline; }
 .dashboard-more, .dashboard-budget > a {
   display:flex;
   align-items:center;
@@ -393,7 +406,7 @@
   .dashboard-task-creative > a:first-child { grid-column:1/-1; }
 }
 @media(max-width:760px) {
-  .dashboard-task, .dashboard-queue .dashboard-task { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px 10px; }
+  .dashboard-task { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px 10px; }
   .dashboard-task > a:first-child { grid-column:1/-1; }
   .dashboard-task .list-status { justify-self:end; }
   .dashboard-task-creative .button { justify-self:start; }
@@ -620,8 +633,22 @@ body:has(.library-task-dialog[open]) { overflow:hidden; }
 .dashboard-role-grid > .dashboard-main-list { grid-column:span 4; }
 .dashboard-role-grid > :is(.dashboard-attention,.dashboard-queue,.reference-bars,.reference-completion) { grid-column:span 2; }
 .dashboard-role-grid > .dashboard-crew-panel { align-self:stretch; }
-.reference-dashboard:not([data-role='lead']) .dashboard-role-grid { align-items:start; }
-.dashboard-attention .reference-task-row { padding:9px 0; border-bottom:1px solid var(--rule); }
+.dashboard-role-grid > :is(.reference-bars,.reference-completion) { display:flex; flex-direction:column; }
+.dashboard-role-grid .reference-bar-chart { flex:1; min-height:145px; max-height:210px; margin:auto 0; }
+.dashboard-role-grid .reference-gauge { margin:auto; padding-top:14px; }
+.dashboard-role-grid .reference-legend { justify-content:center; flex-wrap:wrap; gap:8px 16px; margin-top:10px; }
+.dashboard-role-grid .reference-legend span:nth-child(2)::before { background:#b6aed8; }
+.dashboard-attention .reference-task-row { margin:0; padding:10px 0; border-bottom:1px solid var(--rule); }
+.dashboard-attention .dashboard-hint {
+  width:fit-content;
+  margin-bottom:6px;
+  padding:3px 8px;
+  border-radius:7px;
+  background:color-mix(in srgb,var(--accent) 8%,var(--surface));
+  color:var(--text);
+  font-size:11px;
+  font-weight:550;
+}
 .dashboard-attention .reference-task-row:last-child { border-bottom:0; padding-bottom:0; }
 @media(max-width:1100px) {
   .reference-dashboard .dashboard-role-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }

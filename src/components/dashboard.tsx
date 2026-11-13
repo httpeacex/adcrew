@@ -8,7 +8,7 @@ import { LiveTaskTime } from './live-clock';
 
 const dollars = (amount: number) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'USD' }).format(amount);
 
-function TaskRows({ tasks, creative = false, now, moreHref, empty = 'Задач пока нет.' }: { tasks: Task[]; creative?: boolean; now: number; moreHref: string; empty?: string }) {
+function TaskRows({ tasks, creative, now, moreHref }: { tasks: Task[]; creative: boolean; now: number; moreHref: string }) {
   return <div className="dashboard-task-list">{tasks.length ? tasks.slice(0,5).map(t => <div className={`dashboard-task${creative ? ' dashboard-task-creative' : ''}`} key={t.id}>
     <Link href={`/board?task=${t.id}`}><small>КР-{String(t.id).padStart(3,'0')}</small><strong>{t.offer}</strong></Link>
     <span className="dashboard-task-person">
@@ -16,7 +16,20 @@ function TaskRows({ tasks, creative = false, now, moreHref, empty = 'Задач 
       <span>{creative ? t.buyerName : t.creativeName || 'Без исполнителя'}</span>
     </span>
     {creative ? <><span className="dashboard-task-deadline">{formatDate(t.deadline,true)}<small>{priorities[t.priority]}</small></span><span className="dashboard-task-time">{t.claimedAt ? <><LiveTaskTime task={t} kind="production" sample={now} fallback={Math.max(0, (t.completedAt ?? now) - t.claimedAt)} /><small>В работе</small></> : 'Ещё не начата'}</span><span className="dashboard-task-action">{(t.status === 'progress' || t.status === 'revision') && <Link className="button secondary" href={`/board?task=${t.id}`}>Сдать</Link>}</span></> : <span className={`list-status ${t.status}`}>{statuses.find(s=>s.id===t.status)?.label}</span>}
-  </div>) : <p className="dashboard-empty">{empty}</p>}{tasks.length > 5 && <Link className="dashboard-more" href={moreHref}>Смотреть все задачи ({tasks.length}) <ArrowUpRight size={14}/></Link>}</div>;
+  </div>) : <p className="dashboard-empty">Задач пока нет.</p>}{tasks.length > 5 && <Link className="dashboard-more" href={moreHref}>Смотреть все задачи ({tasks.length}) <ArrowUpRight size={14}/></Link>}</div>;
+}
+
+function QueueRows({ tasks, free }: { tasks: Task[]; free: boolean }) {
+  const status = free ? 'free' : 'review';
+  return <div className="dashboard-queue-list">
+    {tasks.slice(0, 5).map(task => <Link className="dashboard-queue-row" key={task.id} href={`/board?task=${task.id}`}>
+      <small>КР-{String(task.id).padStart(3, '0')}</small>
+      <span><strong>{task.offer}</strong>{!free && <small>{task.creativeName ?? 'Без исполнителя'}</small>}</span>
+      <ArrowUpRight size={14} aria-hidden="true" />
+    </Link>)}
+    {!tasks.length && <p className="dashboard-empty">{free ? 'Свободных задач пока нет.' : 'Все результаты проверены.'}</p>}
+    {tasks.length > 5 && <Link className="dashboard-more" href={`/board?task=none&status=${status}`}>Смотреть все задачи ({tasks.length}) <ArrowUpRight size={14} /></Link>}
+  </div>;
 }
 
 export function Dashboard({ tasks, person, now, finance }: { tasks: Task[]; person: Profile; now: number; finance: ReturnType<ProductStore['productSnapshot']>['finance'] }) {
@@ -49,7 +62,7 @@ export function Dashboard({ tasks, person, now, finance }: { tasks: Task[]; pers
         {finance.monthly.unknown > 0 && <p>Часть расходов без оценки в USD.</p>}
         {finance.monthly.overBudget && <p className="late" role="status">Бюджет превышен на {dollars(finance.monthly.excess)}.</p>}
         <Link href="/settings">Настроить бюджет <ArrowUpRight size={14}/></Link>
-      </div> : <TaskRows now={now} tasks={creative?data.free:data.review} moreHref={creative ? '/board?task=none&status=free' : '/board?task=none&status=review'} empty={creative?'Свободных задач пока нет.':'Все результаты проверены.'}/>}</section>
+      </div> : <QueueRows tasks={creative?data.free:data.review} free={creative}/>}</section>
       <section className="reference-panel reference-bars"><h2>Выполнено за 7 дней</h2><div className="reference-bar-chart" role="img" aria-label={days.map((d,i)=>`${formatDate(d)}: ${values[i]}`).join(', ')}>{days.map((day,i)=><div className="reference-bar-column" key={day}><div className="reference-bar-track"><div style={{height:`${values[i]?25+values[i]/max*65:0}%`}}>{values[i]>0&&<span className="bar-ring"/>}</div></div><small>{new Intl.DateTimeFormat('ru',{weekday:'short',timeZone:'Asia/Yekaterinburg'}).format(day)}</small><small>{values[i]}</small></div>)}</div></section>
       <section className="reference-panel reference-completion"><h2>Прогресс задач</h2><div className="reference-gauge"><svg viewBox="0 0 220 120" aria-hidden="true"><path d="M20 105 A90 90 0 0 1 200 105" className="gauge-track"/>{percent > 0 && <path d="M20 105 A90 90 0 0 1 200 105" className="gauge-value" pathLength="100" strokeDasharray={`${percent} 100`}/>}</svg><div><strong>{percent}%</strong><small>Принято</small></div></div><div className="reference-legend"><span>Завершены</span><span>Активны</span></div></section>
     </div>

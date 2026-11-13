@@ -137,6 +137,8 @@ test('library includes submitted versions and creatives can read every buyer whi
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   const panel = dialog.locator('.task-drawer');
+  await expect(panel.locator('.drawer-scroll')).toHaveCSS('scrollbar-width', 'thin');
+  await expect(panel.locator('.drawer-scroll')).toHaveCSS('scrollbar-color', /rgba\(0, 0, 0, 0\)/);
   await expect(panel).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Сдать результат', exact: true })).toHaveCount(0);
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();

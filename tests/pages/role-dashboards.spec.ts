@@ -1,4 +1,21 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function expectAlignedDashboardPanels(page: Page) {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  const rows = await page.locator('.dashboard-role-grid').evaluate(grid => {
+    const bounds = (selector: string) => {
+      const panel = grid.querySelector(selector)!.getBoundingClientRect();
+      return [panel.top, panel.bottom];
+    };
+    return [
+      ['.dashboard-main-list', '.dashboard-attention'].map(bounds),
+      ['.dashboard-queue', '.reference-bars', '.reference-completion'].map(bounds),
+    ];
+  });
+  for (const row of rows) {
+    for (const panel of row) expect(panel).toEqual(row[0]);
+  }
+}
 test('buyer sees adapted navigation, own dashboard, five board columns and accepted library',async({page})=>{
  await page.emulateMedia({reducedMotion:'reduce'});
  await page.goto('./');
@@ -7,6 +24,7 @@ test('buyer sees adapted navigation, own dashboard, five board columns and accep
  await page.waitForURL('**/#/board');
  await page.goto('./#/dashboard');
  await expect(page.locator('.reference-dashboard')).toHaveAttribute('data-role','buyer');
+ await expectAlignedDashboardPanels(page);
  await page.screenshot({path:'test-results/adcrew-buyer-dashboard.png',fullPage:true});
  await expect(page.getByRole('heading',{name:'Ждут вашей проверки',exact:true})).toBeVisible();
  await expect(page.locator('.side-nav > .side-group > a, .side-nav > .side-group > .side-unavailable')).toHaveCount(6);
@@ -41,6 +59,7 @@ for (const [role,label] of [['creative','Креативщик'],['lead','Рук�
   await expect(page.locator('.reference-stat')).toHaveCount(role==='creative'?5:4);
   await expect(page.getByRole('heading',{name:role==='creative'?'Свободные задачи':'Загрузка креативщиков',exact:true})).toBeVisible();
   if(role==='lead') await expect(page.locator('.dashboard-spend-row section')).toHaveCount(3);
+  if(role==='creative') await expectAlignedDashboardPanels(page);
   await page.screenshot({path:`test-results/adcrew-${role}-dashboard.png`,fullPage:true});
   await page.setViewportSize({width:390,height:844});
   await expect(page.locator('.workspace-body > .reference-topbar .profile-menu summary')).toBeVisible();
