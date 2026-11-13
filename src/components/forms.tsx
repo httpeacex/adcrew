@@ -85,7 +85,7 @@ export function BriefForm({ initial }: { initial?: Brief } = {}) {
       <label className="field span-two">Оффер<input name="offer" defaultValue={initial?.offer} required minLength={2} maxLength={120} placeholder="Например, Neon Dash" aria-invalid={issue?.field === 'offer'} /><ErrorText issue={issue} name="offer" /></label>
       <label className="field">GEO<input name="geo" defaultValue={initial?.geo} required minLength={2} maxLength={40} placeholder="Например, DE" aria-invalid={issue?.field === 'geo'} /><ErrorText issue={issue} name="geo" /></label>
       <label className="field">Тип креатива<select name="format" defaultValue={initial?.format ?? 'image'}>{Object.entries(formats).map(([id, text]) => <option key={id} value={id}>{text}</option>)}</select><ErrorText issue={issue} name="format" /></label>
-      <label className="field">Количество<input name="quantity" type="number" required min="1" max="999" defaultValue={initial?.quantity ?? 1} aria-invalid={issue?.field === 'quantity'} /><ErrorText issue={issue} name="quantity" /></label>
+      <input name="quantity" type="hidden" value="1" /><p className="field">Одна задача — один самостоятельный креатив.</p>
       <label className="field">Приоритет<select name="priority" defaultValue={initial?.priority ?? 'normal'}>{Object.entries(priorities).map(([id, text]) => <option key={id} value={id}>{text}</option>)}</select><ErrorText issue={issue} name="priority" /></label>
       <label className="field span-two">Дедлайн <small>Часовой пояс команды · {zoneLabel}</small><input name="deadline" type="datetime-local" required aria-invalid={issue?.field === 'deadline'} /><ErrorText issue={issue} name="deadline" /></label>
       <label className="field span-two">Описание<textarea name="description" defaultValue={initial?.description} required minLength={5} maxLength={6000} rows={5} placeholder="Что нужно сделать, какие требования к креативам и как проверить результат" aria-invalid={issue?.field === 'description'} /><ErrorText issue={issue} name="description" /></label>
@@ -95,25 +95,25 @@ export function BriefForm({ initial }: { initial?: Brief } = {}) {
   </fieldset>}</RequestForm>;
 }
 
-const buttonText = { claim: 'Взять в работу', submit: 'Сдать результат', revise: 'Отправить на правки', accept: 'Принять работу' } as const;
+const buttonText = { claim: 'Взять в работу', submit: 'Сдать результат', revise: 'Отправить на правки', accept: 'Принять работу', release: 'Отказаться от задачи', delete: 'Удалить задачу' } as const;
 
-export function TaskAction({ task, version, action, returnTo, compact = false, acceptRound }: { task: number; version: number; action: Action; returnTo?: string; compact?: boolean; acceptRound?: number }) {
+export function TaskAction({ task, version, action, returnTo, compact = false, acceptRound, tariffs = [] }: { task: number; version: number; action: Action; returnTo?: string; compact?: boolean; acceptRound?: number; tariffs?: { service: string; kind: 'credits' | 'subscription' }[] }) {
   const [noAi, setNoAi] = useState(false);
   const [fileCount, setFileCount] = useState(0);
   const [review, setReview] = useState(false);
   if (action === 'revise' && !review) return <button type="button" className={`button secondary${compact ? ' review-revise' : ''}`} onClick={() => setReview(true)}>{compact && <RotateCcw size={15} aria-hidden="true" />}{compact ? 'На правки' : 'Запросить правки'}</button>;
   const compactAccept = compact && action === 'accept';
-  return <RequestForm url={`/api/tasks/${task}/${action}`} returnTo={returnTo} className={action === 'submit' ? 'submission-form' : 'action-form'} progress={action === 'submit'}>{({ busy }) => <fieldset disabled={busy}>
+  return <RequestForm url={`/api/tasks/${task}/${action}`} returnTo={action === 'release' || action === 'delete' ? '/board' : returnTo} className={action === 'submit' ? 'submission-form' : 'action-form'} progress={action === 'submit'}>{({ busy }) => <fieldset disabled={busy}>
     <input type="hidden" name="version" value={version} />
     {action === 'submit' && <>
       <label className="file-drop"><UploadCloud size={22} /><strong>{fileCount ? `Выбрано файлов: ${fileCount}` : 'Прикрепить файлы'}</strong><small>PNG, JPEG, WebP или MP4 · до 5 файлов по 25 МБ</small><input type="file" name="files" multiple required accept={fileTypes.join(',')} onChange={(event) => setFileCount(event.target.files?.length ?? 0)} /></label>
-      <div className="expense-head"><h3>Расход AI-кредитов</h3><label className="check"><input type="checkbox" name="noAi" checked={noAi} onChange={(event) => setNoAi(event.target.checked)} /> Без AI</label></div>
-      {!noAi && <div className="credit-fields">{aiServices.map((service) => <label className="field" key={service}>{service}<input name={`credit:${service}`} inputMode="decimal" placeholder="—" maxLength={12} /></label>)}</div>}
+      <div className="expense-head"><h3>Расход AI-сервисов</h3><label className="check"><input type="checkbox" name="noAi" checked={noAi} onChange={(event) => setNoAi(event.target.checked)} /> Без AI</label></div>
+      {!noAi && <div className="credit-fields">{aiServices.map((service) => tariffs.find(tariff => tariff.service === service)?.kind === 'subscription' ? <label className="check" key={service}><input type="checkbox" name={`subscription:${service}`} />{service} · подписка без кредитов</label> : <label className="field" key={service}>{service}<input name={`credit:${service}`} inputMode="decimal" placeholder="—" maxLength={12} /></label>)}</div>}
     </>}
     {action === 'revise' && <label className="field">Что нужно поправить<textarea name="note" autoFocus required maxLength={3000} rows={4} placeholder="Опишите правки к последней версии" /></label>}
     <div className="form-buttons">
       {action === 'revise' && <button type="button" className="button secondary" onClick={() => setReview(false)}>Отмена</button>}
-      <button className={`button ${action === 'revise' ? 'secondary' : 'primary'}${compactAccept ? ' review-accept' : ''}`} type="submit">
+      <button className={`button ${action === 'revise' || action === 'release' || action === 'delete' ? 'secondary' : 'primary'}${compactAccept ? ' review-accept' : ''}`} type="submit">
         {compactAccept ? <>{busy ? <LoaderCircle className="spin" size={16} /> : <Check size={16} aria-hidden="true" />}Принять{acceptRound ? ` v${acceptRound}` : ''}</> : <>{buttonText[action]} {busy ? <LoaderCircle className="spin" size={16} /> : <ArrowRight size={16} />}</>}
       </button>
     </div>

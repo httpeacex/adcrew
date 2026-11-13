@@ -10,6 +10,6 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const theme = (await cookies()).get('kadr_theme')?.value === 'light' ? 'light' : 'dark';
+  const theme = (await cookies()).get('kadr_theme')?.value === 'dark' ? 'dark' : 'light';
   return <html lang="ru" data-theme={theme}><body><ThemeProvider initialTheme={theme}>{children}</ThemeProvider></body></html>;
 }

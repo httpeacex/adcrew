@@ -38,12 +38,12 @@ function seed(store: Store) {
     for (const person of demoProfiles) store.addProfile(person, password);
     const png = readFileSync(resolve('fixtures/creative.png'));
     const mp4 = readFileSync(resolve('fixtures/creative.mp4'));
-    examples.forEach(([offer, geo, format, quantity, priority, status, buyerId, creativeId, due], index) => {
+    examples.forEach(([offer, geo, format, , priority, status, buyerId, creativeId, due], index) => {
       const buyer = demoProfiles[buyerId - 1];
       const creative = demoProfiles[creativeId - 1];
       const created = now - (38 + index * 5) * hour;
-      const task = store.create(buyer, { offer, geo, format, quantity, priority, deadline: now + due * hour,
-        description: `Подготовить ${quantity} креатива для оффера ${offer} на рынке ${geo}. Основной акцент — показать продукт в первом кадре. Сделать варианты с разным первым экраном и единым призывом к действию.`,
+      const task = store.create(buyer, { offer, geo, format, quantity:1, priority, deadline: now + due * hour,
+        description: `Подготовить один креатив для оффера ${offer} на рынке ${geo}. Основной акцент — показать продукт в первом кадре. Подготовить один самостоятельный результат с единым призывом к действию.`,
         references: [],
       } satisfies Brief, `demo-${index}-0`, created);
       if (status === 'new') return;

@@ -12,7 +12,15 @@ test('Pages keeps a two-round task, files and credits after reloading and switch
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
-  await page.getByRole('button', { name: /Заказчик/ }).click();
+  await page.getByRole('button', { name: /Руководитель/ }).click();
+  await page.getByRole('link', { name: 'Настройки', exact: true }).click();
+  const tariff = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Тарифы AI в USD', exact: true }) });
+  await tariff.getByRole('combobox', { name: 'Сервис', exact: true }).selectOption('ChatGPT');
+  await tariff.getByLabel('Стоимость тарифа, USD').fill('20');
+  await tariff.getByLabel('Кредитов в тарифе').fill('100');
+  await tariff.getByRole('button', { name: 'Сохранить тариф', exact: true }).click();
+  await expect(tariff.getByRole('button', { name: 'Сохранить тариф', exact: true })).toBeEnabled();
+  await role(page, 'Анна Волкова');
   await page.getByRole('link', { name: 'Создать задачу', exact: true }).click();
   const offer = `Pages ${Date.now()}`;
   await page.getByLabel('Оффер', { exact: true }).fill(offer);
@@ -53,10 +61,13 @@ test('Pages keeps a two-round task, files and credits after reloading and switch
   await inspector.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await inspector.getByLabel('Версия результата').selectOption({ label: 'Версия 1' });
   await expect(inspector.getByRole('button', { name: /^Принять v/ })).toHaveCount(0);
-  await expect(inspector.getByRole('heading', { name: 'Обсуждение версии 1', exact: true })).toBeVisible();
+  await expect(inspector.locator('.inspector-usage')).toHaveText('ChatGPT — 12 кр.');
+  await expect(inspector.locator('.revision-note')).toContainText('Поднять контраст заголовка.');
+  await expect(inspector.getByRole('textbox', { name: 'Комментарий', exact: true })).toHaveCount(0);
   await inspector.getByRole('button', { name: 'К текущей версии', exact: true }).click();
   await expect(inspector.getByRole('button', { name: 'Принять v2', exact: true })).toBeVisible();
-  await expect(inspector.getByRole('heading', { name: 'Обсуждение версии 2', exact: true })).toBeVisible();
+  await expect(inspector.locator('.inspector-usage')).toHaveText('ChatGPT — 3,5 кр.');
+  await expect(inspector.locator('.revision-note')).toHaveCount(0);
   await page.goto(task);
   await page.getByRole('button', { name: 'Принять работу', exact: true }).click();
   await expect(page.locator('.detail-title .status-pill')).toHaveText('Готово');
@@ -68,10 +79,15 @@ test('Pages keeps a two-round task, files and credits after reloading and switch
   expect((await download).suggestedFilename()).toBe('creative.mp4');
   await role(page, 'Саша Миронов');
   await page.getByRole('link', { name: 'Аналитика', exact: true }).click();
-  await expect(page.getByRole('row', { name: 'ChatGPT Лера Ким 15,5' })).toBeVisible();
+  await page.getByRole('link', { name: 'AI-сервисы', exact: true }).click();
+  const history = page.locator('section').filter({ has: page.getByRole('heading', { name: 'История расходов по версиям', exact: true }) });
+  await expect(history.getByRole('row').filter({ hasText: `#${taskId} · v1` })).toContainText('2,40');
+  await expect(history.getByRole('row').filter({ hasText: `#${taskId} · v2` })).toContainText('0,70');
+  const employees = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Расходы по исполнителям', exact: true }) });
+  await expect(employees.getByRole('row').filter({ hasText: 'Лера Ким' })).toContainText('3,10');
   await page.getByLabel('Начало периода').fill('2020-01-01');
   await page.getByRole('button', { name: 'Показать', exact: true }).click();
-  await expect(page).toHaveURL(/#\/analytics\?from=2020-01-01/);
+  await expect(page).toHaveURL(/#\/analytics\?tab=ai&from=2020-01-01/);
   await page.getByRole('button', { name: 'Включить светлую тему' }).click();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
@@ -97,13 +113,23 @@ test('Pages routes, covers and the mobile dialog fit the published project path'
   await expect.poll(() => page.locator('[inert]').count()).toBe(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.setViewportSize({ width: 1800, height: 1000 });
-  for (const name of ['Аналитика', 'Команда', 'AI-расходы', 'История действий', 'Настройки', 'Доска задач']) {
-    await page.getByRole('navigation').getByRole('link', { name, exact: true }).click();
+  for (const name of ['Дашборд', 'Библиотека', 'Аналитика', 'Настройки']) {
+    await page.getByRole('navigation', { name: 'Рабочее пространство' }).getByRole('link', { name, exact: true }).click();
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
   }
-  await expect(page.locator('.card-description').first()).toBeVisible();
-  await page.locator('.sidebar-account summary').click();
-  await page.locator('.sidebar-account').getByRole('link', { name: 'Как это работает', exact: true }).click();
+  for (const name of ['Команда', 'Тарифы и бюджет', 'История действий']) {
+    await page.getByRole('navigation', { name: 'Рабочее пространство' }).getByRole('link', { name: 'Настройки', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Инструменты рабочего пространства' }).getByRole('link', { name, exact: true }).click();
+    if (name === 'Тарифы и бюджет') await expect(page.getByRole('heading', { name: 'Действующие тарифы', exact: true })).toBeVisible();
+    else await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  }
+  await page.getByRole('navigation', { name: 'Рабочее пространство' }).getByRole('link', { name: 'Доска задач', exact: true }).click();
+  const cover = page.locator('.card-cover img').first();
+  await expect(cover).toHaveAttribute('src', /.+/);
+  expect(await cover.evaluate(async image => (await fetch((image as HTMLImageElement).src)).ok)).toBe(true);
+  await expect(page.locator('.card-assignees').first()).toBeVisible();
+  await page.locator('.profile-menu summary').click();
+  await page.locator('.profile-popup').getByRole('link', { name: 'Как это работает', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Как это работает', exact: true })).toBeVisible();
   expect(failed).toEqual([]);
 });

@@ -100,6 +100,12 @@ export async function POST(request: Request, { params }: Context) {
 
     const person = await currentProfile();
     if (!person) throw new InputError('Сессия завершилась. Войдите снова.', 401);
+    if (collection === 'users' && route.length === 2 && ['edit','deactivate'].includes(key)) {
+      const form=await formBody(request,smallRequest),store=getStore(),id=Number(field(form,'id'));
+      if(key==='edit')store.editProfile(person,id,{name:field(form,'name'),email:field(form,'email'),role:field(form,'role') as typeof person.role,password:field(form,'password')||undefined});
+      else store.deactivateProfile(person,id);
+      return NextResponse.json({path:'/settings'});
+    }
     if (collection === 'product' && route.length === 2) {
       const form = await formBody(request, smallRequest);
       const result = getStore().productCommand(person, `/api/product/${key}`, Object.fromEntries([...form].map(([name, value]) => [name, String(value)])));
@@ -111,7 +117,7 @@ export async function POST(request: Request, { params }: Context) {
       const id = getStore().create(person, validateBrief(Object.fromEntries(form), 0), requestId(form));
       return NextResponse.json({ path: `/tasks/${id}` });
     }
-    if (collection === 'tasks' && route.length === 3 && ['claim', 'submit', 'revise', 'accept'].includes(verb)) {
+    if (collection === 'tasks' && route.length === 3 && ['claim', 'submit', 'revise', 'accept', 'release', 'delete', 'assign'].includes(verb)) {
       const id = positiveId(key);
       const action = verb as Action;
       if (action === 'submit' && person.role !== 'creative') throw new InputError('Сдаёт результат исполнитель.', 403);
@@ -119,14 +125,16 @@ export async function POST(request: Request, { params }: Context) {
       const rawVersion = field(form, 'version');
       const version = Number(rawVersion);
       if (!/^\d+$/.test(rawVersion) || !Number.isSafeInteger(version)) throw new InputError('Обновите карточку.');
+      if (verb === 'assign') { getStore().assign(person,id,Number(field(form,'creativeId')),version,requestId(form)); return NextResponse.json({path:`/tasks/${id}`}); }
       const usage = action === 'submit' && field(form, 'noAi') !== 'on' ? aiServices.flatMap((service) => {
+        if (field(form, `subscription:${service}`) === 'on') return [{service, units:0}];
         const value = field(form, `credit:${service}`).trim();
         return value ? [{ service, units: creditUnits(value) }] : [];
       }) : [];
       if (action === 'submit' && !usage.length && field(form, 'noAi') !== 'on') throw new InputError('Укажите расход или отметьте «Без AI».');
       const files = action === 'submit' ? await uploadFiles(form) : [];
       getStore().act(person, id, action, version, requestId(form), { files, usage, note: field(form, 'note') });
-      return NextResponse.json({ path: `/tasks/${id}` });
+      return NextResponse.json({ path: action === 'release' || action === 'delete' ? '/board?task=none' : `/tasks/${id}` });
     }
     throw new InputError('Страница не найдена.', 404);
   } catch (error) { return errorResponse(error); }

@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import { boardDropAction } from '@/lib/board-moves';
+import { TaskAction } from './forms';
 import NextImage from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChartNoAxesColumnIncreasing, Columns3, Film, Flag, ImageIcon, Layers3, List, MessageSquare, MoreHorizontal, Paperclip, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
-import { formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
+import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChartNoAxesColumnIncreasing, Columns3, Film, Flag, ImageIcon, Layers3, List, MoreHorizontal, Paperclip, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
+import { duration, formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
 
 const icons = { image: ImageIcon, video: Film, animation: Shapes, other: Layers3 };
 
@@ -18,10 +20,10 @@ export function Avatar({ initials, color, size = '' }: { initials: string; color
   return <span className={`avatar ${color} ${size}`}>{initials}</span>;
 }
 
-function TaskCard({ task, now, href, selected }: { task: Task; now: number; href: string; selected: boolean }) {
+function TaskCard({ task, now, href, selected, draggable, onDragStart, onDragEnd }: { task: Task; now: number; href: string; selected: boolean; draggable?: boolean; onDragStart?: React.DragEventHandler<HTMLAnchorElement>; onDragEnd?: React.DragEventHandler<HTMLAnchorElement> }) {
   const overdue = isOverdue(task, now) && task.status !== 'done';
   const statusLabel = statuses.find(status => status.id === task.status)!.label;
-  return <Link className={`task-card task-${task.status}${task.coverId ? ' has-cover' : ' compact-card'}${overdue ? ' overdue-card' : ''}${selected ? ' is-selected' : ''}`} href={href} scroll={false} aria-current={selected ? 'true' : undefined}>
+  return <Link className={`task-card task-${task.status}${task.coverId ? ' has-cover' : ' compact-card'}${overdue ? ' overdue-card' : ''}${selected ? ' is-selected' : ''}`} draggable={draggable} onDragStart={onDragStart} onDragEnd={onDragEnd} href={href} scroll={false} aria-current={selected ? 'true' : undefined}>
     <div className="card-body"><div className="card-top">
       <span className="task-code">КР-{String(task.id).padStart(3, '0')}</span><span className={`priority ${task.priority}`} title={`Приоритет: ${priorities[task.priority]}`}><Flag size={11} /> {priorities[task.priority]}</span></div>
     {task.coverId && <span className={`card-cover ${task.format}`}>
@@ -31,16 +33,16 @@ function TaskCard({ task, now, href, selected }: { task: Task; now: number; href
       {task.status === 'done' && <span className="cover-accepted"><Check size={12} aria-hidden="true" /></span>}
     </span>}
     <h3><ChartNoAxesColumnIncreasing size={14} className={`card-priority-mark ${task.priority}`} /><span className="card-title-text">{task.offer}</span></h3>
-    <p className="card-description">{task.description}</p><div className="card-tags"><span className="card-format"><FormatMark format={task.format} />{formats[task.format]} · {task.quantity} шт.</span><span className="geo-tag">{task.geo}</span></div>
+    <div className="card-assignees"><span>Байер: {task.buyerName}</span><span>Исполнитель: {task.creativeName || 'Свободна'}</span></div><div className="card-tags"><span className="card-format"><FormatMark format={task.format} />{formats[task.format]} · {task.quantity} шт.</span><span className="geo-tag">{task.geo}</span></div>
     {task.status === 'done' && <span className="card-approved"><Check size={13} aria-hidden="true" />Согласовано</span>}
     <div className="card-footer"><span className={`due ${overdue ? 'late' : ''}`} title={overdue ? 'Дедлайн просрочен' : 'Дедлайн'}>{overdue ? <TriangleAlert size={13} /> : <CalendarDays size={14} />}{formatDate(task.deadline)}</span>
     </div>
+    <div className="card-time"><span>Создана {formatDate(task.createdAt,true)}</span><span>Ожидание: {duration(task.timing?.waiting ?? Math.max(0,(task.claimedAt??now)-task.createdAt))}</span><span>В работе: {duration(task.timing?.production ?? 0)} · На проверке: {duration(task.timing?.review ?? 0)}</span>{task.status==='done'&&<span>Потрачено: {duration(task.timing?.production ?? 0)}</span>}{overdue&&<span className="late">Просрочка: {duration(now-task.deadline)}</span>}</div>
     <div className="card-counters" aria-label="Участники, материалы и обсуждение">
       <div className="card-participants" title={task.creativeName ? `${task.buyerName}, ${task.creativeName}` : `${task.buyerName} · без исполнителя`}>
         <Avatar initials={task.buyerName.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()} color="violet" size="tiny" />
         {task.creativeInitials && <Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" />}
       </div>
-      <span title="Комментарии"><MessageSquare size={12} />{task.commentCount ?? 0}</span>
       <span title="Файлы"><Paperclip size={12} />{task.fileCount ?? 0}</span>
       <span title="Чек-лист приёмки"><i className="progress-ring" style={{ '--progress': `${(task.checkedCount ?? 0) / 3 * 100}%` } as React.CSSProperties} />{task.checkedCount ?? 0}/3</span><span className={`card-format-label format-${task.format}`}><i/><span className="card-format-text">{formats[task.format]}</span></span>
     </div></div>
@@ -71,11 +73,21 @@ function ProductionView({ view, tasks, now, boardPath }: { view: 'list' | 'calen
   return <div className="production-list"><table><thead><tr><th>Задача</th><th>Статус</th><th>Формат / GEO</th><th>Исполнитель</th><th>Дедлайн</th></tr></thead><tbody>{tasks.map(task => <tr key={task.id}><td><Link href={`${boardPath}task=${task.id}`} scroll={false}><small>КР-{String(task.id).padStart(3, '0')}</small>{task.offer}</Link></td><td><span className={`status-pill ${task.status}`}>{statuses.find(s => s.id === task.status)!.label}</span></td><td>{formats[task.format]} · {task.geo}</td><td>{task.creativeName ?? 'Свободна'}</td><td className={task.status !== 'done' && isOverdue(task, now) ? 'late' : ''}>{formatDate(task.deadline)}</td></tr>)}</tbody></table>{!tasks.length && <p className="empty-panel">{view === 'archive' ? 'Принятых работ пока нет.' : 'Задачи не найдены.'}</p>}</div>;
 }
 
-export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, drawer }: {
-  tasks: Task[]; person: Actor; mine: boolean; now: number; selectedId?: number; defaultDrawer: boolean; account: ReactNode; drawer: ReactNode; unread?: number;
+export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, drawer, initialStatus = '' }: {
+  initialStatus?: string; tasks: Task[]; person: Actor; mine: boolean; now: number; selectedId?: number; defaultDrawer: boolean; account: ReactNode; drawer: ReactNode; unread?: number;
 }) {
+  const [dragged, setDragged] = useState<number | null>(null);
+  const [drop, setDrop] = useState<{task:Task; action:NonNullable<ReturnType<typeof boardDropAction>>} | null>(null);
+  const [moveNotice,setMoveNotice] = useState('');
+  useEffect(()=>{
+    if(drop && tasks.find(task=>task.id===drop.task.id)?.version !== drop.task.version) {
+      // A successful save supplies a new task version and completes the modal action.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDrop(null);
+    }
+  },[drop,tasks]);
   const [query, setQuery] = useState('');
-  const [stages, setStages] = useState('production');
+  const [stages, setStages] = useState('all');
   const searchInput = useRef<HTMLInputElement>(null);
   const [geo, setGeo] = useState('');
   const [priority, setPriority] = useState('');
@@ -85,7 +97,8 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   const [quick, setQuick] = useState<'all' | 'mine' | 'today'>('all');
   const [format, setFormat] = useState('');
   const [offer, setOffer] = useState('');
-  const [status, setStatus] = useState<string>('');
+  const [scopeFilter, setScopeFilter] = useState(initialStatus === 'active' || initialStatus === 'free' ? initialStatus : '');
+  const [status, setStatus] = useState<string>(statuses.some(s=>s.id===initialStatus) ? initialStatus : '');
   const [showFilters, setShowFilters] = useState(false);
   const [expanded, setExpanded] = useState<Partial<Record<Status, boolean>>>({});
   const restored = useRef(false);
@@ -93,7 +106,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   useEffect(() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
-      if (saved) {
+      if (saved && !initialStatus) {
         // Restore browser-only preferences after hydration.
         /* eslint-disable react-hooks/set-state-in-effect */
         setQuery(typeof saved.query === 'string' ? saved.query : '');
@@ -108,11 +121,11 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
       }
     } catch { /* Storage can be disabled or cleared by the browser. */ }
     restored.current = true;
-  }, [storageKey]);
+  }, [storageKey, initialStatus]);
   useEffect(() => {
-    if (!restored.current) return;
+    if (!restored.current || initialStatus) return;
     try { sessionStorage.setItem(storageKey, JSON.stringify({ query, geo, priority, assignee, status, lateOnly, showFilters, expanded })); } catch { /* Browsing remains available without storage. */ }
-  }, [storageKey, query, geo, priority, assignee, status, lateOnly, showFilters, expanded]);
+  }, [storageKey, initialStatus, query, geo, priority, assignee, status, lateOnly, showFilters, expanded]);
   const isBuyer = person.role === 'buyer';
   const hasTaskDrawer = !!drawer && !defaultDrawer;
   useEffect(() => {
@@ -184,13 +197,13 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   const today = (task: Task) => task.status !== 'done' && localDay(task.deadline) === localDay(now);
   const own = (task: Task) => task.buyerId === person.id || task.creativeId === person.id;
   const filtered = scoped.filter((task) => (!term || `${task.offer} КР-${String(task.id).padStart(3, '0')}`.toLocaleLowerCase('ru').includes(term)) && (!geo || task.geo === geo) && (!format || task.format === format) && (!offer || task.offer === offer) && (quick !== 'mine' || own(task)) && (quick !== 'today' || today(task)) && (view !== 'archive' || task.status === 'done') &&
-    (!priority || task.priority === priority) && (!assignee || (assignee === 'free' ? !task.creativeId : String(task.creativeId) === assignee)) && (!lateOnly || overdue(task)) && (!status || task.status === status));
-  const boardPath = mine ? '/board?scope=mine&' : '/board?';
-  const hasFilters = lateOnly || quick !== 'all' || !!(query || geo || priority || assignee || status || format || offer);
-  function resetFilters() { setLateOnly(false); setQuick('all'); setQuery(''); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); setFormat(''); setOffer(''); }
-  const showAllStages = stages === 'all' || hasFilters || mine || scoped.some(task => task.id === selectedId && task.status === 'revision');
-  const primaryStages: Status[] = ['new', 'progress', 'review', 'done'];
-  const displayedStages = showAllStages ? statuses : primaryStages.map(id => statuses.find(stage => stage.id === id)!);
+    (scopeFilter !== 'active' || task.status !== 'done') && (scopeFilter !== 'free' || (task.status === 'new' && task.creativeId === null)) && (!priority || task.priority === priority) && (!assignee || (assignee === 'free' ? !task.creativeId : String(task.creativeId) === assignee)) && (!lateOnly || overdue(task)) && (!status || task.status === status));
+  const boardStatus = status || scopeFilter;
+  const boardPath = `${mine ? '/board?scope=mine&' : '/board?'}${boardStatus ? `status=${encodeURIComponent(boardStatus)}&` : ''}`;
+  const hasFilters = !!scopeFilter || lateOnly || quick !== 'all' || !!(query || geo || priority || assignee || status || format || offer);
+  function resetFilters() { setScopeFilter(''); setLateOnly(false); setQuick('all'); setQuery(''); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); setFormat(''); setOffer(''); }
+  const showAllStages = true;
+  const displayedStages = statuses;
   return <div className={`board-layout${drawer ? ' with-drawer' : ''}${defaultDrawer ? ' default-drawer' : ''}`}>
     <div className="board-main">
     <header className="reference-topbar"><section className="board-intro" aria-label="Креативное производство">
@@ -239,7 +252,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
         const shown = column.slice(0, limit);
         const selected = column.find((task) => task.id === selectedId);
         const visible = expanded[id] || hasFilters ? column : selected && !shown.includes(selected) ? [selected, ...shown.slice(0, limit - 1)] : shown;
-        return <section className={`column ${id} ${status && status !== id ? 'mobile-hidden' : ''}`} key={id} aria-label={label}>
+        return <section className={`column ${id} ${status && status !== id ? 'mobile-hidden' : ''}`} key={id} aria-label={label} onDragOver={event=>{const t=tasks.find(t=>t.id===dragged);if(t&&boardDropAction(person,t,id)){event.preventDefault();event.dataTransfer.dropEffect='move';}}} onDrop={event=>{event.preventDefault();const t=tasks.find(t=>t.id===dragged);const action=t&&boardDropAction(person,t,id);if(t&&action){setDrop({task:t,action});setMoveNotice('Подтвердите действие. Статус изменится после сохранения.');}setDragged(null);}}>
           <header className="column-head"><span className="column-dot" role="img" aria-label={shareLabel} title={shareLabel} style={{ '--column-share': `${share}%` } as React.CSSProperties} /><h3>{label}</h3><span className="column-count">{column.length}</span><div className="column-tools">
             <details className="column-menu">
               <summary aria-label={`Действия колонки ${label}`}><MoreHorizontal size={15} /></summary>
@@ -256,7 +269,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
             </details>
             {isBuyer && <Link href="/tasks/new" aria-label={`Создать задачу · ${label}`}><Plus size={15} /></Link>}
           </div></header>
-          <div className="column-body">{visible.map((task) => <TaskCard key={task.id} task={task} now={now} href={`${boardPath}task=${task.id}`} selected={selectedId === task.id} />)}
+          <div className="column-body">{visible.map((task) => <TaskCard draggable={statuses.some(stage=>boardDropAction(person,task,stage.id)!==null)} onDragStart={event=>{setDragged(task.id);event.dataTransfer.setData('text/plain',String(task.id));event.dataTransfer.effectAllowed='move';}} onDragEnd={()=>setDragged(null)} key={task.id} task={task} now={now} href={`${boardPath}task=${task.id}`} selected={selectedId === task.id} />)}
             {column.length === 0 && <div className="empty-column"><span>Нет задач</span><small>{isBuyer && id === 'review' ? 'Здесь появятся задачи для вашей проверки' : hint}</small></div>}
             {!hasFilters && column.length > limit && <button className="column-more" type="button" aria-expanded={!!expanded[id]} onClick={() => setExpanded({ ...expanded, [id]: !expanded[id] })}>{expanded[id] ? 'Свернуть' : `Ещё ${column.length - limit}`}<ChevronDown size={13} aria-hidden="true" /></button>}
           </div>
@@ -264,7 +277,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
       })}</div> : <ProductionView view={view} tasks={filtered} now={now} boardPath={boardPath} />}
       {hasFilters && !showFilters && <button type="button" className="reset-filters production-reset" onClick={resetFilters}>Сбросить фильтры</button>}
     </section>
-    </div>{drawer && <Link className="drawer-backdrop" href={`${boardPath}task=none`} scroll={false} aria-hidden="true" tabIndex={-1} />}
+    </div>{drop && <div className="board-move-backdrop"><dialog ref={node=>{if(node&&!node.open)node.showModal();}} onCancel={()=>{setDrop(null);setMoveNotice('');}} aria-label="Изменение статуса" className="board-move-dialog"><button autoFocus className="button secondary" onClick={()=>{setDrop(null);setMoveNotice('');}}>Закрыть</button><h2>КР-{String(drop.task.id).padStart(3,'0')} · {drop.task.offer}</h2><p>{moveNotice}</p><TaskAction key={`${drop.task.id}:${drop.action}`} task={drop.task.id} version={drop.task.version} action={drop.action} returnTo="/board?task=none"/></dialog></div>}{drawer && <Link className="drawer-backdrop" href={`${boardPath}task=none`} scroll={false} aria-hidden="true" tabIndex={-1} />}
     <div className="drawer-slot">{drawer}</div>
   </div>;
 }

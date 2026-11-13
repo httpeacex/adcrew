@@ -7,12 +7,15 @@ const [buyer,other,creative,,lead] = people;
 const now = Date.parse('2026-11-11T00:00:00Z');
 const brief: Brief = {offer:'Test',geo:'DE',format:'image',quantity:1,description:'Brief',references:[],priority:'normal',deadline:now+86400000};
 function setup() { const s=new ProductStore(':memory:'); for(const p of people)s.addProfile(p,'password'); const id=s.create(buyer,brief,'new',now); return {s,id}; }
-test('comments enforce task scope, valid rounds and isolate notice reads',()=>{
+test('new comments are rejected while historical comments and scoped notice reads are preserved',()=>{
  const {s,id}=setup(); try {
  assert.throws(()=>s.productCommand(other,'/api/product/comment',{taskId:String(id),body:'hello'},now),{status:404});
  assert.throws(()=>s.productCommand(buyer,'/api/product/comment',{taskId:String(id),body:'hello',round:'1'},now));
  s.act(creative,id,'claim',0,'claim',{},now);
- s.productCommand(buyer,'/api/product/comment',{taskId:String(id),body:'hello',mentionIds:String(creative.id)},now);
+ assert.throws(()=>s.productCommand(buyer,'/api/product/comment',{taskId:String(id),body:'hello',mentionIds:String(creative.id)},now),{status:403});
+ s.db.prepare('INSERT INTO product_comments(taskId,actorId,body,round,at) VALUES(?,?,?,NULL,?)').run(id,buyer.id,'hello',now); // Existing discussion stays readable.
+ s.act(creative,id,'submit',1,'submit-notice',{files:[{name:'a.png',type:'image/png',data:Uint8Array.of(1)}]},now);
+ s.act(buyer,id,'revise',2,'revision-notice',{note:'Исправить заголовок'},now);
  assert.equal(s.taskExtras(creative,id).comments[0].body,'hello');
  assert.equal(Object.getPrototypeOf(s.profile(buyer.id)),Object.prototype);
  assert.equal(Object.getPrototypeOf(s.productSnapshot(buyer,now).members[0]),Object.prototype);
@@ -63,13 +66,15 @@ test('templates, credentials, monetary rates and idempotent notifications',()=>{
  assert.equal(s.productSnapshot(lead,now).rates.find(r=>r.service==='Runway')?.price,0.0001);
  } finally{s.db.close();}
 });
-test('product requests replay without duplicate comments, templates or members and deadline notices stay read',()=>{
+test('requests replay without duplicate task notices, templates or members and deadline notices stay read',()=>{
  const {s,id}=setup();try{
- const comment={taskId:String(id),body:'Once',requestId:'comment-once'};
- s.productCommand(buyer,'/api/product/comment',comment,now);
- s.productCommand(buyer,'/api/product/comment',comment,now);
- assert.equal(s.taskExtras(buyer,id).comments.length,1);
- assert.throws(()=>s.productCommand(buyer,'/api/product/comment',{...comment,body:'Changed'},now),{status:409});
+ assert.throws(()=>s.productCommand(buyer,'/api/product/comment',{taskId:String(id),body:'Once',requestId:'comment-once'},now),{status:403});
+ assert.equal(s.taskExtras(buyer,id).comments.length,0);
+ s.act(creative,id,'claim',0,'claim-once',{},now);
+ const noticeCount=s.productSnapshot(buyer,now).notices.length;
+ s.act(creative,id,'claim',0,'claim-once',{},now);
+ assert.equal(s.productSnapshot(buyer,now).notices.length,noticeCount);
+ assert.throws(()=>s.act(creative,id,'release',1,'claim-once',{},now),{status:409});
  const template={taskId:String(id),name:'Once',requestId:'template-once'};
  s.productCommand(buyer,'/api/product/template',template,now);
  s.productCommand(buyer,'/api/product/template',template,now);

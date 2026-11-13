@@ -1,15 +1,15 @@
 export const statuses = [
   { id: 'new', label: 'Новые', hint: 'Можно взять в работу' },
   { id: 'progress', label: 'В работе', hint: 'Креативы в производстве' },
-  { id: 'review', label: 'На проверке', hint: 'Ждут решения заказчика' },
   { id: 'revision', label: 'Правки', hint: 'Требуют доработки' },
+  { id: 'review', label: 'На проверке', hint: 'Ждут решения заказчика' },
   { id: 'done', label: 'Готово', hint: 'Работа принята' },
 ] as const;
 
 export const formats = { image: 'Статика', video: 'Видео', animation: 'Анимация', other: 'Другой формат' } as const;
 export const priorities = { low: 'Низкий', normal: 'Обычный', high: 'Высокий', urgent: 'Срочно' } as const;
 export const roles = { buyer: 'Заказчик', creative: 'Креативщик', lead: 'Руководитель' } as const;
-export const actionLabels = { create: 'Создана задача', claim: 'Взята в работу', submit: 'Сдан результат', revise: 'Запрошены правки', accept: 'Работа принята', assign: 'Назначен исполнитель' } as const;
+export const actionLabels = { create: 'Создана задача', claim: 'Взята в работу', submit: 'Сдан результат', revise: 'Запрошены правки', accept: 'Работа принята', assign: 'Назначен исполнитель', release: 'Возвращена в свободные', delete: 'Задача удалена' } as const;
 export const aiServices = ['Midjourney', 'Runway', 'Kling', 'Adobe Firefly', 'ElevenLabs', 'ChatGPT', 'Другой сервис'] as const;
 export const fileTypes = ['image/png', 'image/jpeg', 'image/webp', 'video/mp4'];
 export const maxFileBytes = 25 * 1024 * 1024;
@@ -30,6 +30,8 @@ export type Task = Brief & {
   id: number; status: Status; buyerId: number; creativeId: number | null; version: number;
   createdAt: number; claimedAt: number | null; submittedAt: number | null; completedAt: number | null;
   buyerName: string; creativeName: string | null; creativeInitials: string | null; creativeColor: string | null;
+  deletedAt?: number | null;
+  timing?: {production:number;review:number;waiting:number};
   coverId?: number | null;
   commentCount?: number; fileCount?: number; checkedCount?: number;
 };
@@ -51,14 +53,17 @@ export class InputError extends Error {
 export function canRead(actor: Actor, task: Pick<Task, 'status' | 'buyerId' | 'creativeId'>) {
   if (actor.role === 'lead') return true;
   if (actor.role === 'buyer') return actor.id === task.buyerId;
-  return task.status === 'new' || actor.id === task.creativeId;
+  return true;
 }
 
-export function actionsFor(actor: Actor, task: Pick<Task, 'status' | 'buyerId' | 'creativeId'>): Action[] {
+export function actionsFor(actor: Actor, task: Pick<Task, 'status' | 'buyerId' | 'creativeId'> & Partial<Pick<Task, 'submittedAt' | 'deletedAt'>>): Action[] {
+  if (task.deletedAt) return [];
+  const unsubmitted = task.submittedAt == null && (task.status === 'new' || task.status === 'progress');
+  if (unsubmitted && (actor.role === 'lead' || (actor.role === 'buyer' && actor.id === task.buyerId))) return ['delete'];
   if (actor.role === 'buyer' && actor.id === task.buyerId && task.status === 'review') return ['revise', 'accept'];
   if (actor.role !== 'creative') return [];
-  if (task.status === 'new') return ['claim'];
-  if (actor.id === task.creativeId && (task.status === 'progress' || task.status === 'revision')) return ['submit'];
+  if (task.status === 'new' && task.creativeId === null) return ['claim'];
+  if (actor.id === task.creativeId && (task.status === 'progress' || task.status === 'revision')) return task.status === 'progress' && unsubmitted ? ['submit', 'release'] : ['submit'];
   return [];
 }
 
@@ -92,7 +97,7 @@ export function validateBrief(data: Record<string, unknown>, now = Date.now()): 
   if (typeof data.format !== 'string' || !Object.hasOwn(formats, data.format)) throw new InputError('Выберите формат.', 400, 'format');
   if (typeof data.priority !== 'string' || !Object.hasOwn(priorities, data.priority)) throw new InputError('Выберите приоритет.', 400, 'priority');
   const quantity = typeof data.quantity === 'string' && /^\d+$/.test(data.quantity) ? Number(data.quantity) : NaN;
-  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) throw new InputError('Укажите целое количество от 1 до 999.', 400, 'quantity');
+  if (quantity !== 1) throw new InputError('Одна задача — один самостоятельный креатив.', 400, 'quantity');
   const date = typeof data.deadline === 'string' ? data.deadline : '';
   const deadline = /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d$/.test(date) ? Date.parse(`${date}:00+05:00`) : NaN;
   if (!Number.isFinite(deadline) || localDay(deadline) !== date.slice(0, 10) || deadline <= now) throw new InputError('Укажите будущую дату и время.', 400, 'deadline');

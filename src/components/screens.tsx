@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { Bell, FileText, Puzzle, ArrowDownToLine, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, MoreVertical, ClipboardList, Clock3, Columns3, FileImage, Film, Flag, History, Layers3, ListTodo, LogOut, Play, Plus, Settings2, Sparkles, Users } from 'lucide-react';
+import { FileText, History, Bell, ArrowDownToLine, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, MoreVertical, ClipboardList, Clock3, Columns3, FileImage, Film, Flag,  Layers3,  LogOut, Play, Plus, Settings2, Sparkles, Users } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { demoProfiles } from '@/lib/demo-profiles';
 import type { Store } from '@/lib/store';
@@ -16,6 +16,7 @@ import { ThemeSelector, ThemeToggle } from './theme';
 import { DemoLogin, LoginCredentials } from './login-controls';
 import loginStyles from './login.module.css';
 import './analytics.css';
+import './workspace-reference.css';
 
 function Brand() {
   return <div className="brand"><span className="brand-mark" aria-hidden="true" /><strong>AdCrew</strong></div>;
@@ -39,29 +40,18 @@ const sectionNames: Record<string, string> = { analytics: 'Аналитика', 
 export function Workspace({ children, person, active, demo, counts, unread = 0 }: { children: ReactNode; person: Profile; active: string; demo: boolean; counts: ReturnType<Store['taskCounts']>; unread?: number }) {
   const isBoard = active === 'board' || active === 'mine';
   const boardActive = active === 'board' || active === 'task' || active === 'new';
-  return <div className={`workspace${isBoard ? ' board-workspace' : ''}`}>
+  return <div className={`workspace reference-workspace${isBoard ? ' board-workspace' : ''}`}>
     <a href="#workspace-main" className="skip">К рабочей области</a>
     <aside className={`sidebar${isBoard ? ' board-sidebar' : ''}`}>
       <Link href="/board" className="brand-link" aria-label="AdCrew, доска задач"><Brand /></Link>
       <nav className="side-nav" aria-label="Рабочее пространство">
         <div className="side-group">
-          <p className="side-group-title">Работа</p>
-          <Link className={boardActive ? 'active' : ''} aria-label="Доска задач" aria-describedby="side-all-count" title="Доска задач" aria-current={active === 'board' ? 'page' : undefined} href="/board"><Columns3 size={18} /><span>Доска задач</span><span className="side-count" id="side-all-count">{counts.total}</span></Link>
-          <Link href="/studio" className={active === 'studio' ? 'active' : ''} aria-current={active === 'studio' ? 'page' : undefined} aria-label="ИИ-студия" title="ИИ-студия"><Sparkles size={18} /><span>ИИ-студия</span></Link>
-          {person.role === 'creative' && <Link className={active === 'mine' ? 'active' : ''} aria-label="Мои задачи" aria-describedby="side-mine-count" title="Мои задачи" aria-current={active === 'mine' ? 'page' : undefined} href="/board?scope=mine"><ListTodo size={18} /><span>Мои задачи</span><span className="side-count" id="side-mine-count">{counts.mine}</span></Link>}
-          {person.role === 'lead' && <>
-            <Link className={active === 'analytics' ? 'active' : ''} aria-label="Аналитика" title="Аналитика" aria-current={active === 'analytics' ? 'page' : undefined} href="/analytics"><BarChart3 size={18} /><span>Аналитика</span></Link>
-            <Link href="/team" className={active === 'team' ? 'active' : ''} aria-current={active === 'team' ? 'page' : undefined} aria-label="Команда" title="Команда"><Users size={18} /><span>Команда</span></Link>
-            <Link href="/ai-expenses" className={active === 'ai-expenses' ? 'active' : ''} aria-current={active === 'ai-expenses' ? 'page' : undefined} aria-label="AI-расходы" title="AI-расходы"><Layers3 size={18} /><span>AI-расходы</span></Link>
-          </>}
-          {(person.role === 'buyer' || person.role === 'lead') && <Link href="/templates" className={active === 'templates' ? 'active' : ''} aria-current={active === 'templates' ? 'page' : undefined} aria-label="Шаблоны"><FileText size={18} /><span>Шаблоны ТЗ</span></Link>}
-          <Link href="/integrations" className={active === 'integrations' ? 'active' : ''} aria-current={active === 'integrations' ? 'page' : undefined} aria-label="Интеграции"><Puzzle size={18} /><span>Интеграции</span></Link>
-        </div>
-        <div className="side-group side-group-system">
-          <p className="side-group-title">Система</p>
-          <Link href="/notifications" className={active === 'notifications' ? 'active' : ''} aria-current={active === 'notifications' ? 'page' : undefined} aria-label="Уведомления"><span className="sidebar-bell"><Bell size={18} />{unread > 0 && <i />}</span><span>Уведомления</span>{unread > 0 && <span className="side-count">{unread}</span>}</Link>
-          {person.role === 'lead' && <Link href="/history" className={active === 'history' ? 'active' : ''} aria-current={active === 'history' ? 'page' : undefined} aria-label="История действий" title="История действий"><History size={18} /><span>История действий</span></Link>}
-          <Link href="/settings" className={active === 'settings' ? 'active' : ''} aria-current={active === 'settings' ? 'page' : undefined} aria-label="Настройки" title="Настройки"><Settings2 size={18} /><span>Настройки</span></Link>
+          <p className="side-group-title">Меню</p>
+          <Link aria-label="Дашборд" href="/dashboard" className={active === 'dashboard' ? 'active' : ''} aria-current={active === 'dashboard' ? 'page' : undefined}><Layers3 size={18}/><span>Дашборд</span></Link>
+          <Link href="/board?task=none" className={boardActive || active === 'mine' ? 'active' : ''} aria-label="Доска задач" aria-current={active === 'board' ? 'page' : undefined}><Columns3 size={18}/><span>Задачи</span><span className="side-count">{counts.total}</span></Link>
+          <Link aria-label="Библиотека" href="/library" className={active === 'library' || active === 'templates' ? 'active' : ''} aria-current={active === 'library' ? 'page' : undefined}><FileImage size={18}/><span>Библиотека</span></Link>
+          {person.role === 'lead' ? <Link aria-label="Аналитика" href="/analytics" className={['analytics','team','ai-expenses'].includes(active) ? 'active' : ''} aria-current={active === 'analytics' ? 'page' : undefined}><BarChart3 size={18}/><span>Аналитика</span></Link> : <span className="side-unavailable" title="Командная аналитика доступна руководителю"><BarChart3 size={18}/><span>Аналитика</span></span>}
+          <Link aria-label="Настройки" href="/settings" className={active === 'settings' ? 'active' : ''} aria-current={active === 'settings' ? 'page' : undefined}><Settings2 size={18}/><span>Настройки</span></Link>
         </div>
       </nav>
       <div className="sidebar-promo">
@@ -70,12 +60,16 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
         <Link href={person.role === 'buyer' ? '/tasks/new' : '/how-it-works'} className="sidebar-promo-link">Попробовать <ArrowUpRight size={15} aria-hidden="true" /></Link>
       </div>
       <div className="sidebar-theme"><ThemeSelector /></div>
-      <div className="sidebar-account"><AccountMenu person={person} demo={demo} /></div>
+
     </aside>
     <div className="workspace-body">
+      <header className="reference-topbar">
+        <Link className="reference-search" href="/board"><ClipboardList size={18} /><span>Поиск задач и проектов…</span></Link>
+        <div className="reference-top-actions"><Link href="/notifications" aria-label="Открыть уведомления"><Bell size={18} />{unread > 0 && <i />}</Link><AccountMenu person={person} demo={demo} /></div>
+      </header>
       <main className="workspace-main" id="workspace-main" tabIndex={-1}>
         {isBoard ? children : <div className="workspace-page" data-view={active}>
-          {sectionNames[active] && !['templates', 'notifications', 'team', 'ai-expenses', 'integrations'].includes(active) && <h1 className="workspace-title">{sectionNames[active]}</h1>}
+          {sectionNames[active] && !['templates', 'notifications', 'team', 'ai-expenses', 'integrations', 'library'].includes(active) && <h1 className="workspace-title">{sectionNames[active]}</h1>}
           {children}
         </div>}
       </main>
@@ -84,7 +78,7 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
 }
 
 export function Settings({ person }: { person: Profile }) {
-  return <section className="panel"><div className="panel-title"><h2>Учётная запись</h2></div><dl className="facts"><div><dt>Имя</dt><dd>{person.name}</dd></div><div><dt>Роль</dt><dd>{roles[person.role]}</dd></div><div><dt>Электронная почта</dt><dd>{person.email}</dd></div></dl></section>;
+  return <><nav className="settings-tools" aria-label="Инструменты рабочего пространства"><Link href="/studio">ИИ-студия</Link><Link href="/integrations">Интеграции</Link><Link href="/notifications">Уведомления</Link>{person.role === 'lead' && <><Link href="/team">Команда</Link><Link href="/ai-expenses">Тарифы и бюджет</Link><Link href="/history">История действий</Link></>}</nav><section className="panel"><div className="panel-title"><h2>Учётная запись</h2></div><dl className="facts"><div><dt>Имя</dt><dd>{person.name}</dd></div><div><dt>Роль</dt><dd>{roles[person.role]}</dd></div><div><dt>Электронная почта</dt><dd>{person.email}</dd></div></dl></section></>;
 }
 
 export function WorkspaceHistory({ events }: { events: ReturnType<Store['workspaceHistory']> }) {
@@ -151,7 +145,7 @@ export function TaskScreen({ task, events, submissions, person, now, extras }: {
           <p className="brief-description">{task.description}</p>
           <div className="references"><h3>Референсы</h3>{task.references.length ? <ul>{task.references.map((url, index) => <li key={`${index}-${url}`}><a href={url} target="_blank" rel="noopener noreferrer">{url} <ArrowUpRight size={15} /></a></li>)}</ul> : <p>Ссылок пока нет.</p>}</div>
         </section>
-        {actions.includes('submit') && <section className="panel action-panel"><div className="panel-title"><Plus size={20} /><h2>Сдача результата</h2></div><p className="muted">Файлы и расход только за текущий раунд.</p>{task.status === 'revision' && submissions[0]?.reviewNote && <div className="revision-note"><strong>Что нужно исправить</strong><p>{submissions[0].reviewNote}</p></div>}<TaskAction task={task.id} version={task.version} action="submit" /></section>}
+        {actions.includes('submit') && <section className="panel action-panel"><div className="panel-title"><Plus size={20} /><h2>Сдача результата</h2></div><p className="muted">Файлы и расход только за текущий раунд.</p>{task.status === 'revision' && submissions[0]?.reviewNote && <div className="revision-note"><strong>Что нужно исправить</strong><p>{submissions[0].reviewNote}</p></div>}<TaskAction task={task.id} version={task.version} action="submit" tariffs={extras?.tariffs} /></section>}
         <section className="panel"><div className="panel-title"><Layers3 size={20} /><h2>Результаты</h2><span className="panel-count">{submissions.length}</span></div>
           {submissions.length === 0 && <div className="empty-panel">Здесь появятся файлы после первой сдачи.</div>}
           {submissions.map((submission) => <article className="submission" key={submission.id}>
@@ -164,7 +158,7 @@ export function TaskScreen({ task, events, submissions, person, now, extras }: {
               <a className="file-download" download={file.name} href={fileHref(file.id)} aria-label={`Скачать ${file.name}`}><ArrowDownToLine size={18} /></a>
             </div>)}</div>
             {submission.reviewNote && <div className="revision-note"><strong>Комментарий к правкам</strong><p>{submission.reviewNote}</p></div>}
-            <div className="usage-tags"><Sparkles size={15} />{submission.usage.length ? submission.usage.map((item) => <span key={item.service}>{item.service} · {formatCredits(item.units)} кр.</span>) : <span>Без AI</span>}</div>
+            <div className="usage-tags"><Sparkles size={15} />{submission.usage.length ? submission.usage.map((item) => <span key={item.service}>{item.service} · {item.units === 0 ? 'подписка без кредитов' : `${formatCredits(item.units)} кр.`}</span>) : <span>Без AI</span>}</div>
           </article>)}
         </section>
       </div>
@@ -172,7 +166,7 @@ export function TaskScreen({ task, events, submissions, person, now, extras }: {
         {extras && <TaskCollaboration person={person} task={task} extras={extras} returnTo={`/tasks/${task.id}`} rounds={submissions.map(item => item.round)} />}
         <section className="panel"><div className="panel-title"><CalendarDays size={19} /><h2>Сроки и команда</h2></div>
           <dl className="facts"><div><dt>Дедлайн</dt><dd className={isOverdue(task, now) ? 'late' : ''}>{formatDate(task.deadline, true)} {isOverdue(task, now) && <small>Просрочено</small>}</dd></div><div><dt>Заказчик</dt><dd>{task.buyerName}</dd></div><div><dt>Исполнитель</dt><dd>{task.creativeName ?? 'Свободна'}</dd></div>{time && <><div><dt>Полный цикл</dt><dd>{duration(time.cycle)}</dd></div><div><dt>В производстве</dt><dd>{duration(time.production)}</dd></div><div><dt>На проверке</dt><dd>{duration(time.review)}</dd></div></>}</dl>
-          {actions.some((action) => action !== 'submit') && <div className="task-actions">{actions.filter((action) => action !== 'submit').toReversed().map((action) => <TaskAction task={task.id} version={task.version} action={action} key={action} />)}</div>}
+          {actions.some((action) => action !== 'submit') && <div className="task-actions">{actions.filter((action) => action !== 'submit').toReversed().map((action) => <TaskAction task={task.id} version={task.version} action={action} key={action} tariffs={extras?.tariffs} />)}</div>}
         </section>
         <section className="panel"><div className="panel-title"><History size={19} /><h2>История задачи</h2></div>
           <ol className="timeline">{events.toReversed().map((event) => <li key={event.id}><span className={`status-dot ${event.toStatus}`} /><div><strong>{actionLabels[event.action]}{event.round && (event.action === 'submit' || event.action === 'revise') ? ` · v${event.round}` : ''}</strong><small>{event.actorName} · {formatDate(event.at, true)}</small></div></li>)}</ol>

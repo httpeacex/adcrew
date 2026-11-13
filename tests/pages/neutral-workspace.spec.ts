@@ -1,22 +1,20 @@
 import { test, expect } from '@playwright/test';
 
-test('neutral workspace preserves theme, comments and directory navigation', async ({ page }) => {
+test('workspace keeps five primary sections, top account, theme and Settings tools', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: /Руководитель/ }).click();
+  await page.waitForURL('**/#/board');
   await page.goto('./#/board?task=10');
   const panel = page.locator('.task-drawer');
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
-  const composer = panel.getByLabel('Комментарий', { exact: true });
-  await composer.fill('Проверка:');
-  await expect(panel.getByText('Быстрые фразы', { exact: true })).toHaveCount(0);
-  await panel.getByRole('button', { name: 'Отправить', exact: true }).click();
-  await expect(panel.locator('.comment-entry')).toContainText('Проверка:');
-  await page.reload();
-  await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
-  await expect(panel.locator('.comment-entry')).toContainText('Проверка:');
-  await expect(page.locator('.task-card.is-selected .card-counters').getByTitle('Комментарии')).toHaveText('1');
+  await expect(panel.getByLabel('Комментарий', { exact: true })).toHaveCount(0);
+  await expect(panel.locator('.mention-picker, .comment-compose')).toHaveCount(0);
+  await expect(page.locator('.side-nav a')).toHaveCount(5);
+  await expect(page.locator('.side-nav a')).toHaveText(['Дашборд', /Задачи/, 'Библиотека', 'Аналитика', 'Настройки']);
+  await expect(page.locator('.reference-topbar .profile-menu summary')).toBeVisible();
+  await expect(page.locator('.sidebar .profile-menu')).toHaveCount(0);
   await page.getByRole('button', { name: 'Использовать системную тему', exact: true }).click();
   await page.emulateMedia({ colorScheme: 'light' });
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
@@ -35,7 +33,10 @@ test('neutral workspace preserves theme, comments and directory navigation', asy
   await page.goto('./#/notifications');
   await page.getByRole('button', { name: 'Сегодня', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Сегодня', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await page.goto('./#/integrations');
+  await page.goto('./#/settings');
+  await expect(page.getByRole('region', { name: 'Управление пользователями' })).toBeVisible();
+  await page.getByRole('navigation', { name: 'Инструменты рабочего пространства' }).getByRole('link', { name: 'Интеграции', exact: true }).click();
+  await expect(page).toHaveURL(/#\/integrations/);
   await expect(page.locator('.integration-node')).toHaveCount(3);
   await expect(page.locator('.integration-node').first()).toContainText('В планах');
   await page.goto('./#/history');

@@ -1,15 +1,16 @@
 import { test, expect } from '@playwright/test';
 
-test('approved workspace keeps account and alerts in sidebar and searches task IDs inside board', async ({ page }) => {
+test('approved workspace keeps account and alerts in the reference topbar and searches task IDs inside board', async ({ page }) => {
   await page.setViewportSize({ width: 1664, height: 946 });
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: /Заказчик/ }).click();
+  await page.waitForURL('**/#/board');
   await page.goto('./#/board');
-  await expect(page.locator('.sidebar .profile-menu')).toBeVisible();
+  await expect(page.locator('.workspace-body > .reference-topbar .profile-menu')).toBeVisible();
   await expect(page.locator('.board-heading')).toHaveCount(0);
   const themes = page.getByRole('group', { name: 'Тема оформления' });
-  await expect(themes.getByRole('button', { name: 'Включить тёмную тему' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(themes.getByRole('button', { name: 'Включить светлую тему' })).toHaveAttribute('aria-pressed', 'true');
   await themes.getByRole('button', { name: 'Включить светлую тему' }).click();
   await expect(themes.getByRole('button', { name: 'Включить светлую тему' })).toHaveAttribute('aria-pressed', 'true');
   const search = page.locator('.board-main').getByRole('searchbox');
@@ -24,6 +25,6 @@ test('approved workspace keeps account and alerts in sidebar and searches task I
   await panel.getByRole('button', { name: 'Детали', exact: true }).click();
   await panel.locator('.drawer-description summary').click();
   await expect(panel.getByRole('heading', { name: 'Описание', exact: true })).toBeVisible();
-  await page.locator('.sidebar .profile-menu summary').click();
-  await expect(page.locator('.sidebar .profile-popup')).toBeVisible();
+  await page.locator('.workspace-body > .reference-topbar .profile-menu summary').click();
+  await expect(page.locator('.workspace-body > .reference-topbar .profile-popup')).toBeVisible();
 });

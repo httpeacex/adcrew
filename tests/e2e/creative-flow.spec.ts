@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { expect, test, type Page } from '@playwright/test';
 import { localDay } from '../../src/lib/workflow';
 
@@ -28,11 +29,11 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   const offer = `Тестовый оффер ${Date.now()}`;
   await login(buyer, 'Заказчик');
   const initialCount = (await buyer.locator('.column-count').allTextContents()).reduce((sum, count) => sum + Number(count), 0);
-  const nav = buyer.getByRole('navigation');
+  const nav = buyer.getByRole('navigation', { name: 'Рабочее пространство' });
   await expect(nav.getByRole('link', { name: 'Доска задач' }).locator('.side-count')).toHaveText(String(initialCount));
   await expect(nav.getByRole('link', { name: 'Мои задачи' })).toHaveCount(0);
   await expect(buyer.getByRole('region', { name: 'На проверке', exact: true }).getByRole('heading', { name: 'На проверке' })).toBeVisible();
-  await buyer.getByRole('link', { name: 'Создать задачу' }).click();
+  await buyer.getByRole('link', { name: 'Создать задачу', exact: true }).click();
   await expect(buyer).toHaveURL('/tasks/new');
   await expectCenteredWorkspace(buyer);
   await buyer.getByLabel('Оффер', { exact: true }).fill(offer);
@@ -45,11 +46,28 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   expect(task).toMatch(/^\/tasks\/\d+$/);
 
   await login(creative, 'Креативщик');
-  await expect(creative.getByRole('navigation').getByRole('link', { name: 'Мои задачи' })).toBeVisible();
+  await expect(creative.getByRole('navigation', { name: 'Рабочее пространство' }).getByRole('link')).toHaveCount(4);
+  await expect(creative.locator('.side-unavailable')).toHaveText('Аналитика');
   await creative.getByRole('searchbox').fill(offer);
   await creative.getByRole('link', { name: new RegExp(offer) }).click();
   await creative.getByRole('button', { name: 'Взять в работу' }).click();
   await expect(creative.locator('.status-pill')).toHaveText('В работе');
+  const otherCreative = await browser.newPage({ baseURL });
+  await login(otherCreative, 'Креативщик');
+  await otherCreative.locator('.profile-menu summary').click();
+  await otherCreative.getByRole('button', { name: /Никита Орлов/ }).click();
+  await expect(otherCreative.getByLabel('Учётная запись: Никита Орлов, Креативщик')).toBeVisible();
+  await otherCreative.goto(task);
+  await expect(otherCreative.getByRole('heading', { name: offer })).toBeVisible();
+  await expect(otherCreative.getByRole('button', { name: 'Сдать результат', exact: true })).toHaveCount(0);
+  await expect(otherCreative.getByRole('button', { name: 'Отказаться от задачи', exact: true })).toHaveCount(0);
+  const forbiddenRelease = await otherCreative.request.post(`/api/tasks/${task.split('/').at(-1)}/release`, {
+    headers: { 'x-kadr-form': '1' }, multipart: { version: '1', requestId: randomUUID() },
+  });
+  expect(forbiddenRelease.status()).toBe(403);
+  await otherCreative.reload();
+  await expect(otherCreative.locator('.status-pill')).toHaveText('В работе');
+
   await creative.locator('input[type=file]').setInputFiles('fixtures/creative.png');
   await creative.getByLabel('ChatGPT').fill('12');
   await creative.getByRole('button', { name: 'Сдать результат' }).click();
@@ -91,14 +109,21 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   expect((await buyer.goto('/analytics'))?.status()).toBe(404);
 
   await login(lead, 'Руководитель');
-  const overview = lead.getByRole('region', { name: 'Сводка аналитики' });
-  await expect(overview).toHaveCount(0);
-  await lead.getByRole('link', { name: 'Аналитика' }).click();
-  await expect(overview).toBeVisible();
-  await expect(overview.getByText('AI-сервисов', { exact: true })).toBeVisible();
-  await expect(overview.getByRole('listitem').filter({ hasText: 'ChatGPT' })).toContainText('15,5 кр.');
-  await expect(lead.getByRole('row', { name: 'ChatGPT Лера Ким 15,5' })).toBeVisible();
-  await expect(lead.getByRole('heading', { name: 'Загрузка команды' })).toBeVisible();
+  await expect(lead.locator('.operations-kpis')).toHaveCount(0);
+  await lead.getByRole('link', { name: 'Аналитика', exact: true }).click();
+  await expect(lead.locator('.operations-kpis > section')).toHaveCount(5);
+  await expect(lead.getByRole('heading', { name: 'Задачи по статусам', exact: true })).toBeVisible();
+  await expect(lead.getByRole('heading', { name: 'Динамика по дням', exact: true })).toBeVisible();
+  await lead.getByRole('navigation', { name: 'Разделы аналитики' }).getByRole('link', { name: 'Сотрудники', exact: true }).click();
+  await expect(lead.getByRole('heading', { name: 'Креативщики', exact: true })).toBeVisible();
+  await expect(lead.getByRole('heading', { name: 'Байеры', exact: true })).toBeVisible();
+  await lead.getByRole('navigation', { name: 'Разделы аналитики' }).getByRole('link', { name: 'AI-сервисы', exact: true }).click();
+  const expenseHistory = lead.locator('section').filter({ has: lead.getByRole('heading', { name: 'История расходов по версиям', exact: true }) });
+  const chatGpt = expenseHistory.getByRole('row').filter({ has: lead.getByRole('cell', { name: 'ChatGPT', exact: true }) });
+  await expect(chatGpt).toHaveCount(2);
+  await expect(chatGpt.filter({ has: lead.getByRole('cell', { name: '12', exact: true }) })).toHaveCount(1);
+  await expect(chatGpt.filter({ has: lead.getByRole('cell', { name: '3,5', exact: true }) })).toHaveCount(1);
+  await expect(lead.getByRole('heading', { name: 'Расходы по исполнителям', exact: true })).toBeVisible();
   await lead.goto(task);
   await expect(lead.getByRole('heading', { name: 'Версия 1' })).toBeVisible();
   await expect(lead.getByRole('heading', { name: 'Версия 2' })).toBeVisible();
@@ -117,7 +142,9 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   await expect(buyer.getByRole('complementary', { name: offer })).toHaveCount(0);
   expect((await buyer.goto(task))?.status()).toBe(404);
   expect((await buyer.request.get(fileUrl)).status()).toBe(404);
-  await Promise.all([buyer.close(), creative.close(), lead.close()]);
+  await otherCreative.goto(task);
+  expect((await otherCreative.request.get(fileUrl)).status()).toBe(200);
+  await Promise.all([buyer.close(), creative.close(), lead.close(), otherCreative.close()]);
 });
 
 test('mobile board and history fit the viewport', async ({ page }) => {
@@ -128,21 +155,28 @@ test('mobile board and history fit the viewport', async ({ page }) => {
   const luma = page.getByRole('link', { name: /Видео для Dating/ });
   await expect(luma).toBeVisible();
   const cover = luma.locator('.card-cover img');
-  await cover.scrollIntoViewIfNeeded();
-  await expect.poll(() => cover.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBeGreaterThan(0);
+  const coverUrl = await cover.getAttribute('src');
+  expect(coverUrl).toBeTruthy();
+  const coverResponse = await page.request.get(coverUrl!);
+  expect(coverResponse.status()).toBe(200);
+  expect(coverResponse.headers()['content-type']).toMatch(/^image\//);
+  expect((await coverResponse.body()).length).toBeGreaterThan(200);
   await expect(page.getByRole('link', { name: /Пакет креативов для WeightLoss/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Сбросить' }).click();
   await page.getByLabel('Статус', { exact: true }).selectOption('done');
-  await expect(page.getByRole('region', { name: 'Новые', exact: true })).toBeHidden();
+  await expect(page.locator('.column-head h3')).toHaveText(['Готово']);
+  await expect(page.getByRole('region', { name: 'Новые', exact: true })).toHaveCount(0);
   await page.getByRole('link', { name: /Пакет креативов для WeightLoss/ }).click();
   await page.getByRole('button', { name: 'Детали', exact: true }).click();
-  const description = page.getByRole('region', { name: 'Описание задачи' }).locator('p');
+  await page.locator('.drawer-description summary').click();
+  const description = page.locator('.drawer-description p');
   await expect(description).toBeVisible();
   const typography = await description.evaluate((element) => ({ width: element.getBoundingClientRect().width, fontWeight: Number(getComputedStyle(element).fontWeight) }));
   expect(typography.width).toBeGreaterThan(270);
   expect(typography.fontWeight).toBe(400);
-  await page.getByRole('button', { name: 'История', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'История задачи' })).toBeVisible();
+  await page.locator('.inspector-history summary').click();
+  await expect(page.locator('.inspector-history .timeline')).toBeVisible();
+  await expect(page.locator('.inspector-history .timeline')).toContainText('Работа принята');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
 });
 
@@ -151,9 +185,10 @@ test('theme changes across the board, drawer and analytics and survives reload',
   const board = page.getByRole('region', { name: 'Kanban-доска' });
   await expect(board.getByRole('button', { name: /^(Все задачи|Мои|Просрочены|Все|Новые|В работе|На проверке|Правки|Готово) \d+$/ })).toHaveCount(0);
   const html = page.locator('html');
+  await page.getByRole('button', { name: 'Включить тёмную тему' }).click();
   await expect(html).toHaveAttribute('data-theme', 'dark');
   const darkBackground = await page.locator('body').evaluate(element => getComputedStyle(element).backgroundColor);
-  const darkCard = await page.locator('.task-card').first().evaluate(element => getComputedStyle(element).backgroundImage);
+  const darkCard = await page.locator('.task-card').first().evaluate(element => getComputedStyle(element).backgroundColor);
   await expect(page.getByRole('heading', { name: 'Доска задач', exact: true })).toBeVisible();
   await expect(page.getByRole('complementary', { name: /Видео для Dating/ })).toBeVisible();
   await expect(page.locator('.drawer-summary > div')).toHaveCount(2);
@@ -167,7 +202,7 @@ test('theme changes across the board, drawer and analytics and survives reload',
   await page.reload();
   await expect(html).toHaveAttribute('data-theme', 'light');
   expect(await page.locator('body').evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(darkBackground);
-  expect(await page.locator('.task-card').first().evaluate(element => getComputedStyle(element).backgroundImage)).not.toBe(darkCard);
+  expect(await page.locator('.task-card').first().evaluate(element => getComputedStyle(element).backgroundColor)).not.toBe(darkCard);
   await expect(page.getByRole('heading', { name: 'Доска задач', exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Закрыть карточку' }).click();
   await expect(page.getByRole('complementary', { name: /Видео для Dating/ })).toHaveCount(0);
@@ -198,23 +233,19 @@ test('sidebar keeps its geometry between sections', async ({ page }) => {
     const sidebar = document.querySelector('.sidebar')!.getBoundingClientRect();
     return [Math.round(sidebar.width), Math.round(sidebar.right)];
   });
-  const nav = page.getByRole('navigation');
+  const nav = page.getByRole('navigation', { name: 'Рабочее пространство' });
   for (const theme of ['dark', 'light']) {
     if (theme === 'light') await page.getByRole('button', { name: 'Включить светлую тему' }).click();
     const geometry = await measure();
-    for (const [label, path] of [['Аналитика', '/analytics'], ['Команда', '/team'], ['AI-расходы', '/ai-expenses'], ['История действий', '/history'], ['Настройки', '/settings'], ['Доска задач', '/board']]) {
+    for (const [label, path, heading] of [['Аналитика', '/analytics', 'Аналитика'], ['Библиотека', '/library', 'Библиотека'], ['Настройки', '/settings', 'Настройки'], ['Доска задач', '/board?task=none', 'Доска задач'], ['Дашборд', '/dashboard', 'Дашборд']]) {
       const link = nav.getByRole('link', { name: label, exact: true });
       await link.click();
       await expect(page).toHaveURL(path);
-      await expect(page.getByRole('heading', { name: label, exact: true })).toBeVisible();
+      await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
       await expect(link).toHaveAttribute('aria-current', 'page');
       expect(await measure()).toEqual(geometry);
       expect(await page.evaluate(() => window.scrollY)).toBe(0);
-      if (path !== '/board') await expectCenteredWorkspace(page);
-      if (path === '/team' || path === '/ai-expenses') {
-        await link.click();
-        await expect(page).toHaveURL(path);
-      }
+      if (!path.startsWith('/board')) await expectCenteredWorkspace(page);
     }
   }
 });
@@ -253,8 +284,9 @@ test('opening a task resizes the board progressively and keeps the panel inside 
 test('the workflow guide opens from the account menu and follows the active theme', async ({ page }) => {
   await page.setViewportSize({ width: 1800, height: 900 });
   await login(page, 'Руководитель');
-  await page.locator('.sidebar-account summary').click();
-  await page.locator('.sidebar-account').getByRole('link', { name: 'Как это работает', exact: true }).click();
+  await page.getByRole('button', { name: 'Включить тёмную тему' }).click();
+  await page.locator('.reference-topbar .profile-menu summary').click();
+  await page.locator('.reference-topbar .profile-menu').getByRole('link', { name: 'Как это работает', exact: true }).click();
   await expect(page).toHaveURL('/how-it-works');
   await expect(page.getByRole('heading', { name: 'Как это работает', exact: true })).toBeVisible();
   const guide = page.getByRole('region', { name: 'От задачи до готового креатива' });

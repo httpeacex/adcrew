@@ -1,17 +1,23 @@
 import { test, expect } from '@playwright/test';
 
-test('task panel shows media and versions in both themes and saves discussion and checks', async ({ page, context }) => {
+test('task panel retains media revision versions and acceptance checks in both themes without discussions', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: /Заказчик/ }).click();
-  await page.goto('./#/board');
+  await page.waitForURL('**/#/board');
+  await page.goto('./#/board?task=14');
   const panel = page.locator('.task-drawer');
+  await expect(panel.locator('.drawer-badges strong')).toHaveText('КР-014');
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await expect(panel.locator('.drawer-hero')).toBeVisible();
   await panel.getByRole('button', { name: 'Скопировать ссылку на задачу', exact: true }).click();
-  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain('#/board?task=9');
-  await expect(panel.getByLabel('Версия результата')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain('#/board?task=14');
+  const versions = panel.getByLabel('Версия результата');
+  await expect(versions.locator('option')).toHaveCount(2);
+  await versions.selectOption({ label: 'Версия 1' });
+  const remarks = 'Сократить первый экран и оставить один призыв к действию. Поднять контраст текста.';
+  await expect(panel.locator('.revision-note')).toContainText(remarks);
   await panel.locator('.acceptance-checks summary').click();
   await expect(panel.getByRole('heading', { name: 'Чек-лист приёмки', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Включить светлую тему' }).click();
@@ -20,20 +26,17 @@ test('task panel shows media and versions in both themes and saves discussion an
   const check = panel.getByRole('button', { name: 'Соответствует брифу', exact: true });
   await check.click();
   await expect(check).toHaveAttribute('aria-pressed', 'true');
-  await panel.getByLabel('Комментарий', { exact: true }).fill('Проверено в панели задачи');
-  await panel.getByRole('button', { name: 'Отправить', exact: true }).click();
-  await expect(panel.getByText('Проверено в панели задачи', { exact: true })).toBeVisible();
+  await expect(panel.getByLabel('Комментарий', { exact: true })).toHaveCount(0);
+  await expect(panel.locator('.mention-picker, .comment-compose')).toHaveCount(0);
   await page.reload();
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
-  await expect(panel.getByText('Проверено в панели задачи', { exact: true })).toBeVisible();
+  await versions.selectOption({ label: 'Версия 1' });
+  await expect(panel.locator('.revision-note')).toContainText(remarks);
   await expect(panel.getByRole('link', { name: /^Скачать / }).first()).toBeVisible();
+  await panel.locator('.acceptance-checks summary').click();
+  await expect(check).toHaveAttribute('aria-pressed', 'true');
   await panel.getByRole('button', { name: 'Детали', exact: true }).click();
-  await panel.getByLabel('Комментарий', { exact: true }).fill('Общий вопрос по брифу');
-  await panel.getByRole('button', { name: 'Отправить', exact: true }).click();
-  await expect(panel.getByText('Общий вопрос по брифу', { exact: true })).toBeVisible();
-  await page.reload();
-  await panel.getByRole('button', { name: 'Детали', exact: true }).click();
-  await expect(panel.getByText('Общий вопрос по брифу', { exact: true })).toBeVisible();
-  await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
-  await expect(panel.getByText('Общий вопрос по брифу', { exact: true })).toHaveCount(0);
+  await expect(panel.getByLabel('Комментарий', { exact: true })).toHaveCount(0);
+  await expect(panel.locator('.mention-picker, .comment-compose')).toHaveCount(0);
+  await expect(page.locator('.task-card .card-counters [title="Комментарии"]')).toHaveCount(0);
 });

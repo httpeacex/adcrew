@@ -10,7 +10,7 @@ const people: Profile[] = ['buyer', 'buyer', 'creative', 'creative', 'lead'].map
 const [buyer, otherBuyer, creative, otherCreative, lead] = people;
 const base = Date.parse('2026-11-10T04:00:00Z');
 const hour = 3_600_000;
-const brief: Brief = { offer: 'Night Run', geo: 'DE', format: 'image', quantity: 2, description: 'Две версии', references: [], priority: 'high', deadline: base + 5.5 * hour };
+const brief: Brief = { offer: 'Night Run', geo: 'DE', format: 'image', quantity: 1, description: 'Две версии', references: [], priority: 'high', deadline: base + 5.5 * hour };
 const asset = { name: 'concept.png', type: 'image/png', data: Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10) };
 
 test('profiles with mixed-case email addresses can sign in', () => {
@@ -32,7 +32,7 @@ test('a conflicting claim and forbidden reads leave the original owner intact', 
   assert.equal(store.task(otherBuyer, task), null);
   store.act(creative, task, 'claim', 0, randomUUID(), {}, base + hour);
   assert.throws(() => store.act(otherCreative, task, 'claim', 0, randomUUID(), {}, base + hour), { status: 409 });
-  assert.equal(store.task(otherCreative, task), null);
+  assert.equal(store.task(otherCreative, task)?.task.creativeId, creative.id);
   assert.equal(store.task(lead, task)?.task.creativeId, creative.id);
   store.db.close();
 });

@@ -6,13 +6,13 @@ import { browserRuntime } from '@/lib/client-runtime';
 
 const tabs = [
   { id: 'details', label: 'Обзор' }, { id: 'versions', label: 'Версии' },
-  { id: 'activity', label: 'Обсуждение' }, { id: 'history', label: 'История' },
+  { id: 'history', label: 'История' },
 ] as const;
 
-export function DrawerTabs({ details, activity, versions, history }: Record<typeof tabs[number]['id'], ReactNode>) {
+export function DrawerTabs({ details, versions, history }: Record<typeof tabs[number]['id'], ReactNode>) {
   const [tab, setTab] = useState<typeof tabs[number]['id']>('details');
   return <><div className="drawer-tabs" aria-label="Разделы задачи">{tabs.map(({ id, label }) => <button type="button" key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}</div>
-    <div key={tab} className="drawer-tab-body">{{ details, activity, versions, history }[tab]}</div></>;
+    <div key={tab} className="drawer-tab-body">{{ details, versions, history }[tab]}</div></>;
 }
 
 export function CopyTaskLink({ href }: { href: string }) {

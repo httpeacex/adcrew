@@ -72,6 +72,13 @@ export async function post(url: string, form: FormData, progress: (value: number
       if (!person) throw new InputError('Войдите в аккаунт.', 401);
       const requestId = field('requestId');
       let id: number;
+      let boardReturn = false;
+      if (url === '/api/users/edit' || url === '/api/users/deactivate') {
+        const userId=Number(field('id'));
+        if(url.endsWith('/edit'))store.editProfile(person,userId,{name:field('name'),email:field('email'),role:field('role') as typeof person.role,password:field('password')||undefined});
+        else store.deactivateProfile(person,userId);
+        await saveSnapshot(database().export());changes.postMessage('updated');return {path:'/settings'};
+      }
       if (url.startsWith('/api/product/')) {
         const result = store.productCommand(person, url, Object.fromEntries([...form].map(([key, value]) => [key, String(value)])));
         await saveSnapshot(database().export());
@@ -81,12 +88,18 @@ export async function post(url: string, form: FormData, progress: (value: number
       if (url === '/api/tasks') {
         id = store.create(person, validateBrief(Object.fromEntries(form), 0), requestId);
       } else {
-        const match = /^\/api\/tasks\/(\d+)\/(claim|submit|revise|accept)$/.exec(url);
+        const match = /^\/api\/tasks\/(\d+)\/(claim|submit|revise|accept|release|delete|assign)$/.exec(url);
         if (!match) throw new InputError('Страница не найдена.', 404);
         id = Number(match[1]);
         const action = match[2] as Action;
+        if (match[2] === 'assign') {
+          store.assign(person,id,Number(field('creativeId')),Number(field('version')),requestId);
+          await saveSnapshot(database().export());changes.postMessage('updated');return {path:`/tasks/${id}`};
+        }
+        boardReturn = action === 'release' || action === 'delete';
         const files: Upload[] = [];
         const usage = action === 'submit' && field('noAi') !== 'on' ? aiServices.flatMap(service => {
+          if (field(`subscription:${service}`) === 'on') return [{service, units:0}];
           const value = field(`credit:${service}`).trim();
           return value ? [{ service, units: creditUnits(value) }] : [];
         }) : [];
@@ -107,7 +120,7 @@ export async function post(url: string, form: FormData, progress: (value: number
       }
       await saveSnapshot(database().export());
       changes.postMessage('updated');
-      return { path: `/tasks/${id}` };
+      return { path: boardReturn ? '/board?task=none' : `/tasks/${id}` };
     });
   } catch (error) {
     if (error instanceof InputError) throw { error: error.message, field: error.field, status: error.status };
