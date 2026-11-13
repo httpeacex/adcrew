@@ -1504,7 +1504,6 @@ body::before { background: none; }
 .detail-labels { display: flex; gap: 8px; flex-wrap: wrap; }
 .detail-labels span { background: var(--raised); color: var(--text); padding: 5px 9px; font-size: 12px; border-radius: 5px; }
 @media (min-width: 1400px) {
- .board-sidebar > .side-nav { margin-top: 65px; }
  .board-local-search .search { position: fixed; left: 14px; top: 76px; width: 222px !important; z-index: 20; border-radius: 5px; height: 42px; background: var(--well); }
  .production-filters .board-local-search { flex: 0 0 0; width: 0; }
  .board-intro { min-height: 54px; }

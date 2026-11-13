@@ -8,6 +8,17 @@ test('approved workspace keeps account and alerts in the reference topbar withou
   await page.waitForURL('**/#/board');
   await page.goto('./#/board');
   await expect(page.locator('.workspace-body > .reference-topbar .profile-menu')).toBeVisible();
+  const menu = page.getByRole('navigation', { name: 'Рабочее пространство' });
+  await expect(menu.locator('.side-group-title')).toHaveText(['Меню', 'Общее']);
+  const boardMenu = await menu.boundingBox();
+  await menu.getByRole('link', { name: 'Дашборд', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Дашборд', exact: true })).toBeVisible();
+  expect((await menu.boundingBox())?.y).toBe(boardMenu?.y);
+  await menu.getByRole('link', { name: 'Библиотека', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Библиотека', exact: true })).toBeVisible();
+  expect((await menu.boundingBox())?.y).toBe(boardMenu?.y);
+  await page.goto('./#/board');
+
   await expect(page.locator('.board-heading')).toHaveCount(0);
   const themes = page.getByRole('group', { name: 'Тема оформления' });
   await expect(themes.getByRole('button', { name: 'Включить светлую тему' })).toHaveAttribute('aria-pressed', 'true');

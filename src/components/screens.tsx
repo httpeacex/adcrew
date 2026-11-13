@@ -42,7 +42,7 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
   const boardActive = active === 'board' || active === 'task' || active === 'new';
   return <div className={`workspace reference-workspace${isBoard ? ' board-workspace' : ''}`}>
     <a href="#workspace-main" className="skip">К рабочей области</a>
-    <aside className={`sidebar${isBoard ? ' board-sidebar' : ''}`}>
+    <aside className="sidebar">
       <Link href="/board" className="brand-link" aria-label="AdCrew, доска задач"><Brand /></Link>
       <nav className="side-nav" aria-label="Рабочее пространство">
         <div className="side-group">
@@ -51,6 +51,9 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
           <Link href="/board?task=none" className={boardActive || active === 'mine' ? 'active' : ''} aria-label="Доска задач" aria-current={active === 'board' ? 'page' : undefined}><Columns3 size={18}/><span>Задачи</span><span className="side-count">{counts.total}</span></Link>
           <Link aria-label="Библиотека" href="/library" className={active === 'library' || active === 'templates' ? 'active' : ''} aria-current={active === 'library' ? 'page' : undefined}><FileImage size={18}/><span>Библиотека</span></Link>
           {person.role === 'lead' ? <Link aria-label="Аналитика" href="/analytics" className={['analytics','team','ai-expenses'].includes(active) ? 'active' : ''} aria-current={active === 'analytics' ? 'page' : undefined}><BarChart3 size={18}/><span>Аналитика</span></Link> : <span className="side-unavailable" title="Командная аналитика доступна руководителю"><BarChart3 size={18}/><span>Аналитика</span></span>}
+        </div>
+        <div className="side-group">
+          <p className="side-group-title">Общее</p>
           <Link aria-label="Настройки" href="/settings" className={active === 'settings' ? 'active' : ''} aria-current={active === 'settings' ? 'page' : undefined}><Settings2 size={18}/><span>Настройки</span></Link>
         </div>
       </nav>
