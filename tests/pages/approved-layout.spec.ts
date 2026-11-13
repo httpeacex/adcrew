@@ -8,6 +8,8 @@ test('approved workspace keeps account and alerts in the reference topbar withou
   await page.waitForURL('**/#/board');
   await page.goto('./#/board');
   await expect(page.locator('.workspace-body > .reference-topbar .profile-menu')).toBeVisible();
+  const workspace = page.locator('.reference-workspace');
+  await expect(workspace).toHaveCSS('background-image', /radial-gradient/);
   const menu = page.getByRole('navigation', { name: 'Рабочее пространство' });
   const sectionTitles = menu.locator('.side-group-title');
   await expect(sectionTitles).toHaveText(['Меню', 'Общее']);
@@ -38,6 +40,22 @@ test('approved workspace keeps account and alerts in the reference topbar withou
   await expect(themes.getByRole('button', { name: 'Включить светлую тему' })).toHaveAttribute('aria-pressed', 'true');
   await themes.getByRole('button', { name: 'Включить светлую тему' }).click();
   await expect(themes.getByRole('button', { name: 'Включить светлую тему' })).toHaveAttribute('aria-pressed', 'true');
+  const lightBackground = await workspace.evaluate(element => getComputedStyle(element).backgroundImage);
+  await themes.getByRole('button', { name: 'Включить тёмную тему' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(workspace).toHaveCSS('background-image', /radial-gradient/);
+  expect(await workspace.evaluate(element => getComputedStyle(element).backgroundImage)).not.toBe(lightBackground);
+  const workspaceColors = () => workspace.evaluate(element => ({
+    canvas: getComputedStyle(element).background,
+    sidebar: getComputedStyle(element.querySelector('.sidebar')!).background,
+    logo: getComputedStyle(element.querySelector('.brand-mark')!).background,
+    accent: getComputedStyle(element).getPropertyValue('--primary-face'),
+  }));
+  const boardColors = await workspaceColors();
+  await menu.getByRole('link', { name: 'Дашборд', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Дашборд', exact: true })).toBeVisible();
+  expect(await workspaceColors()).toEqual(boardColors);
+  await page.goto('./#/board');
   await expect(page.locator('.board-local-search')).toHaveCount(0);
   await expect(page.getByRole('searchbox')).toHaveCount(0);
   const panel = page.locator('.task-drawer');

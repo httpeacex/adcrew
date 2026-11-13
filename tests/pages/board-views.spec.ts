@@ -6,8 +6,11 @@ test('production views and quick filters use the same tasks in both themes', asy
   await page.getByRole('dialog').getByRole('button', { name: /Руководитель/ }).click();
   await page.goto('./#/board?task=none');
   await expect(page.getByRole('region', { name: 'Показатели производства' })).toHaveCount(0);
+  const boardPanel = page.locator('.board-main');
+  await expect(boardPanel).toHaveCSS('border-radius', '26px');
   await page.getByRole('button', { name: 'Список', exact: true }).click();
   await expect(page.locator('.production-list tbody tr')).toHaveCount(17);
+  await expect(boardPanel).toHaveCSS('border-radius', '26px');
   await page.getByLabel('Формат задач', { exact: true }).selectOption('image');
   const imageCount = await page.locator('.production-list tbody tr').count();
   expect(imageCount).toBeGreaterThan(0);
