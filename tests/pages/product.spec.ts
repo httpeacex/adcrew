@@ -104,7 +104,7 @@ test('lead assigns an actual task and manages user access in Settings', async ({
   await page.reload();
   await expect(edited).toContainText('Доступ открыт');
   await page.locator('.profile-menu summary').click();
-  await page.getByRole('button', { name: 'Выйти', exact: true }).click();
+  await page.locator('.side-nav').getByRole('button', { name: 'Выйти', exact: true }).click();
   await page.getByRole('button', { name: 'Войти', exact: true }).click();
   const loginDialog = page.getByRole('dialog', { name: 'Вход в AdCrew' });
   await loginDialog.getByLabel('Эл. почта', { exact: true }).fill(email);

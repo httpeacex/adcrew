@@ -453,3 +453,38 @@
 .board-search-summary a { color:var(--accent-ink); text-decoration:underline; }
 .work-calendar-days { display:flex; flex-wrap:wrap; gap:8px 14px; margin:10px 0; }
 .work-calendar-days legend { margin-bottom:8px; }
+.reference-workspace .side-session,
+.reference-workspace .side-session fieldset { margin:0; padding:0; border:0; min-width:0; }
+.reference-workspace .side-session button {
+  display:flex;
+  align-items:center;
+  width:100%;
+  gap:12px;
+  padding:8px 10px;
+  min-height:42px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:var(--muted);
+  font:inherit;
+  font-size:13px;
+  cursor:pointer;
+}
+.reference-workspace .side-session button:hover { background:var(--surface); color:var(--text); }
+.reference-dashboard .dashboard-role-grid {
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  align-items:stretch;
+}
+.dashboard-role-grid > .dashboard-main-list { grid-column:span 4; }
+.dashboard-role-grid > :is(.dashboard-attention,.dashboard-queue,.reference-bars,.reference-completion) { grid-column:span 2; }
+.dashboard-role-grid > .dashboard-crew-panel { align-self:stretch; }
+@media(max-width:1100px) {
+  .reference-dashboard .dashboard-role-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .dashboard-role-grid > .dashboard-main-list { grid-column:1/-1; }
+  .dashboard-role-grid > :is(.dashboard-attention,.dashboard-queue,.reference-bars,.reference-completion) { grid-column:auto; }
+}
+@media(max-width:760px) {
+  .reference-dashboard .dashboard-role-grid { grid-template-columns:minmax(0,1fr); }
+  .reference-workspace .side-session button { justify-content:center; }
+  .reference-workspace .side-session button span { display:none; }
+}

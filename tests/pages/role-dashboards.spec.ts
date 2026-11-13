@@ -9,7 +9,7 @@ test('buyer sees adapted navigation, own dashboard, five board columns and accep
  await expect(page.locator('.reference-dashboard')).toHaveAttribute('data-role','buyer');
  await page.screenshot({path:'test-results/adcrew-buyer-dashboard.png',fullPage:true});
  await expect(page.getByRole('heading',{name:'Ждут вашей проверки',exact:true})).toBeVisible();
- await expect(page.locator('.side-nav > .side-group > a, .side-nav > .side-group > .side-unavailable')).toHaveCount(5);
+ await expect(page.locator('.side-nav > .side-group > a, .side-nav > .side-group > .side-unavailable')).toHaveCount(6);
  await page.locator('.reference-stat').filter({hasText:'Ждут проверки'}).click();
  await expect(page.locator('.task-card')).toHaveCount(2);
  await page.locator('.task-card').first().click();

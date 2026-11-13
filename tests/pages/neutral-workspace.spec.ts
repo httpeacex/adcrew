@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('workspace keeps six primary sections for the lead, top account, theme and Settings tools', async ({ page }) => {
+test('workspace keeps lead navigation and help, top account, theme and Settings tools', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
@@ -11,8 +11,8 @@ test('workspace keeps six primary sections for the lead, top account, theme and 
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await expect(panel.getByLabel('Комментарий', { exact: true })).toHaveCount(0);
   await expect(panel.locator('.mention-picker, .comment-compose')).toHaveCount(0);
-  await expect(page.locator('.side-nav a')).toHaveCount(6);
-  await expect(page.locator('.side-nav a')).toHaveText(['Дашборд', /Задачи/, 'Библиотека', 'Аналитика', 'Команда', 'Настройки']);
+  await expect(page.locator('.side-nav a')).toHaveCount(7);
+  await expect(page.locator('.side-nav a')).toHaveText(['Дашборд', /Задачи/, 'Библиотека', 'Аналитика', 'Команда', 'Настройки', 'Справка']);
   await expect(page.locator('.reference-topbar .profile-menu summary')).toBeVisible();
   await expect(page.locator('.sidebar .profile-menu')).toHaveCount(0);
   await page.getByRole('button', { name: 'Использовать системную тему', exact: true }).click();

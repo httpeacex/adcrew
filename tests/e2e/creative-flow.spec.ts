@@ -46,7 +46,7 @@ test('brief, claim, two file submissions, review, analytics and role boundaries'
   expect(task).toMatch(/^\/tasks\/\d+$/);
 
   await login(creative, 'Креативщик');
-  await expect(creative.getByRole('navigation', { name: 'Рабочее пространство' }).getByRole('link')).toHaveCount(4);
+  await expect(creative.getByRole('navigation', { name: 'Рабочее пространство' }).getByRole('link')).toHaveCount(5);
   await expect(creative.locator('.side-unavailable')).toHaveText('Аналитика');
   await creative.goto(`/board?task=${task.split('/').at(-1)}`);
   await creative.getByRole('button', { name: 'Взять в работу' }).click();

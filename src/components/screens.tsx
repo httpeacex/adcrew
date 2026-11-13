@@ -56,6 +56,14 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
         <div className="side-group">
           <p className="side-group-title">Общее</p>
           <Link aria-label="Настройки" href="/settings" className={active === 'settings' ? 'active' : ''} aria-current={active === 'settings' ? 'page' : undefined}><Settings2 size={18}/><span>Настройки</span></Link>
+          <Link href="/how-it-works" aria-label="Справка" className={active === 'how-it-works' ? 'active' : ''} aria-current={active === 'how-it-works' ? 'page' : undefined}>
+            <BookOpen size={18} aria-hidden="true"/><span>Справка</span>
+          </Link>
+          <SessionForm className="side-session">
+            <button type="submit" name="mode" value="logout" aria-label="Выйти">
+              <LogOut size={18} aria-hidden="true"/><span>Выйти</span>
+            </button>
+          </SessionForm>
         </div>
       </nav>
       <div className="sidebar-promo">
