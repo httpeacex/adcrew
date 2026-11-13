@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { FileText, History, Bell, ArrowDownToLine, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, MoreVertical, ClipboardList, Clock3, Columns3, FileImage, Film, Flag,  Layers3,  LogOut, Play, Plus, Search, Settings2, Sparkles, Users } from 'lucide-react';
+import { FileText, History, Bell, ArrowDownToLine, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, MoreVertical, ClipboardList, Clock3, Columns3, FileImage, Film, Flag,  Layers3,  LogOut, Play, Plus, Search, Settings2, Smartphone, Sparkles, Users } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { demoProfiles } from '@/lib/demo-profiles';
 import type { Store } from '@/lib/store';
@@ -53,7 +53,7 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
           {person.role === 'lead' ? <Link aria-label="Аналитика" href="/analytics" className={['analytics','ai-expenses'].includes(active) ? 'active' : ''} aria-current={active === 'analytics' ? 'page' : undefined}><BarChart3 size={18}/><span>Аналитика</span></Link> : <span className="side-unavailable" title="Командная аналитика доступна руководителю"><BarChart3 size={18}/><span>Аналитика</span></span>}
           {person.role === 'lead' && <Link aria-label="Команда" href="/team" className={active === 'team' ? 'active' : ''} aria-current={active === 'team' ? 'page' : undefined}><Users size={18}/><span>Команда</span></Link>}
         </div>
-        <div className="side-group">
+        <div className="side-group side-general">
           <p className="side-group-title">Общее</p>
           <Link aria-label="Настройки" href="/settings" className={active === 'settings' ? 'active' : ''} aria-current={active === 'settings' ? 'page' : undefined}><Settings2 size={18}/><span>Настройки</span></Link>
           <Link href="/how-it-works" aria-label="Справка" className={active === 'how-it-works' ? 'active' : ''} aria-current={active === 'how-it-works' ? 'page' : undefined}>
@@ -66,12 +66,14 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
           </SessionForm>
         </div>
       </nav>
-      <div className="sidebar-promo">
-        <span className="sidebar-promo-label">Новое</span>
-        <strong>Создавай креативы быстрее в одной системе</strong>
-        <Link href={person.role === 'buyer' ? '/tasks/new' : '/how-it-works'} className="sidebar-promo-link">Попробовать <ArrowUpRight size={15} aria-hidden="true" /></Link>
-      </div>
       <div className="sidebar-theme"><ThemeSelector /></div>
+      <div className="sidebar-promo">
+        <Image src="/reference/mobile-promo.webp" alt="" fill sizes="188px" className="sidebar-promo-art" unoptimized />
+        <span className="sidebar-promo-icon"><Smartphone size={15} aria-hidden="true" /></span>
+        <strong>AdCrew на телефоне</strong>
+        <p>Задачи всегда под рукой</p>
+        <Link href="/board?task=none" className="sidebar-promo-link">Открыть задачи <ArrowUpRight size={14} aria-hidden="true" /></Link>
+      </div>
 
     </aside>
     <div className="workspace-body">

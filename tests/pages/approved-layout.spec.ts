@@ -9,7 +9,10 @@ test('approved workspace keeps account and alerts in the reference topbar withou
   await page.goto('./#/board');
   await expect(page.locator('.workspace-body > .reference-topbar .profile-menu')).toBeVisible();
   const menu = page.getByRole('navigation', { name: 'Рабочее пространство' });
-  await expect(menu.locator('.side-group-title')).toHaveText(['Меню', 'Общее']);
+  const sectionTitles = menu.locator('.side-group-title');
+  await expect(sectionTitles).toHaveText(['Меню', 'Общее']);
+  await expect(sectionTitles.first()).toHaveCSS('font-size', '13px');
+  await expect(sectionTitles.last()).toHaveCSS('font-size', '13px');
   const boardMenu = await menu.boundingBox();
   await menu.getByRole('link', { name: 'Дашборд', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Дашборд', exact: true })).toBeVisible();
@@ -17,6 +20,17 @@ test('approved workspace keeps account and alerts in the reference topbar withou
   await menu.getByRole('link', { name: 'Библиотека', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Библиотека', exact: true })).toBeVisible();
   expect((await menu.boundingBox())?.y).toBe(boardMenu?.y);
+  const promo = page.locator('.sidebar-promo');
+  await expect(promo).toBeVisible();
+  await expect.poll(() => promo.locator('img').evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+  const sidebarBox = (await page.locator('.sidebar').boundingBox())!;
+  const promoBox = (await promo.boundingBox())!;
+  const generalBox = (await sectionTitles.last().boundingBox())!;
+  expect(generalBox.y).toBeGreaterThan(sidebarBox.y + sidebarBox.height / 2);
+  expect(promoBox.y).toBeGreaterThan(generalBox.y);
+  expect(sidebarBox.y + sidebarBox.height - promoBox.y - promoBox.height).toBeLessThan(25);
+  await promo.getByRole('link', { name: 'Открыть задачи' }).click();
+  await expect(page).toHaveURL(/#\/board\?task=none$/);
   await page.goto('./#/board');
 
   await expect(page.locator('.board-heading')).toHaveCount(0);
@@ -35,4 +49,13 @@ test('approved workspace keeps account and alerts in the reference topbar withou
   await expect(panel.getByRole('heading', { name: 'Описание', exact: true })).toBeVisible();
   await page.locator('.workspace-body > .reference-topbar .profile-menu summary').click();
   await expect(page.locator('.workspace-body > .reference-topbar .profile-popup')).toBeVisible();
+
+  await page.setViewportSize({ width: 820, height: 640 });
+  await expect(promo).toBeHidden();
+  await expect(menu.getByRole('link', { name: 'Настройки' })).toBeVisible();
+  const rail = await page.locator('.sidebar').evaluate(element => ({
+    width: element.clientWidth,
+    contentWidth: element.scrollWidth,
+  }));
+  expect(rail.contentWidth).toBe(rail.width);
 });
