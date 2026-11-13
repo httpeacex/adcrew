@@ -63,7 +63,7 @@ function ProductionView({ view, tasks, now, boardPath }: { view: 'list' | 'calen
 export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, drawer, initialStatus = '' }: {
   initialStatus?: string; tasks: Task[]; person: Actor; mine: boolean; now: number; selectedId?: number; defaultDrawer: boolean; account: ReactNode; drawer: ReactNode; unread?: number;
 }) {
-  const [dragged, setDragged] = useState<number | null>(null);
+  const draggedId = useRef<number | null>(null);
   const [drop, setDrop] = useState<{task:Task; action:NonNullable<ReturnType<typeof boardDropAction>>} | null>(null);
   const [moveNotice,setMoveNotice] = useState('');
   useEffect(()=>{
@@ -218,7 +218,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
         const shown = column.slice(0, limit);
         const selected = column.find((task) => task.id === selectedId);
         const visible = expanded[id] || hasFilters ? column : selected && !shown.includes(selected) ? [selected, ...shown.slice(0, limit - 1)] : shown;
-        return <section className={`column ${id} ${status && status !== id ? 'mobile-hidden' : ''}`} key={id} aria-label={label} onDragOver={event=>{const t=tasks.find(t=>t.id===dragged);if(t&&boardDropAction(person,t,id)){event.preventDefault();event.dataTransfer.dropEffect='move';}}} onDrop={event=>{event.preventDefault();const t=tasks.find(t=>t.id===dragged);const action=t&&boardDropAction(person,t,id);if(t&&action){setDrop({task:t,action});setMoveNotice('Подтвердите действие. Статус изменится после сохранения.');}setDragged(null);}}>
+        return <section className={`column ${id} ${status && status !== id ? 'mobile-hidden' : ''}`} key={id} aria-label={label} onDragOver={event=>{const t=tasks.find(t=>t.id===draggedId.current);if(t&&boardDropAction(person,t,id)){event.preventDefault();event.dataTransfer.dropEffect='move';}}} onDrop={event=>{event.preventDefault();const t=tasks.find(t=>t.id===draggedId.current);const action=t&&boardDropAction(person,t,id);if(t&&action){setDrop({task:t,action});setMoveNotice('Подтвердите действие. Статус изменится после сохранения.');}draggedId.current = null;}}>
           <header className="column-head"><span className="column-dot" role="img" aria-label={shareLabel} title={shareLabel} style={{ '--column-share': `${share}%` } as React.CSSProperties} /><h3>{label}</h3><span className="column-count">{column.length}</span><div className="column-tools">
             <details className="column-menu">
               <summary aria-label={`Действия колонки ${label}`}><MoreHorizontal size={15} /></summary>
@@ -235,7 +235,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
             </details>
             {isBuyer && <Link href="/tasks/new" aria-label={`Создать задачу · ${label}`}><Plus size={15} /></Link>}
           </div></header>
-          <div className="column-body">{visible.map((task) => <TaskCard draggable={statuses.some(stage=>boardDropAction(person,task,stage.id)!==null)} onDragStart={event=>{setDragged(task.id);event.dataTransfer.setData('text/plain',String(task.id));event.dataTransfer.effectAllowed='move';}} onDragEnd={()=>setDragged(null)} key={task.id} task={task} now={now} href={`${boardPath}task=${task.id}`} selected={selectedId === task.id} />)}
+          <div className="column-body">{visible.map((task) => <TaskCard draggable={statuses.some(stage=>boardDropAction(person,task,stage.id)!==null)} onDragStart={event=>{draggedId.current = task.id;event.dataTransfer.setData('text/plain',String(task.id));event.dataTransfer.effectAllowed='move';}} onDragEnd={()=>draggedId.current = null} key={task.id} task={task} now={now} href={`${boardPath}task=${task.id}`} selected={selectedId === task.id} />)}
             {column.length === 0 && <div className="empty-column"><span>Нет задач</span><small>{isBuyer && id === 'review' ? 'Здесь появятся задачи для вашей проверки' : hint}</small></div>}
             {!hasFilters && column.length > limit && <button className="column-more" type="button" aria-expanded={!!expanded[id]} onClick={() => setExpanded({ ...expanded, [id]: !expanded[id] })}>{expanded[id] ? 'Свернуть' : `Ещё ${column.length - limit}`}<ChevronDown size={13} aria-hidden="true" /></button>}
           </div>
