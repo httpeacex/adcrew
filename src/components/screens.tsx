@@ -96,7 +96,16 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
 }
 
 export function Settings({ person }: { person: Profile }) {
-  return <><nav className="settings-tools" aria-label="Инструменты рабочего пространства"><Link href="/studio">ИИ-студия</Link><Link href="/integrations">Интеграции</Link><Link href="/notifications">Уведомления</Link>{person.role === 'lead' && <><Link href="/team">Команда</Link><Link href="/ai-expenses">Тарифы и бюджет</Link><Link href="/history">История действий</Link></>}</nav><section className="panel"><div className="panel-title"><h2>Учётная запись</h2></div><dl className="facts"><div><dt>Имя</dt><dd>{person.name}</dd></div><div><dt>Роль</dt><dd>{roles[person.role]}</dd></div><div><dt>Электронная почта</dt><dd>{person.email}</dd></div></dl></section></>;
+  return <>
+    <nav className="settings-tools" aria-label="Инструменты рабочего пространства">
+      <Link href="/studio">ИИ-студия</Link><Link href="/integrations">Интеграции</Link><Link href="/notifications">Уведомления</Link>
+      {person.role === 'lead' && <><Link href="/team">Команда</Link><Link href="/ai-expenses">Тарифы и бюджет</Link><Link href="/history">История действий</Link></>}
+    </nav>
+    <section className="product-panel product-padding settings-account">
+      <h2>Учётная запись</h2>
+      <dl><div><dt>Имя</dt><dd>{person.name}</dd></div><div><dt>Роль</dt><dd>{roles[person.role]}</dd></div><div><dt>Электронная почта</dt><dd>{person.email}</dd></div></dl>
+    </section>
+  </>;
 }
 
 export function WorkspaceHistory({ events }: { events: ReturnType<Store['workspaceHistory']> }) {

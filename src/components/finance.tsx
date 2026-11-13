@@ -41,7 +41,9 @@ export function FinanceSettings({ snapshot, person, returnTo = '/settings' }: { 
   if (person.role !== 'lead') return null;
   const subscriptions = snapshot.finance.tariffs.filter(tariff => tariff.kind === 'subscription');
   const creditTariffs = snapshot.finance.tariffs.filter(tariff => tariff.kind === 'credits');
-  return <div className="product-card-grid">
+  return <section className="finance-settings" aria-label="Настройки расходов AI">
+    <h2 className="finance-settings-title">Расходы AI</h2>
+    <div className="product-card-grid">
     <section className="product-panel product-padding">
       <h2>Тарифы AI в USD</h2>
       <p className="product-muted">Цена кредита вычисляется из стоимости тарифа. Новый тариф применяется к будущим сдачам.</p>
@@ -65,6 +67,8 @@ export function FinanceSettings({ snapshot, person, returnTo = '/settings' }: { 
         <label className="field">Сумма, USD<input name="amount" type="number" min="0" step="0.01" defaultValue={snapshot.finance.budget.amount} required /></label>
         <button className="button primary" type="submit" disabled={busy}>Сохранить бюджет</button>
       </fieldset>}</RequestForm>
+    </section>
+    <section className="product-panel product-padding">
       <h2>Платёж за подписку</h2>
       <RequestForm url="/api/product/usd-charge" returnTo={returnTo}>{({ busy }) => <fieldset disabled={busy}>
         <label className="field">Подписка<select name="service" required defaultValue=""><option value="" disabled>Выберите подписку</option>{subscriptions.map(tariff => <option key={tariff.service}>{tariff.service}</option>)}</select></label>
@@ -84,7 +88,8 @@ export function FinanceSettings({ snapshot, person, returnTo = '/settings' }: { 
       </fieldset>}</RequestForm>
     </section>
     <AllocationForm options={snapshot.finance.allocationOptions} returnTo={returnTo} />
-  </div>;
+    </div>
+  </section>;
 }
 
 export function FinancePage({ snapshot, report, person, settings = false, returnTo = '/analytics' }: {

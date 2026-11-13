@@ -36,6 +36,14 @@ test('workspace keeps lead navigation and help, top account, theme and Settings 
   await expect(page.getByRole('button', { name: 'Сегодня', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.goto('./#/settings');
   await expect(page.getByRole('region', { name: 'Управление пользователями' })).toBeVisible();
+  const settings = page.locator('[data-view="settings"]');
+  const calendarDays = settings.locator('.work-calendar-options .check');
+  await expect(calendarDays).toHaveCount(7);
+  expect(await calendarDays.evaluateAll(days => new Set(days.map(day => day.getBoundingClientRect().top)).size)).toBe(1);
+  expect(await settings.evaluate(panel => panel.clientWidth)).toBeGreaterThan(900);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('navigation', { name: 'Инструменты рабочего пространства' }).getByRole('link', { name: 'Интеграции', exact: true }).click();
   await expect(page).toHaveURL(/#\/integrations/);
   await expect(page.locator('.integration-node')).toHaveCount(3);

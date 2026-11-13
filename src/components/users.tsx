@@ -19,8 +19,8 @@ function UserFields({ user }: { user?: User }) {
 
 export function UserManagement({ person, users }: { person: Profile; users: User[] }) {
   if (person.role !== 'lead') return null;
-  return <section className="product-page" aria-label="Управление пользователями">
-    <header className="product-heading"><div><h2>Пользователи</h2><p>Участники команды, роли и доступ к сервису.</p></div></header>
+  return <section className="product-page settings-users" aria-label="Управление пользователями">
+    <header className="product-heading"><div><h2>Пользователи</h2><p>При удалении пользователя его задачи, файлы и расходы сохраняются.</p></div></header>
     <details className="product-panel product-padding"><summary>Добавить пользователя</summary>
       <RequestForm url="/api/product/member" returnTo="/settings">{({ busy, issue }) => <fieldset disabled={busy}>
         <UserFields /><Issue issue={issue?.field ? issue : undefined} />
@@ -37,7 +37,7 @@ export function UserManagement({ person, users }: { person: Profile; users: User
           </fieldset>}</RequestForm>
         </details>
         {user.id !== person.id && <RequestForm url="/api/users/deactivate" returnTo="/settings">{({ busy }) => <fieldset disabled={busy}>
-          <input name="id" type="hidden" value={user.id} /><p className="product-muted">Удаление закрывает доступ. Задачи, файлы и расходы сохраняются.</p>
+          <input name="id" type="hidden" value={user.id} />
           <button className="button secondary" type="submit">{busy ? 'Закрываем доступ…' : 'Удалить пользователя'}</button>
         </fieldset>}</RequestForm>}
       </>}

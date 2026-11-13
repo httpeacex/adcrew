@@ -154,8 +154,48 @@
 .dashboard-workload .dashboard-workload-head { color:var(--muted); font-size:10px; }
 .reference-bar-track .bar-ring { width:12px; height:12px; border-radius:50%; border:3px solid white; flex-shrink:0; }
 .reference-workspace .side-unavailable { display:flex; align-items:center; gap:12px; min-height:42px; padding:8px 10px; color:var(--quiet); font-size:13px; }
-.settings-tools { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
-.settings-tools a { padding:10px 14px; background:var(--surface); border:1px solid var(--rule); border-radius:10px; font-size:13px; }
+.workspace-page[data-view='settings'] {
+  display:grid;
+  gap:20px;
+  container-type:inline-size;
+}
+.workspace-page[data-view='settings'] > .workspace-title { margin:0; }
+.settings-tools { display:flex; flex-wrap:wrap; gap:8px; }
+.settings-tools a { display:flex; align-items:center; min-height:40px; padding:8px 13px; background:var(--surface); border:1px solid var(--panel-outline,var(--rule)); border-radius:10px; font-size:13px; }
+.settings-tools a:hover { border-color:var(--accent); color:var(--accent-ink); }
+.settings-account dl { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr)); gap:12px; margin:14px 0 0; }
+.settings-account dl > div { min-width:0; padding:10px 12px; border:1px solid var(--rule); border-radius:10px; background:var(--well); }
+.settings-account dt { color:var(--muted); font-size:12px; }
+.settings-account dd { margin:5px 0 0; font-size:14px; overflow-wrap:anywhere; }
+.workspace-page[data-view='settings'] .product-padding { padding:clamp(14px,2.2cqw,22px); }
+.workspace-page[data-view='settings'] .product-card-grid { gap:14px; align-items:start; }
+.workspace-page[data-view='settings'] .product-padding form > fieldset { gap:12px; margin-top:14px; }
+.workspace-page[data-view='settings'] :is(.field input,.field select,.button) { min-height:40px; }
+.workspace-page[data-view='settings'] .field { overflow-wrap:anywhere; }
+.workspace-page[data-view='settings'] .field small { color:var(--muted); line-height:1.4; }
+.workspace-page[data-view='settings'] .settings-users { gap:12px; }
+.settings-users .product-heading h2,.finance-settings-title { margin:0; font-size:18px; }
+.settings-users .product-heading p { margin:4px 0 0; }
+.settings-users article h3 { font-size:14px; margin:0 0 4px; }
+.settings-users article > p { overflow-wrap:anywhere; font-size:12px; line-height:1.5; }
+.settings-users article details { border-top:1px solid var(--rule); margin-top:12px; padding-top:10px; }
+.settings-users summary { cursor:pointer; color:var(--accent-ink); font-size:13px; font-weight:550; }
+.settings-users article .product-form-grid { grid-template-columns:minmax(0,1fr); gap:10px; }
+.settings-users article .button.secondary { color:var(--overdue); }
+.settings-users article:has(details[open]) { grid-column:1/-1; }
+.settings-calendar .product-muted,.finance-settings .product-muted { margin-top:5px; }
+.finance-settings { display:grid; gap:12px; }
+.finance-settings .product-card-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.finance-settings .product-card-grid > :last-child { grid-column:1/-1; }
+@container (min-width:720px) {
+  .workspace-page[data-view='settings'] :is(.settings-calendar,.finance-settings) form > fieldset,
+  .workspace-page[data-view='settings'] .settings-users article .product-form-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .workspace-page[data-view='settings'] :is(.settings-calendar,.finance-settings) form > fieldset > :not(.field) { grid-column:1/-1; }
+}
+@container (max-width:600px) {
+  .workspace-page[data-view='settings'] .finance-settings .product-card-grid,
+  .workspace-page[data-view='settings'] .product-form-grid { grid-template-columns:minmax(0,1fr); }
+}
 .card-assignees,.card-time { display:grid; gap:5px; margin:10px 0; font-size:11px; color:var(--muted); }
 .reference-workspace .task-card { height:auto; min-height:180px; }
 .reference-workspace .card-time { display:grid; }
@@ -606,8 +646,11 @@ body:has(.library-task-dialog[open]) { overflow:hidden; }
 }
 .board-search-summary { display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; padding:12px 16px; font-size:13px; }
 .board-search-summary a { color:var(--accent-ink); text-decoration:underline; }
-.work-calendar-days { display:flex; flex-wrap:wrap; gap:8px 14px; margin:10px 0; }
-.work-calendar-days legend { margin-bottom:8px; }
+.settings-calendar .work-calendar-days { display:block; margin:0; }
+.work-calendar-days legend { margin-bottom:6px; font-size:13px; }
+.work-calendar-options { display:flex; flex-wrap:wrap; gap:6px; }
+.work-calendar-options .check { padding:7px 9px; min-height:34px; border:1px solid var(--rule); border-radius:8px; background:var(--well); font-size:12px; cursor:pointer; }
+.work-calendar-options .check:has(:checked) { background:var(--accent-deep); color:var(--accent-ink); }
 .reference-workspace .side-session,
 .reference-workspace .side-session fieldset { margin:0; padding:0; border:0; min-width:0; }
 .reference-workspace .side-session button {
