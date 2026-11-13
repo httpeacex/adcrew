@@ -1,3 +1,4 @@
+import { saveWorkCalendar } from '@/lib/work-calendar';
 import { Buffer } from 'buffer';
 import type { Upload } from '@/lib/store';
 import { ProductStore as Store } from '@/lib/product-store';
@@ -73,6 +74,12 @@ export async function post(url: string, form: FormData, progress: (value: number
       const requestId = field('requestId');
       let id: number;
       let boardReturn = false;
+      if (url === '/api/settings/work-calendar') {
+        saveWorkCalendar(store, person, { enabled: field('enabled'), days: field('days'), start: field('start'), end: field('end') });
+        await saveSnapshot(database().export());
+        changes.postMessage('updated');
+        return { path: '/settings' };
+      }
       if (url === '/api/users/edit' || url === '/api/users/deactivate') {
         const userId=Number(field('id'));
         if(url.endsWith('/edit'))store.editProfile(person,userId,{name:field('name'),email:field('email'),role:field('role') as typeof person.role,password:field('password')||undefined});

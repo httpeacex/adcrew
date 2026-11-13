@@ -1,4 +1,6 @@
-import { withTaskTimes } from '@/lib/operations-report';
+import { readReportTasks, withTaskTimes, type RevisionEvent } from '@/lib/operations-report';
+import { readWorkCalendar } from '@/lib/work-calendar';
+import { WorkCalendarSettings } from '@/components/work-calendar-settings';
 import { UserManagement } from '@/components/users';
 import { OperationsAnalytics } from '@/components/operations-analytics';
 import { FinancePage, FinanceSettings } from '@/components/finance';
@@ -46,7 +48,8 @@ function App() {
   const now = snapshot.now;
   const product = store.productSnapshot(person, now);
   const unread = product.notices.filter(item => !item.read).length;
-  const timedTasks = withTaskTimes(store,person,store.list(person),now);
+  const calendar = readWorkCalendar(store);
+  const timedTasks = withTaskTimes(store,person,store.list(person),now,calendar);
   let active = view;
   let screen: ReactNode;
   if (view === 'library') {
@@ -61,14 +64,15 @@ function App() {
   } else if (view === 'board' && path.length === 1) {
     const mine = route.searchParams.get('scope') === 'mine' && person.role === 'creative';
     active = mine ? 'mine' : 'board';
-    const tasks = timedTasks;
+    const search = (route.searchParams.get('q') || '').trim().toLocaleLowerCase('ru');
+    const tasks = search ? timedTasks.filter(task => `${task.offer} КР-${String(task.id).padStart(3, '0')}`.toLocaleLowerCase('ru').includes(search)) : timedTasks;
     const query = route.searchParams.get('task');
     const defaultTask = query === null && !mine ? tasks.find(task => task.status === 'review')?.id : undefined;
     const id = query && /^\d+$/.test(query) ? Number(query) : defaultTask;
     const detail = id && (!mine || tasks.some(task => task.id === id && task.creativeId === person.id)) ? store.task(person, id) : null;
     const boardStatus = route.searchParams.get('status') || '';
-    const boardPath = `${mine ? '/board?scope=mine&' : '/board?'}${boardStatus ? `status=${encodeURIComponent(boardStatus)}&` : ''}`;
-    screen = <Board tariffs={product.finance.tariffs} initialStatus={route.searchParams.get('status') || ''} key={`${person.id}:${active}:${route.searchParams.get('status') || ''}`} tasks={tasks} person={person} mine={mine} now={now} selectedId={detail?.task.id}
+    const boardPath = `${mine ? '/board?scope=mine&' : '/board?'}${search ? `q=${encodeURIComponent(search)}&` : ''}${boardStatus ? `status=${encodeURIComponent(boardStatus)}&` : ''}`;
+    screen = <Board search={search} tariffs={product.finance.tariffs} initialStatus={route.searchParams.get('status') || ''} key={`${person.id}:${active}:${boardStatus}:${search}`} tasks={tasks} person={person} mine={mine} now={now} selectedId={detail?.task.id}
       defaultDrawer={!!defaultTask} account={<AccountMenu person={person} demo />}
       unread={unread} drawer={detail && <TaskDrawer extras={store.taskExtras(person, detail.task.id)} key={detail.task.id} {...detail} person={person} now={now} closeHref={`${boardPath}task=none`} currentHref={`${boardPath}task=${detail.task.id}`} />} />;
   } else if (view === 'tasks' && path.length === 2) {
@@ -79,7 +83,7 @@ function App() {
       screen = detail ? <TaskScreen extras={store.taskExtras(person, detail.task.id)} key={`${person.id}:${detail.task.id}:${detail.task.version}`} {...detail} person={person} now={now} /> : <Missing />;
     }
   } else if (['templates', 'notifications', 'integrations'].includes(view) && path.length === 1 && (view !== 'templates' || person.role !== 'creative')) screen = <ProductPage view={view as 'templates' | 'notifications' | 'integrations'} person={person} snapshot={product} tasks={timedTasks} now={now} />;
-  else if (view === 'settings') screen = <><Settings person={person} /><UserManagement person={person} users={person.role === 'lead' ? store.users(person) : []} /><FinanceSettings snapshot={product} person={person} /></>;
+  else if (view === 'settings') screen = <><Settings person={person} /><UserManagement person={person} users={person.role === 'lead' ? store.users(person) : []} />{person.role === 'lead' && <WorkCalendarSettings calendar={calendar}/>}<FinanceSettings snapshot={product} person={person} /></>;
   else if (view === 'how-it-works') screen = <InkOrbitFeatures />;
   else if (view === 'history' && person.role === 'lead') screen = <WorkspaceHistory events={store.workspaceHistory(person)} />;
   else if ((view === 'analytics' || view === 'team' || view === 'ai-expenses') && person.role === 'lead') {
@@ -93,7 +97,7 @@ function App() {
     screen = view === 'team'
       ? <ProductPage view="team" person={person} snapshot={product} tasks={timedTasks} now={now} />
       : view === 'ai-expenses' ? <FinancePage person={person} snapshot={product} report={period ? store.financeReport(person,period.from,period.to) : undefined} />
-      : period ? <OperationsAnalytics members={store.users(person)} tasks={timedTasks} events={store.db.prepare('SELECT taskId,action,at FROM task_events ORDER BY id').all() as {taskId:number;action:string;at:number}[]} snapshot={product} finance={store.financeReport(person,period.from,period.to)} person={person} start={start} end={end} now={now} tab={route.searchParams.get('tab') || 'overview'} /> : <p role="alert">Проверьте даты периода.</p>;
+      : period ? <OperationsAnalytics members={store.users(person)} tasks={readReportTasks(store,person)} calendar={calendar} events={store.db.prepare('SELECT taskId,action,at,toStatus FROM task_events ORDER BY id').all() as RevisionEvent[]} snapshot={product} finance={store.financeReport(person,period.from,period.to)} person={person} start={start} end={end} now={now} tab={route.searchParams.get('tab') || 'overview'} /> : <p role="alert">Проверьте даты периода.</p>;
   } else screen = <Missing />;
   return <Workspace key={person.id} person={person} active={active} demo counts={store.taskCounts(person)} unread={unread}>{screen}</Workspace>;
 }
@@ -101,7 +105,7 @@ function App() {
 // Native GET forms need hash routing too; React action forms prevent their own default.
 document.addEventListener('submit', event => {
   const form = event.target;
-  if (event.defaultPrevented || !(form instanceof HTMLFormElement) || !form.matches('.report-range')) return;
+  if (event.defaultPrevented || !(form instanceof HTMLFormElement) || !form.matches('.report-range, .reference-search')) return;
   event.preventDefault();
   const query = new URLSearchParams();
   for (const [name, value] of new FormData(form)) query.set(name, String(value));

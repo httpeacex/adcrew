@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('workspace keeps five primary sections, top account, theme and Settings tools', async ({ page }) => {
+test('workspace keeps six primary sections for the lead, top account, theme and Settings tools', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
@@ -11,8 +11,8 @@ test('workspace keeps five primary sections, top account, theme and Settings too
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await expect(panel.getByLabel('Комментарий', { exact: true })).toHaveCount(0);
   await expect(panel.locator('.mention-picker, .comment-compose')).toHaveCount(0);
-  await expect(page.locator('.side-nav a')).toHaveCount(5);
-  await expect(page.locator('.side-nav a')).toHaveText(['Дашборд', /Задачи/, 'Библиотека', 'Аналитика', 'Настройки']);
+  await expect(page.locator('.side-nav a')).toHaveCount(6);
+  await expect(page.locator('.side-nav a')).toHaveText(['Дашборд', /Задачи/, 'Библиотека', 'Аналитика', 'Команда', 'Настройки']);
   await expect(page.locator('.reference-topbar .profile-menu summary')).toBeVisible();
   await expect(page.locator('.sidebar .profile-menu')).toHaveCount(0);
   await page.getByRole('button', { name: 'Использовать системную тему', exact: true }).click();
@@ -22,7 +22,8 @@ test('workspace keeps five primary sections, top account, theme and Settings too
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.reload();
   await expect(page.getByRole('button', { name: 'Использовать системную тему', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await page.goto('./#/team');
+  await page.locator('.side-nav').getByRole('link', { name: 'Команда', exact: true }).click();
+  await expect(page.locator('.side-nav [aria-current=page]')).toHaveText('Команда');
   await page.getByRole('searchbox', { name: 'Поиск участника' }).fill('Никита');
   await expect(page.locator('.team-member')).toHaveCount(1);
   await page.locator('.team-member').click();
@@ -38,7 +39,7 @@ test('workspace keeps five primary sections, top account, theme and Settings too
   await page.getByRole('navigation', { name: 'Инструменты рабочего пространства' }).getByRole('link', { name: 'Интеграции', exact: true }).click();
   await expect(page).toHaveURL(/#\/integrations/);
   await expect(page.locator('.integration-node')).toHaveCount(3);
-  await expect(page.locator('.integration-node').first()).toContainText('В планах');
+  await expect(page.locator('.integration-node .integration-status')).toHaveText(['Требуется сервер', 'Требуется сервер', 'Требуется сервер']);
   await page.goto('./#/history');
   await expect(page.locator('.activity-task').first()).toBeVisible();
   await page.locator('.activity-task').first().click();

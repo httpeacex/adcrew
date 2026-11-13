@@ -38,7 +38,13 @@ export class ProductStore extends Store {
  override profile(id:number){const profile=super.profile(id);return profile?{...profile}:undefined;}
  private members(){return (this.db.prepare('SELECT id,email,name,initials,color,role FROM profiles WHERE active=1 ORDER BY name').all() as Profile[]).map(row=>({...row}));}
  private readable(actor:Actor,id:number){const detail=super.task(actor,id);if(!detail)throw new InputError('Задача не найдена.',404);return detail;}
- private notice(recipientId:number,taskId:number,title:string,at:number,eventKey:string){this.db.prepare('INSERT OR IGNORE INTO product_notices(recipientId,taskId,title,at,eventKey) VALUES(?,?,?,?,?)').run(recipientId,taskId,title,at,eventKey);}
+ private notice(recipientId:number,taskId:number|null,title:string,at:number,eventKey:string){this.db.prepare('INSERT OR IGNORE INTO product_notices(recipientId,taskId,title,at,eventKey) VALUES(?,?,?,?,?)').run(recipientId,taskId,title,at,eventKey);}
+ private warnBudget(now:number){
+  const leads=this.members().filter(member=>member.role==='lead');
+  if(!leads.length)return;
+  const budget=this.finance.budgetStatus(leads[0],now);
+  if(budget.overBudget)for(const lead of leads)this.notice(lead.id,null,'Превышен месячный AI-бюджет',now,`ai-budget:${budget.month}`);
+ }
  private participants(taskId:number){const task=this.db.prepare('SELECT buyerId,creativeId FROM tasks WHERE id=?').get(taskId)!;return [...new Set([Number(task.buyerId),...(task.creativeId?[Number(task.creativeId)]:[]),...this.members().filter(p=>p.role==='lead').map(p=>p.id)])];}
  productSnapshot(actor:Actor,now=Date.now()){
   const members=this.members();
@@ -57,7 +63,29 @@ export class ProductStore extends Store {
   return {finance:this.finance.snapshot(actor,now),members,templates,notices,rates,budget,metrics:{spent:Math.round(spent*100)/100,unpricedUnits,remaining:Math.round((budget.amount-spent)*100)/100}};
  }
  taskExtras(actor:Actor,id:number){this.readable(actor,id);const comments=this.db.prepare('SELECT c.*,p.name AS actorName FROM product_comments c JOIN profiles p ON p.id=c.actorId WHERE taskId=? ORDER BY c.id').all(id) as Comment[];const checks={brief:false,format:false,quality:false};for(const row of this.db.prepare('SELECT key,checked FROM product_checks WHERE taskId=?').all(id)){if(row.key==='brief'||row.key==='format'||row.key==='quality')checks[row.key]=!!row.checked;}return plain({tariffs:this.finance.tariffs(),comments,checks,members:this.members().filter(member=>!!super.task(member,id)),assignable:actor.role==='lead'?this.members().filter(member=>member.role==='creative'):[]});}
- override act(...args:Parameters<Store['act']>){return this.atomic(()=>{const replayed=!!this.db.prepare('SELECT 1 FROM task_events WHERE actorId=? AND requestId=?').get(args[0].id,args[4]);if(args[2]==='submit'&&!replayed)this.finance.validateUsage(args[5]?.usage??[]);const result=super.act(...args);if(args[2]==='submit'&&!replayed){const submission=this.db.prepare('SELECT id FROM submissions WHERE taskId=? ORDER BY round DESC LIMIT 1').get(args[1]);if(submission)this.finance.capture(Number(submission.id));}if(args[2]==='submit'&&!replayed)this.db.prepare('DELETE FROM product_checks WHERE taskId=?').run(args[1]);const [actor,id,action,,, ,now=Date.now()]=args;const event=this.db.prepare('SELECT id,at FROM task_events WHERE actorId=? AND requestId=?').get(actor.id,args[4])!;for(const recipient of this.participants(id)){if(recipient!==actor.id)this.notice(recipient,id,({claim:'Задача взята в работу',submit:'Результат на проверке',revise:'Запрошены правки',accept:'Работа принята',release:'Задача снова свободна',delete:'Задача удалена'})[action],Number(event.at??now),`event:${event.id}`);}return result;});}
+ override act(...args:Parameters<Store['act']>){
+  return this.atomic(()=>{
+   const [actor,id,action,,requestId,command]=args;
+   const replayed=!!this.db.prepare('SELECT 1 FROM task_events WHERE actorId=? AND requestId=?').get(actor.id,requestId);
+   if(action==='submit'&&!replayed)this.finance.validateUsage(command?.usage??[]);
+   const result=super.act(...args);
+   if(replayed)return result;
+   const event=this.db.prepare('SELECT id,at FROM task_events WHERE actorId=? AND requestId=?').get(actor.id,requestId)!;
+   if(action==='submit'){
+    const submission=this.db.prepare('SELECT id,submittedAt FROM submissions WHERE taskId=? ORDER BY round DESC LIMIT 1').get(id);
+    if(submission){
+     this.finance.capture(Number(submission.id));
+     this.warnBudget(Number(submission.submittedAt));
+    }
+    this.db.prepare('DELETE FROM product_checks WHERE taskId=?').run(id);
+   }
+   const title={claim:'Задача взята в работу',submit:'Результат на проверке',revise:'Запрошены правки',accept:'Работа принята',release:'Задача снова свободна',delete:'Задача удалена'}[action];
+   for(const recipient of this.participants(id)){
+    if(recipient!==actor.id)this.notice(recipient,id,title,Number(event.at),`event:${event.id}`);
+   }
+   return result;
+  });
+ }
  override task(actor:Actor,id:number){const detail=super.task(actor,id);if(!detail)return null;const assigned=this.db.prepare("SELECT -a.id AS id,p.name AS actorName,'assign' AS action,a.fromStatus,a.toStatus,a.at,NULL AS round FROM product_assignments a JOIN profiles p ON p.id=a.actorId WHERE taskId=? ORDER BY a.id").all(id) as Event[];return plain({...detail,events:[...detail.events,...assigned].sort((a,b)=>a.at-b.at)});}
  override workspaceHistory(actor:Actor){const events=super.workspaceHistory(actor);const assignments=this.db.prepare("SELECT -a.id AS id,a.taskId,t.offer,p.name AS actorName,'assign' AS action,a.fromStatus,a.toStatus,a.at,NULL AS round FROM product_assignments a JOIN tasks t ON t.id=a.taskId JOIN profiles p ON p.id=a.actorId").all() as (Event&{taskId:number;offer:string})[];return [...events,...assignments].sort((a,b)=>b.at-a.at).slice(0,100);}
  override analytics(actor:Actor,start:string,end:string,now=Date.now()){
@@ -78,7 +106,10 @@ export class ProductStore extends Store {
   return result;
  });}
  private executeProductCommand(actor:Actor,route:string,fields:Record<string,string>,now:number):{path:string}{return this.atomic(()=>{
-  if(this.finance.command(actor,route,fields,now))return {path:'/settings'};
+  if(this.finance.command(actor,route,fields,now)){
+   if(route.endsWith('usd-budget')||route.endsWith('usd-charge'))this.warnBudget(now);
+   return {path:'/settings'};
+  }
   const lead=()=>{if(actor.role!=='lead')throw new InputError('Действие доступно руководителю.',403);};
   if(route==='/api/product/read'){if(fields.noticeId)this.db.prepare('UPDATE product_notices SET read=1 WHERE id=? AND recipientId=?').run(integer(fields.noticeId),actor.id);else this.db.prepare('UPDATE product_notices SET read=1 WHERE recipientId=?').run(actor.id);return {path:'/notifications'};}
   if(route==='/api/product/member'){lead();const name=text(fields.name,100),email=text(fields.email,254).toLowerCase(),role=fields.role as Profile['role'],password=text(fields.password,256);if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!['buyer','creative','lead'].includes(role)||password.length<8)throw new InputError('Проверьте email, роль и пароль (от 8 символов).');if(this.db.prepare('SELECT id FROM profiles WHERE email=?').get(email))throw new InputError('Email уже используется.',409);const id=Number(this.db.prepare('SELECT COALESCE(MAX(id),0)+1 AS id FROM profiles').get()!.id);this.addProfile({id,name,email,role,initials:name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase(),color:'violet'},password);return {path:'/team'};}

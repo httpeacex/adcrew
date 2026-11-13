@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { boardDropAction } from '@/lib/board-moves';
 import { TaskAction } from './forms';
+import { taskTime, useLiveNow } from './live-clock';
 import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Columns3, Film, Flag, ImageIcon, Layers3, List, MoreHorizontal, Clock3, Hourglass, Eye, Plus, Shapes, SlidersHorizontal, TriangleAlert, Users } from 'lucide-react';
 import { duration, formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
 
@@ -30,7 +31,7 @@ function TaskCard({ task, now, href, selected, draggable, onDragStart, onDragEnd
     <div className="ref-card-identity"><Avatar personId={task.creativeId ?? task.buyerId} initials={initials} color={task.creativeColor || 'violet'}/><div><span className="ref-card-code">КР-{String(task.id).padStart(3,'0')}</span><span className={`ref-card-priority ${task.priority}`}><Flag size={10}/>{priorities[task.priority]}</span></div></div>
     <div className="ref-card-heading"><div><h3>{task.offer}</h3><p>{formats[task.format]} · {task.geo}</p></div><span className="ref-card-format" title={formats[task.format]}><FormatMark format={task.format}/></span></div>
     <div className="card-assignees ref-card-people"><span><small>Заказчик</small>{task.buyerName}</span><span><small>Исполнитель</small>{task.creativeName || 'Не назначен'}</span></div>
-    <div className="ref-card-metrics"><div><Hourglass size={14}/><strong>{duration(task.timing?.waiting ?? Math.max(0,(task.claimedAt??now)-task.createdAt))}</strong><small>Ожидание</small></div><div><Clock3 size={14}/><strong>{duration(task.timing?.production ?? 0)}</strong><small>{task.status==='done'?'Потрачено':'В работе'}</small></div><div><Eye size={14}/><strong>{duration(task.timing?.review ?? 0)}</strong><small>Проверка</small></div></div>
+    <div className="ref-card-metrics"><div><Hourglass size={14}/><strong>{duration(taskTime(task, 'waiting', now, Math.max(0, (task.claimedAt ?? now) - task.createdAt)))}</strong><small>Ожидание</small></div><div><Clock3 size={14}/><strong>{duration(taskTime(task, 'production', now))}</strong><small>{task.status==='done'?'Потрачено':'В работе'}</small></div><div><Eye size={14}/><strong>{duration(taskTime(task, 'review', now))}</strong><small>Проверка</small></div></div>
     <small className="ref-card-created">Создана {formatDate(task.createdAt,true)}</small>
     <div className={`ref-card-deadline${overdue?' late':''}${task.status==='done'?' accepted':''}`}>{overdue?<TriangleAlert size={13}/>:task.status==='done'?<Check size={13}/>:<CalendarDays size={13}/>}<span>{overdue?`Просрочка ${duration(now-task.deadline)}`:task.status==='done'?`Готово ${formatDate(task.completedAt!,true)}`:`До ${formatDate(task.deadline,true)}`}</span></div>
   </Link>;
@@ -60,9 +61,11 @@ function ProductionView({ view, tasks, now, boardPath }: { view: 'list' | 'calen
   return <div className="production-list"><table><thead><tr><th>Задача</th><th>Статус</th><th>Формат / GEO</th><th>Исполнитель</th><th>Дедлайн</th></tr></thead><tbody>{tasks.map(task => <tr key={task.id}><td><Link href={`${boardPath}task=${task.id}`} scroll={false}><small>КР-{String(task.id).padStart(3, '0')}</small>{task.offer}</Link></td><td><span className={`list-status ${task.status}`}>{statuses.find(s => s.id === task.status)!.label}</span></td><td>{formats[task.format]} · {task.geo}</td><td>{task.creativeName ?? 'Свободна'}</td><td className={task.status !== 'done' && isOverdue(task, now) ? 'late' : ''}>{formatDate(task.deadline)}</td></tr>)}</tbody></table>{!tasks.length && <p className="empty-panel">{view === 'archive' ? 'Принятых работ пока нет.' : 'Задачи не найдены.'}</p>}</div>;
 }
 
-export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, drawer, tariffs, initialStatus = '' }: {
+export function Board({ tasks, person, mine, now: sample, selectedId, defaultDrawer, drawer, tariffs, initialStatus = '', search = '' }: {
   tariffs?: Parameters<typeof TaskAction>[0]['tariffs']; initialStatus?: string; tasks: Task[]; person: Actor; mine: boolean; now: number; selectedId?: number; defaultDrawer: boolean; account: ReactNode; drawer: ReactNode; unread?: number;
+  search?: string;
 }) {
+  const now = useLiveNow(sample);
   const draggedId = useRef<number | null>(null);
   const [drop, setDrop] = useState<{task:Task; action:NonNullable<ReturnType<typeof boardDropAction>>} | null>(null);
   const [moveNotice,setMoveNotice] = useState('');
@@ -91,7 +94,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   useEffect(() => {
     try {
       const saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
-      if (saved && !initialStatus) {
+      if (saved && !initialStatus && !search) {
         // Restore browser-only preferences after hydration.
         /* eslint-disable react-hooks/set-state-in-effect */
         setGeo(typeof saved.geo === 'string' ? saved.geo : '');
@@ -105,11 +108,11 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
       }
     } catch { /* Storage can be disabled or cleared by the browser. */ }
     restored.current = true;
-  }, [storageKey, initialStatus]);
+  }, [storageKey, initialStatus, search]);
   useEffect(() => {
-    if (!restored.current || initialStatus) return;
+    if (!restored.current || initialStatus || search) return;
     try { sessionStorage.setItem(storageKey, JSON.stringify({ geo, priority, assignee, status, lateOnly, showFilters, expanded })); } catch { /* Browsing remains available without storage. */ }
-  }, [storageKey, initialStatus, geo, priority, assignee, status, lateOnly, showFilters, expanded]);
+  }, [storageKey, initialStatus, search, geo, priority, assignee, status, lateOnly, showFilters, expanded]);
   const isBuyer = person.role === 'buyer';
   const hasTaskDrawer = !!drawer && !defaultDrawer;
   useEffect(() => {
@@ -172,8 +175,8 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   const filtered = scoped.filter((task) => (!geo || task.geo === geo) && (!format || task.format === format) && (!offer || task.offer === offer) && (quick !== 'mine' || own(task)) && (quick !== 'today' || today(task)) && (view !== 'archive' || task.status === 'done') &&
     (scopeFilter !== 'active' || task.status !== 'done') && (scopeFilter !== 'free' || (task.status === 'new' && task.creativeId === null)) && (!priority || task.priority === priority) && (!assignee || (assignee === 'free' ? !task.creativeId : String(task.creativeId) === assignee)) && (!lateOnly || overdue(task)) && (!status || task.status === status));
   const boardStatus = status || scopeFilter;
-  const boardPath = `${mine ? '/board?scope=mine&' : '/board?'}${boardStatus ? `status=${encodeURIComponent(boardStatus)}&` : ''}`;
-  const hasFilters = !!scopeFilter || lateOnly || quick !== 'all' || !!(geo || priority || assignee || status || format || offer);
+  const boardPath = `${mine ? '/board?scope=mine&' : '/board?'}${search ? `q=${encodeURIComponent(search)}&` : ''}${boardStatus ? `status=${encodeURIComponent(boardStatus)}&` : ''}`;
+  const hasFilters = !!search || !!scopeFilter || lateOnly || quick !== 'all' || !!(geo || priority || assignee || status || format || offer);
   function resetFilters() { setScopeFilter(''); setLateOnly(false); setQuick('all'); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); setFormat(''); setOffer(''); }
   const showAllStages = true;
   const displayedStages = statuses;
@@ -241,6 +244,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
           </div>
         </section>;
       })}</div> : <ProductionView view={view} tasks={filtered} now={now} boardPath={boardPath} />}
+      {search && <p className="board-search-summary">{filtered.length ? `Результаты поиска «${search}»` : `По запросу «${search}» задачи не найдены.`} <Link href="/board?task=none">Сбросить поиск</Link></p>}
       {hasFilters && !showFilters && <button type="button" className="reset-filters production-reset" onClick={resetFilters}>Сбросить фильтры</button>}
     </section>
     </div>{drop && <div className="board-move-backdrop"><dialog ref={node=>{if(node&&!node.open)node.showModal();}} onCancel={()=>{setDrop(null);setMoveNotice('');}} aria-label="Изменение статуса" className="board-move-dialog"><button autoFocus className="button secondary" onClick={()=>{setDrop(null);setMoveNotice('');}}>Закрыть</button><h2>КР-{String(drop.task.id).padStart(3,'0')} · {drop.task.offer}</h2><p>{moveNotice}</p><TaskAction key={`${drop.task.id}:${drop.action}`} task={drop.task.id} version={drop.task.version} action={drop.action} tariffs={tariffs} returnTo="/board?task=none"/></dialog></div>}{drawer && <Link className="drawer-backdrop" href={`${boardPath}task=none`} scroll={false} aria-hidden="true" tabIndex={-1} />}

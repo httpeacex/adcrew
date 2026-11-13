@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { FileText, History, Bell, ArrowDownToLine, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, MoreVertical, ClipboardList, Clock3, Columns3, FileImage, Film, Flag,  Layers3,  LogOut, Play, Plus, Settings2, Sparkles, Users } from 'lucide-react';
+import { FileText, History, Bell, ArrowDownToLine, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, MoreVertical, ClipboardList, Clock3, Columns3, FileImage, Film, Flag,  Layers3,  LogOut, Play, Plus, Search, Settings2, Sparkles, Users } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { demoProfiles } from '@/lib/demo-profiles';
 import type { Store } from '@/lib/store';
@@ -50,7 +50,8 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
           <Link aria-label="Дашборд" href="/dashboard" className={active === 'dashboard' ? 'active' : ''} aria-current={active === 'dashboard' ? 'page' : undefined}><Layers3 size={18}/><span>Дашборд</span></Link>
           <Link href="/board?task=none" className={boardActive || active === 'mine' ? 'active' : ''} aria-label="Доска задач" aria-current={active === 'board' ? 'page' : undefined}><Columns3 size={18}/><span>Задачи</span><span className="side-count">{counts.total}</span></Link>
           <Link aria-label="Библиотека" href="/library" className={active === 'library' || active === 'templates' ? 'active' : ''} aria-current={active === 'library' ? 'page' : undefined}><FileImage size={18}/><span>Библиотека</span></Link>
-          {person.role === 'lead' ? <Link aria-label="Аналитика" href="/analytics" className={['analytics','team','ai-expenses'].includes(active) ? 'active' : ''} aria-current={active === 'analytics' ? 'page' : undefined}><BarChart3 size={18}/><span>Аналитика</span></Link> : <span className="side-unavailable" title="Командная аналитика доступна руководителю"><BarChart3 size={18}/><span>Аналитика</span></span>}
+          {person.role === 'lead' ? <Link aria-label="Аналитика" href="/analytics" className={['analytics','ai-expenses'].includes(active) ? 'active' : ''} aria-current={active === 'analytics' ? 'page' : undefined}><BarChart3 size={18}/><span>Аналитика</span></Link> : <span className="side-unavailable" title="Командная аналитика доступна руководителю"><BarChart3 size={18}/><span>Аналитика</span></span>}
+          {person.role === 'lead' && <Link aria-label="Команда" href="/team" className={active === 'team' ? 'active' : ''} aria-current={active === 'team' ? 'page' : undefined}><Users size={18}/><span>Команда</span></Link>}
         </div>
         <div className="side-group">
           <p className="side-group-title">Общее</p>
@@ -67,6 +68,11 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
     </aside>
     <div className="workspace-body">
       <header className="reference-topbar">
+        {active === 'dashboard' && <form className="reference-search" action="/board" role="search">
+          <Search size={17} aria-hidden="true"/>
+          <input type="hidden" name="task" value="none"/>
+          <input type="search" name="q" aria-label="Поиск задач" placeholder="Поиск по названию или ID"/>
+        </form>}
         <div className="reference-top-actions"><Link href="/notifications" aria-label="Открыть уведомления"><Bell size={18} />{unread > 0 && <i />}</Link><AccountMenu person={person} demo={demo} /></div>
       </header>
       <main className="workspace-main" id="workspace-main" tabIndex={-1}>

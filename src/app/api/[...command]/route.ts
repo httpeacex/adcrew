@@ -1,6 +1,8 @@
+import { saveWorkCalendar } from '@/lib/work-calendar';
 import { uploadType } from '@/lib/upload-type';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
+import { archiveDriveFile, deliverTaskUpdate, integrationStatus } from '@/lib/integration-server';
 import { currentProfile, demoMode, getStore, sessionCookie } from '@/lib/data';
 import { demoProfiles } from '@/lib/demo-profiles';
 import type { Upload } from '@/lib/store';
@@ -100,6 +102,14 @@ export async function POST(request: Request, { params }: Context) {
 
     const person = await currentProfile();
     if (!person) throw new InputError('Сессия завершилась. Войдите снова.', 401);
+    if (collection === 'settings' && route.length === 2 && key === 'work-calendar') {
+      const form = await formBody(request, smallRequest);
+      saveWorkCalendar(getStore(), person, {
+        enabled: field(form, 'enabled'), days: field(form, 'days'),
+        start: field(form, 'start'), end: field(form, 'end'),
+      });
+      return NextResponse.json({ path: '/settings' });
+    }
     if (collection === 'users' && route.length === 2 && ['edit','deactivate'].includes(key)) {
       const form=await formBody(request,smallRequest),store=getStore(),id=Number(field(form,'id'));
       if(key==='edit')store.editProfile(person,id,{name:field(form,'name'),email:field(form,'email'),role:field(form,'role') as typeof person.role,password:field(form,'password')||undefined});
@@ -133,7 +143,30 @@ export async function POST(request: Request, { params }: Context) {
       }) : [];
       if (action === 'submit' && !usage.length && field(form, 'noAi') !== 'on') throw new InputError('Укажите расход или отметьте «Без AI».');
       const files = action === 'submit' ? await uploadFiles(form) : [];
-      getStore().act(person, id, action, version, requestId(form), { files, usage, note: field(form, 'note') });
+      const store = getStore();
+      const operationId = requestId(form);
+      const replay = store.atomic(() => {
+        const previous = store.db.prepare('SELECT 1 FROM task_events WHERE actorId=? AND requestId=?').get(person.id, operationId);
+        store.act(person, id, action, version, operationId, { files, usage, note: field(form, 'note') });
+        return Boolean(previous);
+      });
+      if (!demoMode() && !replay && (action === 'submit' || action === 'revise' || action === 'accept')) {
+        const providers = integrationStatus();
+        const archive = action === 'accept' && providers.drive ? store.task(person, id)?.submissions[0] : undefined;
+        if (providers.telegram || providers.slack || archive) after(async () => {
+          const delivery = await deliverTaskUpdate({ taskId: id, action });
+          if (delivery.telegram === 'failed' || delivery.slack === 'failed') {
+            console.error('Task notification delivery failed', { taskId: id, action, ...delivery });
+          }
+          if (!archive) return;
+          for (const entry of archive.files) {
+            const file = store.file(person, entry.id);
+            if (!file) continue;
+            const result = await archiveDriveFile({ ...file, taskId: id, round: archive.round, fileId: entry.id });
+            if (result.status === 'failed') console.error('Drive archival failed', { taskId: id, fileId: entry.id });
+          }
+        });
+      }
       return NextResponse.json({ path: action === 'release' || action === 'delete' ? '/board?task=none' : `/tasks/${id}` });
     }
     throw new InputError('Страница не найдена.', 404);

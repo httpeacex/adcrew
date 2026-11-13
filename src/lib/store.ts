@@ -11,7 +11,14 @@ type TaskRow = Omit<Task, 'references' | 'timing'> & { referenceJson: string };
 type PersonRow = Profile & { password: string };
 const selectTasks = `SELECT t.*, b.name AS buyerName, c.name AS creativeName, c.initials AS creativeInitials, c.color AS creativeColor,
   (SELECT f.id FROM task_files f WHERE f.submissionId = (SELECT id FROM submissions WHERE taskId = t.id ORDER BY round DESC LIMIT 1)
-    AND f.type IN ('image/jpeg','image/png','image/webp') AND length(f.data) <= 307200 ORDER BY f.id DESC LIMIT 1) AS coverId
+    AND f.type IN ('image/jpeg','image/png','image/webp') AND length(f.data) <= 307200 ORDER BY f.id DESC LIMIT 1) AS coverId,
+  CASE WHEN EXISTS (
+    SELECT 1 FROM task_events e WHERE e.taskId = t.id AND e.action = 'submit'
+    AND e.round = (SELECT MAX(s.round) FROM submissions s WHERE s.taskId = t.id)
+    AND e.requestId IN ('demo-' || (t.id - 1) || '-2', 'demo-' || (t.id - 1) || '-4')
+  ) AND EXISTS (
+    SELECT 1 FROM metadata WHERE key = 'reference-demo-v1'
+  ) THEN t.id - 9 ELSE NULL END AS demoPreview
   FROM tasks t JOIN profiles b ON b.id = t.buyerId LEFT JOIN profiles c ON c.id = t.creativeId`;
 const taskScope = { lead: ' WHERE t.deletedAt IS NULL', buyer: ' WHERE t.deletedAt IS NULL AND t.buyerId = ?', creative: ' WHERE t.deletedAt IS NULL' };
 const destinations: Record<Action, Status> = { claim: 'progress', submit: 'review', revise: 'revision', accept: 'done', release: 'new', delete: 'new' };

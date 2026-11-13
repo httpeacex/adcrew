@@ -31,8 +31,9 @@ export type Task = Brief & {
   createdAt: number; claimedAt: number | null; submittedAt: number | null; completedAt: number | null;
   buyerName: string; creativeName: string | null; creativeInitials: string | null; creativeColor: string | null;
   deletedAt?: number | null;
-  timing?: {production:number;review:number;waiting:number};
+  timing?: { production: number; review: number; waiting: number; sampledAt?: number; calendar?: import('./work-calendar.ts').WorkCalendar | null };
   coverId?: number | null;
+  demoPreview?: number | null;
   commentCount?: number; fileCount?: number; checkedCount?: number;
 };
 export type Event = { id: number; actorName: string; action: keyof typeof actionLabels; fromStatus: Status | null; toStatus: Status; at: number; round: number | null };

@@ -1,4 +1,7 @@
-import { withTaskTimes } from '@/lib/operations-report';
+import { integrationStatus } from '@/lib/integration-server';
+import { readReportTasks, withTaskTimes, type RevisionEvent } from '@/lib/operations-report';
+import { readWorkCalendar } from '@/lib/work-calendar';
+import { WorkCalendarSettings } from '@/components/work-calendar-settings';
 import { UserManagement } from '@/components/users';
 import { OperationsAnalytics } from '@/components/operations-analytics';
 import { FinancePage, FinanceSettings } from '@/components/finance';
@@ -34,7 +37,8 @@ export default async function Page({ params, searchParams }: Props) {
   const query = await searchParams;
   const snapshot = store.productSnapshot(person, now);
   const unread = snapshot.notices.filter(item => !item.read).length;
-  const timedTasks = withTaskTimes(store,person,store.list(person),now);
+  const calendar = readWorkCalendar(store);
+  const timedTasks = withTaskTimes(store,person,store.list(person),now,calendar);
   let screen;
   let active = view;
   if (view === 'library') {
@@ -49,14 +53,15 @@ export default async function Page({ params, searchParams }: Props) {
   } else if (view === 'board' && route.length === 1) {
     const mine = query.scope === 'mine' && person.role === 'creative';
     active = mine ? 'mine' : 'board';
-    const tasks = timedTasks;
+    const search = (typeof query.q === 'string' ? query.q : '').trim().toLocaleLowerCase('ru');
+    const tasks = search ? timedTasks.filter(task => `${task.offer} КР-${String(task.id).padStart(3, '0')}`.toLocaleLowerCase('ru').includes(search)) : timedTasks;
     const selection = typeof query.task === 'string' && /^\d+$/.test(query.task) ? Number(query.task) : null;
     const defaultTask = demo && query.task === undefined && !mine ? tasks.find((task) => task.status === 'review')?.id : null;
     const id = selection ?? defaultTask;
     const detail = id && (!mine || tasks.some((task) => task.id === id && (task.buyerId === person.id || task.creativeId === person.id))) ? store.task(person, id) : null;
     const boardStatus = typeof query.status === 'string' ? query.status : '';
-    const boardPath = `${mine ? '/board?scope=mine&' : '/board?'}${boardStatus ? `status=${encodeURIComponent(boardStatus)}&` : ''}`;
-    screen = <Board tariffs={snapshot.finance.tariffs} initialStatus={typeof query.status === 'string' ? query.status : ''} key={`${active}:${typeof query.status === 'string' ? query.status : ''}`} tasks={tasks} person={{ id: person.id, role: person.role }} mine={mine} now={now} selectedId={detail?.task.id}
+    const boardPath = `${mine ? '/board?scope=mine&' : '/board?'}${search ? `q=${encodeURIComponent(search)}&` : ''}${boardStatus ? `status=${encodeURIComponent(boardStatus)}&` : ''}`;
+    screen = <Board search={search} tariffs={snapshot.finance.tariffs} initialStatus={typeof query.status === 'string' ? query.status : ''} key={`${active}:${boardStatus}:${search}`} tasks={tasks} person={{ id: person.id, role: person.role }} mine={mine} now={now} selectedId={detail?.task.id}
       defaultDrawer={!!defaultTask} account={<AccountMenu person={person} demo={demo} />}
       unread={unread} drawer={detail && <TaskDrawer extras={store.taskExtras(person, detail.task.id)} key={detail.task.id} {...detail} person={person} now={now} closeHref={`${boardPath}task=none`} currentHref={`${boardPath}task=${detail.task.id}`} />} />;
   } else if (view === 'tasks' && route.length === 2) {
@@ -76,11 +81,11 @@ export default async function Page({ params, searchParams }: Props) {
     }
   } else if (['templates', 'notifications', 'integrations'].includes(view) && route.length === 1) {
     if (view === 'templates' && person.role === 'creative') notFound();
-    screen = <ProductPage view={view as 'templates' | 'notifications' | 'integrations'} person={person} snapshot={snapshot} tasks={timedTasks} now={now} />;
+    screen = <ProductPage integrationStatus={view === 'integrations' && !demo ? integrationStatus() : undefined} view={view as 'templates' | 'notifications' | 'integrations'} person={person} snapshot={snapshot} tasks={timedTasks} now={now} />;
   } else if (view === 'how-it-works' && route.length === 1) {
     screen = <InkOrbitFeatures />;
   } else if (view === 'settings' && route.length === 1) {
-    screen = <><Settings person={person} /><UserManagement person={person} users={person.role === 'lead' ? store.users(person) : []} /><FinanceSettings snapshot={snapshot} person={person} /></>;
+    screen = <><Settings person={person} /><UserManagement person={person} users={person.role === 'lead' ? store.users(person) : []} />{person.role === 'lead' && <WorkCalendarSettings calendar={calendar}/>}<FinanceSettings snapshot={snapshot} person={person} /></>;
   } else if (view === 'history' && route.length === 1 && person.role === 'lead') {
     screen = <WorkspaceHistory events={store.workspaceHistory(person)} />;
   } else if ((view === 'analytics' || view === 'team' || view === 'ai-expenses') && route.length === 1) {
@@ -98,7 +103,7 @@ export default async function Page({ params, searchParams }: Props) {
     screen = view === 'team'
       ? <ProductPage view="team" person={person} snapshot={snapshot} tasks={timedTasks} now={now} />
       : view === 'ai-expenses' ? <FinancePage person={person} snapshot={snapshot} report={period ? store.financeReport(person,period.from,period.to) : undefined} />
-      : period ? <OperationsAnalytics members={store.users(person)} tasks={timedTasks} events={store.db.prepare('SELECT taskId,action,at FROM task_events ORDER BY id').all().map(row=>({...row})) as {taskId:number;action:string;at:number}[]} snapshot={snapshot} finance={store.financeReport(person,period.from,period.to)} person={person} start={start} end={end} now={now} tab={(typeof query.tab === 'string' ? query.tab : null) || 'overview'} /> : <p role="alert">Проверьте даты периода.</p>;
+      : period ? <OperationsAnalytics members={store.users(person)} tasks={readReportTasks(store,person)} calendar={calendar} events={store.db.prepare('SELECT taskId,action,at,toStatus FROM task_events ORDER BY id').all().map(row=>({...row})) as RevisionEvent[]} snapshot={snapshot} finance={store.financeReport(person,period.from,period.to)} person={person} start={start} end={end} now={now} tab={(typeof query.tab === 'string' ? query.tab : null) || 'overview'} /> : <p role="alert">Проверьте даты периода.</p>;
   } else notFound();
   return <Workspace person={person} active={active} demo={demo} counts={store.taskCounts(person)} unread={unread}>{screen}</Workspace>;
 }
