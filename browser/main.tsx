@@ -68,7 +68,7 @@ function App() {
     const detail = id && (!mine || tasks.some(task => task.id === id && task.creativeId === person.id)) ? store.task(person, id) : null;
     const boardStatus = route.searchParams.get('status') || '';
     const boardPath = `${mine ? '/board?scope=mine&' : '/board?'}${boardStatus ? `status=${encodeURIComponent(boardStatus)}&` : ''}`;
-    screen = <Board initialStatus={route.searchParams.get('status') || ''} key={`${person.id}:${active}:${route.searchParams.get('status') || ''}`} tasks={tasks} person={person} mine={mine} now={now} selectedId={detail?.task.id}
+    screen = <Board tariffs={product.finance.tariffs} initialStatus={route.searchParams.get('status') || ''} key={`${person.id}:${active}:${route.searchParams.get('status') || ''}`} tasks={tasks} person={person} mine={mine} now={now} selectedId={detail?.task.id}
       defaultDrawer={!!defaultTask} account={<AccountMenu person={person} demo />}
       unread={unread} drawer={detail && <TaskDrawer extras={store.taskExtras(person, detail.task.id)} key={detail.task.id} {...detail} person={person} now={now} closeHref={`${boardPath}task=none`} currentHref={`${boardPath}task=${detail.task.id}`} />} />;
   } else if (view === 'tasks' && path.length === 2) {
