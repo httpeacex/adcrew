@@ -24,6 +24,10 @@ export type Priority = keyof typeof priorities;
 export type Role = keyof typeof roles;
 export type Action = Exclude<keyof typeof actionLabels, 'create' | 'assign'>;
 export type Actor = { id: number; role: Role };
+
+export function workspaceEntry(role: Role) {
+  return role === 'buyer' ? '/board' : '/dashboard';
+}
 export type Profile = Actor & { name: string; initials: string; color: string; email: string };
 export type Brief = { offer: string; geo: string; format: Format; quantity: number; description: string; references: string[]; priority: Priority; deadline: number };
 export type Task = Brief & {
@@ -135,8 +139,12 @@ export function isOverdue(task: Pick<Task, 'deadline' | 'completedAt'>, now = Da
   return (task.completedAt ?? now) > task.deadline;
 }
 
+const dateOptions = { timeZone: 'Asia/Yekaterinburg', day: 'numeric', month: 'short' } satisfies Intl.DateTimeFormatOptions;
+const shortDateFormat = new Intl.DateTimeFormat('ru-RU', dateOptions);
+const fullDateFormat = new Intl.DateTimeFormat('ru-RU', { ...dateOptions, hour: '2-digit', minute: '2-digit' });
+
 export function formatDate(time: number, full = false) {
-  return new Intl.DateTimeFormat('ru-RU', { timeZone: 'Asia/Yekaterinburg', day: 'numeric', month: 'short', ...(full && { hour: '2-digit', minute: '2-digit' }) }).format(time);
+  return (full ? fullDateFormat : shortDateFormat).format(time);
 }
 
 export function duration(time: number | null) {
@@ -147,4 +155,10 @@ export function duration(time: number | null) {
 
 export function formatCredits(units: number) {
   return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 3 }).format(units / 1000);
+}
+
+export function libraryTaskId(tasks: Task[], person: Profile, value: unknown) {
+  if (typeof value !== 'string' || !/^\d+$/.test(value)) return;
+  const id = Number(value);
+  return tasks.find(task => task.id === id && task.submittedAt !== null && (person.role !== 'buyer' || task.buyerId === person.id))?.id;
 }

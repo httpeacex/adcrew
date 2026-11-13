@@ -4,10 +4,13 @@ test('production views and quick filters use the same tasks in both themes', asy
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: /Руководитель/ }).click();
+  await page.waitForURL('**/#/dashboard');
   await page.goto('./#/board?task=none');
   await expect(page.getByRole('region', { name: 'Показатели производства' })).toHaveCount(0);
   const boardPanel = page.locator('.board-main');
   await expect(boardPanel).toHaveCSS('border-radius', '26px');
+  await expect(page.locator('.board-layout')).toHaveCSS('transition-duration', '0s');
+  await expect(boardPanel.locator('.board')).toHaveCSS('box-shadow', 'none');
   await page.getByRole('button', { name: 'Список', exact: true }).click();
   await expect(page.locator('.production-list tbody tr')).toHaveCount(17);
   await expect(boardPanel).toHaveCSS('border-radius', '26px');
@@ -29,7 +32,7 @@ test('production views and quick filters use the same tasks in both themes', asy
 });
 
 test('board wraps columns without horizontal scrolling at phone tablet and desktop sizes',async({page})=>{
- await page.goto('./');await page.getByRole('button',{name:'Тестовый вход',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:/Руководитель/}).click();await page.waitForURL(/#\/board$/);
+ await page.goto('./');await page.getByRole('button',{name:'Тестовый вход',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:/Руководитель/}).click();await page.waitForURL(/#\/dashboard$/);
  for(const task of ['none','9']) {
   await page.goto(`./#/board?task=${task}`);
   for(const width of [320,390,768,1024,1440,1920]) {
@@ -40,6 +43,9 @@ test('board wraps columns without horizontal scrolling at phone tablet and deskt
  }
  await expect(page.locator('.board-local-search, .task-card .card-cover')).toHaveCount(0);
  await expect(page.locator('.ref-card-identity .generated-avatar').first()).toBeVisible();
+  expect(await page.locator('.ref-card-metrics').evaluateAll(groups => groups.every(group =>
+    new Set(Array.from(group.querySelectorAll('small'), label => label.getBoundingClientRect().top)).size === 1
+  ))).toBe(true);
  await page.goto('./#/board?task=none');await page.setViewportSize({width:390,height:844});
  for(const name of ['Список','Календарь','Загрузка','Архив']) {
   await page.getByRole('button',{name,exact:true}).click();

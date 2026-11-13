@@ -8,9 +8,16 @@ test('task panel retains media revision versions and acceptance checks in both t
   await page.waitForURL('**/#/board');
   await page.goto('./#/board?task=14');
   const panel = page.locator('.task-drawer');
+  await expect(panel).toHaveCSS('border-top-left-radius', '26px');
   await expect(panel.locator('.drawer-badges strong')).toHaveText('КР-014');
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await expect(panel.locator('.drawer-hero')).toBeVisible();
+  const edges = await panel.evaluate(element => {
+    const tabs = element.querySelector('.drawer-tabs')!.getBoundingClientRect();
+    const media = element.querySelector('.inspector-media')!.getBoundingClientRect();
+    return [tabs.left - media.left, tabs.right - media.right];
+  });
+  expect(edges).toEqual([0, 0]);
   await panel.getByRole('button', { name: 'Скопировать ссылку на задачу', exact: true }).click();
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain('#/board?task=14');
   const versions = panel.getByLabel('Версия результата');

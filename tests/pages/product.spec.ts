@@ -133,11 +133,24 @@ test('library includes submitted versions and creatives can read every buyer whi
   await route(page, 'library');
   await expect(page.locator('.library-result')).toHaveCount(9);
   await page.locator('.library-result[href*="task=13"]').click();
-  const panel = page.locator('.task-drawer');
+  await expect(page).toHaveURL(/#\/library\?task=13$/);
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  const panel = dialog.locator('.task-drawer');
   await expect(panel).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Сдать результат', exact: true })).toHaveCount(0);
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await expect(panel.getByLabel('Версия результата')).toBeVisible();
   await expect(panel.locator('.revision-note')).toContainText('Поднять контраст текста.');
   await expect(panel.getByRole('link', { name: /^Скачать / }).first()).toBeVisible();
+  const centered = await dialog.evaluate(element => {
+    const { x, y, width, height } = element.getBoundingClientRect();
+    return { square: Math.abs(width - height) < 1, centered: Math.abs(x * 2 + width - innerWidth) < 2 && Math.abs(y * 2 + height - innerHeight) < 2 };
+  });
+  expect(centered).toEqual({ square: true, centered: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect((await dialog.boundingBox())!.width).toBeLessThan(390);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(page).toHaveURL(/#\/library$/);
 });

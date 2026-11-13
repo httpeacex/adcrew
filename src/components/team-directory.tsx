@@ -77,7 +77,7 @@ export function TeamDirectory({ members, tasks, currentId }: { members: Profile[
       </div>
       {tab === 'tasks' ? <section className="team-detail-body" aria-label="Задачи участника">
         <div className="team-detail-counts"><span>Активные <b>{summary.active}</b></span><span>Готово <b>{summary.done}</b></span></div>
-        <div className="member-tasks">{selectedTasks.map(task => <Link href={`/board?task=${task.id}`} key={task.id}><span className={`status-pill ${task.status}`}>{statuses.find(status => status.id === task.status)?.label}</span><strong>{task.offer}</strong><small>{formatDate(task.deadline)}<ArrowUpRight size={14} aria-hidden="true" /></small></Link>)}</div>
+        <div className="member-tasks">{selectedTasks.map(task => <Link href={`/board?task=${task.id}`} key={task.id}><span className={`list-status ${task.status}`}>{statuses.find(status => status.id === task.status)?.label}</span><strong>{task.offer}</strong><small>{formatDate(task.deadline)}<ArrowUpRight size={14} aria-hidden="true" /></small></Link>)}</div>
         {!selectedTasks.length && <p className="team-detail-empty">У участника пока нет задач.</p>}
       </section> : <dl className="team-detail-body team-profile"><div><dt>Роль</dt><dd>{roles[selected.role]}</dd></div><div><dt>Эл. почта</dt><dd>{selected.email}</dd></div></dl>}
     </aside>}

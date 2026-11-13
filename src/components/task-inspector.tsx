@@ -15,11 +15,11 @@ import { VersionComparison } from './version-comparison';
 
 export type InspectorProps = {
   task: Task; events: Event[]; submissions: Submission[]; person: Profile; now: number;
-  closeHref: string; currentHref: string; extras?: ReturnType<ProductStore['taskExtras']>;
+  closeHref: string; currentHref: string; extras?: ReturnType<ProductStore['taskExtras']>; initialTab?: 'result' | 'brief';
 };
 
-export function TaskInspector({ task, events, submissions, person, now, closeHref, currentHref, extras }: InspectorProps) {
-  const [tab, setTab] = useState('brief');
+export function TaskInspector({ task, events, submissions, person, now, closeHref, currentHref, extras, initialTab = 'brief' }: InspectorProps) {
+  const [tab, setTab] = useState<'result' | 'brief'>(initialTab);
   const [selectedId, setSelectedId] = useState(submissions[0]?.id);
   const [compare, setCompare] = useState(false);
   const selected = submissions.find(item => item.id === selectedId) ?? submissions[0];
@@ -39,7 +39,7 @@ export function TaskInspector({ task, events, submissions, person, now, closeHre
 
     </header>
     <div className="drawer-scroll">
-      <div className="drawer-tabs" aria-label="Разделы задачи">{[['result', 'Содержимое'], ['brief', 'Детали']].map(([id, label]) => <button type="button" key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}</div>
+      <div className="drawer-tabs" aria-label="Разделы задачи">{([['result', 'Содержимое'], ['brief', 'Детали']] as const).map(([id, label]) => <button type="button" key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}</div>
       <dl className="drawer-summary"><div><dt>Исполнитель</dt><dd>{task.creativeInitials && <Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" />}{task.creativeName ?? 'Свободна'}</dd></div><div><dt><CalendarDays size={13} />Дедлайн</dt><dd className={isOverdue(task, now) && task.status !== 'done' ? 'drawer-late' : undefined}>{formatDate(task.deadline, true)}</dd></div></dl>
       <div className="drawer-tab-body">
         {task.creativeId === person.id && <Link className="button secondary inspector-studio" href={`/studio?task=${task.id}`}><Sparkles size={16} />Открыть в студии</Link>}

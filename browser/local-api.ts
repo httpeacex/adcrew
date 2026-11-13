@@ -2,7 +2,7 @@ import { saveWorkCalendar } from '@/lib/work-calendar';
 import { Buffer } from 'buffer';
 import type { Upload } from '@/lib/store';
 import { ProductStore as Store } from '@/lib/product-store';
-import { aiServices, creditUnits, fileTypes, InputError, maxFileBytes, maxFiles, validateBrief, type Action } from '@/lib/workflow';
+import { aiServices, creditUnits, fileTypes, InputError, maxFileBytes, maxFiles, validateBrief, workspaceEntry, type Action } from '@/lib/workflow';
 import { uploadType } from '@/lib/upload-type';
 import { initializeSqlite, type DatabaseSync } from './sqlite';
 import { loadSnapshot, saveSnapshot, withDatabaseLock } from './storage';
@@ -67,7 +67,7 @@ export async function post(url: string, form: FormData, progress: (value: number
         if (!person) throw new InputError('Проверьте адрес почты и пароль.', 401);
         sessionStorage.setItem(roleKey, String(person.id));
         clearFileUrls();
-        return { path: '/board' };
+        return { path: workspaceEntry(person.role) };
       }
       const person = currentProfile();
       if (!person) throw new InputError('Войдите в аккаунт.', 401);

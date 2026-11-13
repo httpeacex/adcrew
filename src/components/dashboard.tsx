@@ -15,7 +15,7 @@ function TaskRows({ tasks, creative = false, now, moreHref, empty = 'Задач 
       <Avatar personId={creative ? t.buyerId : t.creativeId} initials={(creative ? t.buyerName : t.creativeName)?.split(/\s+/).map(word => word[0]).slice(0,2).join('') || '–'} color={t.creativeColor || 'violet'} size="tiny" />
       <span>{creative ? t.buyerName : t.creativeName || 'Без исполнителя'}</span>
     </span>
-    {creative ? <><span>{formatDate(t.deadline,true)}<small>{priorities[t.priority]}</small></span><span>{t.claimedAt ? <>В работе: <LiveTaskTime task={t} kind="production" sample={now} fallback={Math.max(0, (t.completedAt ?? now) - t.claimedAt)} /></> : 'Ещё не начата'}</span>{(t.status === 'progress' || t.status === 'revision') && <Link className="button secondary" href={`/board?task=${t.id}`}>Сдать</Link>}</> : <span className={`list-status ${t.status}`}>{statuses.find(s=>s.id===t.status)?.label}</span>}
+    {creative ? <><span className="dashboard-task-deadline">{formatDate(t.deadline,true)}<small>{priorities[t.priority]}</small></span><span className="dashboard-task-time">{t.claimedAt ? <><LiveTaskTime task={t} kind="production" sample={now} fallback={Math.max(0, (t.completedAt ?? now) - t.claimedAt)} /><small>В работе</small></> : 'Ещё не начата'}</span><span className="dashboard-task-action">{(t.status === 'progress' || t.status === 'revision') && <Link className="button secondary" href={`/board?task=${t.id}`}>Сдать</Link>}</span></> : <span className={`list-status ${t.status}`}>{statuses.find(s=>s.id===t.status)?.label}</span>}
   </div>) : <p className="dashboard-empty">{empty}</p>}{tasks.length > 5 && <Link className="dashboard-more" href={moreHref}>Смотреть все задачи ({tasks.length}) <ArrowUpRight size={14}/></Link>}</div>;
 }
 

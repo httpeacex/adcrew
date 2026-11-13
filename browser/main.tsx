@@ -17,7 +17,7 @@ import InkOrbitFeatures from '@/components/ui/ink-orbit-features';
 import { ThemeProvider, type Theme } from '@/components/theme';
 import { setBrowserRuntime } from '@/lib/client-runtime';
 import { ProductPage } from '@/components/product';
-import { InputError, localDay, reportPeriod } from '@/lib/workflow';
+import { InputError, libraryTaskId, localDay, reportPeriod, workspaceEntry } from '@/lib/workflow';
 import { changes, currentProfile, fileUrl, getStore, initializeStore, post, refreshStore } from './local-api';
 import { navigate } from './link';
 import { withDatabaseLock } from './storage';
@@ -44,7 +44,7 @@ function App() {
   if (!person || route.pathname === '/') return <Landing demo signedIn={!!person} />;
   const store = getStore();
   const path = route.pathname.split('/').filter(Boolean);
-  const view = path[0] === 'login' ? 'board' : path[0];
+  const view = path[0] === 'login' ? workspaceEntry(person.role).slice(1) : path[0];
   const now = snapshot.now;
   const product = store.productSnapshot(person, now);
   const unread = product.notices.filter(item => !item.read).length;
@@ -53,7 +53,11 @@ function App() {
   let active = view;
   let screen: ReactNode;
   if (view === 'library') {
-    screen = <Library tasks={timedTasks} person={person} />;
+    const id = libraryTaskId(timedTasks, person, route.searchParams.get('task'));
+    const detail = id ? store.task(person, id) : null;
+    screen = <Library tasks={timedTasks} person={person} selected={detail?.task} taskPanel={detail && <TaskDrawer
+      {...detail} person={person} now={now} closeHref="/library" currentHref={`/library?task=${detail.task.id}`}
+      initialTab="result" extras={store.taskExtras(person, detail.task.id)} />} />;
   } else if (view === 'dashboard') {
     screen = <Dashboard tasks={timedTasks} person={person} now={now} finance={product.finance} />;
   } else if (view === 'studio' && path.length === 1) {

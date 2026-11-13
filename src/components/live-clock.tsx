@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react';
 import { measuredTime } from '@/lib/work-calendar';
 import { duration, type Task } from '@/lib/workflow';
 
-export function useLiveNow(sample: number, active = true) {
+export function useLiveNow(sample: number, active = true, refreshMs = 1_000) {
   const [now, setNow] = useState(sample);
   useEffect(() => {
     if (!active) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
+    const timer = window.setInterval(() => setNow(Date.now()), refreshMs);
     return () => window.clearInterval(timer);
-  }, [active]);
+  }, [active, refreshMs]);
   return Math.max(now, sample);
 }
 

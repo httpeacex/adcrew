@@ -5,7 +5,7 @@ test('workspace keeps lead navigation and help, top account, theme and Settings 
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: /Руководитель/ }).click();
-  await page.waitForURL('**/#/board');
+  await page.waitForURL('**/#/dashboard');
   await page.goto('./#/board?task=10');
   const panel = page.locator('.task-drawer');
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();

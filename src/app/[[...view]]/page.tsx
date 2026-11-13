@@ -16,7 +16,7 @@ import { AccountMenu, NewTask, Settings, TaskDrawer, TaskScreen, Workspace, Work
 import InkOrbitFeatures from '@/components/ui/ink-orbit-features';
 import { demoMode, getStore, requestSnapshot } from '@/lib/data';
 import { ProductPage } from '@/components/product';
-import { InputError, localDay, reportPeriod } from '@/lib/workflow';
+import { InputError, libraryTaskId, localDay, reportPeriod, workspaceEntry } from '@/lib/workflow';
 
 type Props = { params: Promise<{ view?: string[] }>; searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -28,7 +28,7 @@ export default async function Page({ params, searchParams }: Props) {
   const { now, person } = await requestSnapshot();
   if (!view) return <Landing demo={demo} signedIn={!!person} />;
   if (view === 'login' && route.length === 1) {
-    if (person) redirect('/board');
+    if (person) redirect(workspaceEntry(person.role));
     return <Landing demo={demo} />;
   }
   if (!person) redirect('/login');
@@ -42,7 +42,11 @@ export default async function Page({ params, searchParams }: Props) {
   let screen;
   let active = view;
   if (view === 'library') {
-    screen = <Library tasks={timedTasks} person={person} />;
+    const id = libraryTaskId(timedTasks, person, query.task);
+    const detail = id ? store.task(person, id) : null;
+    screen = <Library tasks={timedTasks} person={person} selected={detail?.task} taskPanel={detail && <TaskDrawer
+      {...detail} person={person} now={now} closeHref="/library" currentHref={`/library?task=${detail.task.id}`}
+      initialTab="result" extras={store.taskExtras(person, detail.task.id)} />} />;
   } else if (view === 'dashboard') {
     screen = <Dashboard tasks={timedTasks} person={person} now={now} finance={snapshot.finance} />;
   } else if (view === 'studio' && route.length === 1) {

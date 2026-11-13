@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import demoAtlas from '../../public/reference/library-previews.png';
@@ -8,7 +8,7 @@ import { ArrowUpRight, FileImage, Search } from 'lucide-react';
 import { fileHref } from '@/lib/client-runtime';
 import { formatDate, formats, statuses, type Profile, type Task } from '@/lib/workflow';
 
-export function Library({ tasks, person }: { tasks: Task[]; person: Profile }) {
+export function Library({ tasks, person, selected, taskPanel }: { tasks: Task[]; person: Profile; selected?: Task; taskPanel?: ReactNode }) {
   const [query, setQuery] = useState('');
   const term = query.trim().toLocaleLowerCase('ru');
   const visible = tasks.filter(task => {
@@ -32,7 +32,7 @@ export function Library({ tasks, person }: { tasks: Task[]; person: Profile }) {
       const demoPosition = preview >= 0 && preview < 9
         ? `${preview % 3 * 50}% ${Math.floor(preview / 3) * 50}%`
         : undefined;
-      return <Link className="library-result reference-panel" href={`/board?task=${task.id}`} key={task.id}>
+      return <Link className="library-result reference-panel" href={`/library?task=${task.id}`} scroll={false} key={task.id}>
       <div className="library-preview">
         {demoPosition ? <span className="library-demo-preview" aria-hidden="true" style={{ backgroundImage: `url(${atlasUrl})`, backgroundPosition: demoPosition }}/> : task.coverId ? <Image alt="" src={fileHref(task.coverId, true)} fill unoptimized sizes="(max-width: 650px) 85vw, (max-width: 1150px) 45vw, 30vw"/> : <FileImage size={32} aria-hidden="true"/>}
       </div>
@@ -51,5 +51,26 @@ export function Library({ tasks, person }: { tasks: Task[]; person: Profile }) {
     </Link>;
     })}</div>
     {!visible.length && <p className="dashboard-empty">{term ? 'По вашему запросу ничего не найдено.' : 'После сдачи результата креатив появится здесь.'}</p>}
+    {selected && taskPanel && <LibraryTaskDialog title={selected.offer} key={selected.id}>{taskPanel}</LibraryTaskDialog>}
   </div>;
+}
+
+function LibraryTaskDialog({ title, children }: { title: string; children: ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) return;
+    dialog.showModal();
+    return () => dialog.close();
+  }, []);
+
+  function close() {
+    ref.current?.querySelector<HTMLElement>('[aria-label="Закрыть карточку"]')?.click();
+  }
+
+  return <dialog ref={ref} className="library-task-dialog" aria-label={title}
+    onCancel={event => { event.preventDefault(); close(); }}
+    onClick={event => { if (event.target === event.currentTarget) close(); }}>
+    {children}
+  </dialog>;
 }

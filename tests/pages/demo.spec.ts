@@ -104,6 +104,7 @@ test('Pages routes, covers and the mobile dialog fit the published project path'
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
   await page.getByRole('button', { name: /Руководитель/ }).click();
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('link', { name: 'Доска задач', exact: true }).click();
   await page.locator('.task-card').first().click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Tab');

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { fileHref } from '@/lib/client-runtime';
-import { FileText, History, Bell, ArrowDownToLine, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, MoreVertical, ClipboardList, Clock3, Columns3, FileImage, Film, Flag,  Layers3,  LogOut, Play, Plus, Search, Settings2, Smartphone, Sparkles, Users } from 'lucide-react';
+import { FileText, History, Bell, ArrowDownToLine, ArrowUpRight, BarChart3, BookOpen, CalendarDays, Check, ChevronDown, ClipboardList, Clock3, Columns3, FileImage, Film, Flag,  Layers3,  LogOut, Play, Plus, Search, Settings2, Smartphone, Sparkles, Users } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { demoProfiles } from '@/lib/demo-profiles';
 import type { Store } from '@/lib/store';
@@ -24,7 +24,7 @@ function Brand() {
 
 export function AccountMenu({ person, demo }: { person: Profile; demo: boolean }) {
   return <details className="profile-menu">
-    <summary aria-label={`Учётная запись: ${person.name}, ${roles[person.role]}`} title={person.name}><Avatar personId={person.id} initials={person.initials} color={person.color} /><span><strong>{person.name}</strong><small>{roles[person.role]}</small></span><MoreVertical size={16} /></summary>
+    <summary aria-label={`Учётная запись: ${person.name}, ${roles[person.role]}`} title={person.name}><Avatar personId={person.id} initials={person.initials} color={person.color} /><span><strong>{person.name}</strong><small>{roles[person.role]}</small></span><ChevronDown size={14} aria-hidden="true" /></summary>
     <div className="profile-popup">
       {demo && <><span className="side-caption">Переключить учётку</span><SessionForm className="account-switch">{demoProfiles.map((account) => <button key={account.id} name="demo" value={account.id} disabled={person.id === account.id}>
         <Avatar personId={account.id} initials={account.initials} color={account.color} size="tiny" /><span><strong>{account.name}</strong><small>{roles[account.role]}</small></span>{person.id === account.id && <Check size={15} />}

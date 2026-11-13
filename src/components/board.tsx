@@ -11,6 +11,8 @@ import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, C
 import { duration, formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
 
 const icons = { image: ImageIcon, video: Film, animation: Shapes, other: Layers3 };
+const columnShare = new Intl.NumberFormat('ru', { maximumFractionDigits: 1 });
+const boardClockRefresh = 15_000;
 
 export function FormatMark({ format }: { format: Format }) {
   const Icon = icons[format];
@@ -65,7 +67,7 @@ export function Board({ tasks, person, mine, now: sample, selectedId, defaultDra
   tariffs?: Parameters<typeof TaskAction>[0]['tariffs']; initialStatus?: string; tasks: Task[]; person: Actor; mine: boolean; now: number; selectedId?: number; defaultDrawer: boolean; account: ReactNode; drawer: ReactNode; unread?: number;
   search?: string;
 }) {
-  const now = useLiveNow(sample);
+  const now = useLiveNow(sample, true, boardClockRefresh);
   const draggedId = useRef<number | null>(null);
   const [drop, setDrop] = useState<{task:Task; action:NonNullable<ReturnType<typeof boardDropAction>>} | null>(null);
   const [moveNotice,setMoveNotice] = useState('');
@@ -216,7 +218,7 @@ export function Board({ tasks, person, mine, now: sample, selectedId, defaultDra
       {view === 'board' ? <div className={`kanban${showAllStages ? ' all-stages' : ''}`}>{displayedStages.filter(stage => !status || stage.id === status).map(({ id, label, hint }) => {
         const column = filtered.filter((task) => task.status === id);
         const share = filtered.length ? (column.length / filtered.length) * 100 : 0;
-        const shareLabel = `${label}: ${new Intl.NumberFormat('ru', { maximumFractionDigits: 1 }).format(share)}% (${column.length} из ${filtered.length} задач)`;
+        const shareLabel = `${label}: ${columnShare.format(share)}% (${column.length} из ${filtered.length} задач)`;
         const limit = 3;
         const shown = column.slice(0, limit);
         const selected = column.find((task) => task.id === selectedId);

@@ -10,7 +10,8 @@ async function login(page: Page, role: string) {
     page.getByRole('button', { name: new RegExp(role) }).click(),
   ]);
   expect(response.status()).toBe(200);
-  await expect(page).toHaveURL('/board');
+  await expect(page).toHaveURL(role === 'Заказчик' ? '/board' : '/dashboard');
+  if (role !== 'Заказчик') await page.goto('/board');
 }
 
 async function expectCenteredWorkspace(page: Page) {
@@ -238,7 +239,7 @@ test('sidebar keeps its geometry between sections', async ({ page }) => {
   }
 });
 
-test('opening a task resizes the board progressively and keeps the panel inside the viewport', async ({ page }) => {
+test('opening a task resizes the board in one layout change and keeps the panel inside the viewport', async ({ page }) => {
   await page.setViewportSize({ width: 1800, height: 900 });
   await login(page, 'Руководитель');
   await page.goto('/board?task=none');
@@ -258,7 +259,7 @@ test('opening a task resizes the board progressively and keeps the panel inside 
   const widths = await samples;
   const after = (await page.locator('.board-main').boundingBox())!.width;
   expect(before - after).toBeGreaterThan(300);
-  expect(widths.filter(width => width < before - 2 && width > after + 2).length).toBeGreaterThan(3);
+  expect(widths.filter(width => width < before - 2 && width > after + 2).length).toBe(0);
   const panel = (await page.locator('.task-drawer').boundingBox())!;
   expect(panel.x + panel.width).toBeLessThanOrEqual(1800);
   await page.getByRole('link', { name: 'Закрыть карточку', exact: true }).click();

@@ -35,8 +35,8 @@ for (const [role,label] of [['creative','Креативщик'],['lead','Рук�
  await page.goto('./');
   await page.getByRole('button',{name:'Тестовый вход',exact:true}).click();
   await page.getByRole('dialog').getByRole('button',{name:new RegExp(label)}).click();
-  await page.waitForURL('**/#/board');
-  await page.goto('./#/dashboard');
+  await expect(page).toHaveURL(/#\/dashboard$/);
+  await expect(page.locator('.task-drawer')).toHaveCount(0);
   await expect(page.locator('.reference-dashboard')).toHaveAttribute('data-role',role);
   await expect(page.locator('.reference-stat')).toHaveCount(role==='creative'?5:4);
   await expect(page.getByRole('heading',{name:role==='creative'?'Свободные задачи':'Загрузка креативщиков',exact:true})).toBeVisible();

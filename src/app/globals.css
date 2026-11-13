@@ -772,8 +772,6 @@ input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
   .workspace-page, .reference-hero, .board { animation: interface-enter .24s ease-out; }
   .task-card { animation: interface-fade .22s ease-out; }
   .task-drawer { animation: drawer-enter .4s cubic-bezier(.22,1,.36,1); }
-  /* Keep the same two grid tracks so opening and closing can interpolate. */
-  .board-layout { transition: grid-template-columns .4s cubic-bezier(.22,1,.36,1); }
   .drawer-backdrop { animation: interface-fade .2s ease-out; }
   .drawer-tab-body, .revision-note, .form-error, .field-error, .board-toolbar:not([hidden]), .profile-menu[open] .profile-popup { animation: interface-enter .18s ease-out; }
   .button, .theme-toggle, .icon-link, .side-nav a, .column-more, .drawer-tabs button, .task-card, .search, input, select, textarea {

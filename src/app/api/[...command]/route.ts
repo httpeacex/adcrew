@@ -6,7 +6,7 @@ import { archiveDriveFile, deliverTaskUpdate, integrationStatus } from '@/lib/in
 import { currentProfile, demoMode, getStore, sessionCookie } from '@/lib/data';
 import { demoProfiles } from '@/lib/demo-profiles';
 import type { Upload } from '@/lib/store';
-import { aiServices, creditUnits, InputError, fileTypes, maxFileBytes, maxFiles, validateBrief, type Action } from '@/lib/workflow';
+import { aiServices, creditUnits, InputError, fileTypes, maxFileBytes, maxFiles, validateBrief, workspaceEntry, type Action } from '@/lib/workflow';
 
 type Context = { params: Promise<{ command: string[] }> };
 const smallRequest = 128 * 1024;
@@ -95,7 +95,7 @@ export async function POST(request: Request, { params }: Context) {
       if (!person) throw new InputError('Проверьте адрес почты и пароль.', 401);
       store.endSession(token);
       const session = store.startSession(person);
-      const response = NextResponse.json({ path: '/board' });
+      const response = NextResponse.json({ path: workspaceEntry(person.role) });
       response.cookies.set(sessionCookie, session.token, { ...sessionOptions, maxAge: session.maxAge });
       return response;
     }
