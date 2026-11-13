@@ -32,6 +32,22 @@ test('workspace keeps lead navigation and help, top account, theme and Settings 
   await page.getByRole('combobox', { name: 'Роль участника' }).selectOption('buyer');
   await expect(page.locator('.team-member')).toHaveCount(0);
   await page.goto('./#/notifications');
+  const notices = page.locator('[data-view="notifications"]');
+  await expect(notices.getByRole('button', { name: 'Прочитать всё', exact: true })).toHaveCount(0);
+  await expect(notices.getByRole('button', { name: 'Прочитано', exact: true }).first()).toBeVisible();
+  for (const width of [1600, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const offset = await notices.evaluate(panel => {
+      const center = (rect: DOMRect) => rect.left + rect.width / 2;
+      const outer = center(panel.getBoundingClientRect());
+      return Math.max(...['.product-heading', '.notification-center'].map(selector =>
+        Math.abs(center(panel.querySelector(selector)!.getBoundingClientRect()) - outer)
+      ));
+    });
+    expect(offset).toBeLessThan(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole('button', { name: 'Сегодня', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Сегодня', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.goto('./#/settings');

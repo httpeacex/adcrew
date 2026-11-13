@@ -52,6 +52,16 @@
 }
 .reference-workspace .workspace-main { padding:18px 0 0; }
 .reference-workspace .workspace-page { max-width:none; background:var(--rail); border-radius:22px; padding:22px; }
+.workspace-page[data-view='notifications'] > .product-page {
+  width:min(100%,960px);
+  margin-inline:auto;
+}
+.workspace-page[data-view='notifications'] .notice-content { min-width:0; overflow-wrap:anywhere; }
+@media(max-width:650px) {
+  .workspace-page[data-view='notifications'] .notification-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; }
+  .workspace-page[data-view='notifications'] .notice-row { gap:10px; }
+  .workspace-page[data-view='notifications'] .notice-row > form { margin-left:56px; }
+}
 .reference-topbar { min-height:76px; border-radius:22px; background:var(--rail); padding:12px 20px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
 .reference-search { display:flex; gap:10px; align-items:center; border-radius:12px; background:var(--surface); padding:12px; width:min(340px,45%); color:var(--muted); font-size:12px; }
 .reference-top-actions { display:flex; align-items:center; gap:14px; }
