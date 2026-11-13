@@ -24,10 +24,10 @@ function Brand() {
 
 export function AccountMenu({ person, demo }: { person: Profile; demo: boolean }) {
   return <details className="profile-menu">
-    <summary aria-label={`Учётная запись: ${person.name}, ${roles[person.role]}`} title={person.name}><Avatar initials={person.initials} color={person.color} /><span><strong>{person.name}</strong><small>{roles[person.role]}</small></span><MoreVertical size={16} /></summary>
+    <summary aria-label={`Учётная запись: ${person.name}, ${roles[person.role]}`} title={person.name}><Avatar personId={person.id} initials={person.initials} color={person.color} /><span><strong>{person.name}</strong><small>{roles[person.role]}</small></span><MoreVertical size={16} /></summary>
     <div className="profile-popup">
       {demo && <><span className="side-caption">Переключить учётку</span><SessionForm className="account-switch">{demoProfiles.map((account) => <button key={account.id} name="demo" value={account.id} disabled={person.id === account.id}>
-        <Avatar initials={account.initials} color={account.color} size="tiny" /><span><strong>{account.name}</strong><small>{roles[account.role]}</small></span>{person.id === account.id && <Check size={15} />}
+        <Avatar personId={account.id} initials={account.initials} color={account.color} size="tiny" /><span><strong>{account.name}</strong><small>{roles[account.role]}</small></span>{person.id === account.id && <Check size={15} />}
       </button>)}</SessionForm></>}
       <Link href="/how-it-works" className="account-help"><BookOpen size={16} /> Как это работает</Link>
       <SessionForm><button className="logout" name="mode" value="logout"><LogOut size={16} /> Выйти</button></SessionForm>
@@ -64,7 +64,6 @@ export function Workspace({ children, person, active, demo, counts, unread = 0 }
     </aside>
     <div className="workspace-body">
       <header className="reference-topbar">
-        <Link className="reference-search" href="/board"><ClipboardList size={18} /><span>Поиск задач и проектов…</span></Link>
         <div className="reference-top-actions"><Link href="/notifications" aria-label="Открыть уведомления"><Bell size={18} />{unread > 0 && <i />}</Link><AccountMenu person={person} demo={demo} /></div>
       </header>
       <main className="workspace-main" id="workspace-main" tabIndex={-1}>
@@ -242,7 +241,7 @@ function ReportTeam({ workload }: { workload: Report['workload'] }) {
   const maximum = Math.max(1, ...workload.map((item) => item.progress + item.revision + item.review));
   return <section className="panel" id="team"><div className="panel-title"><Users size={19} /><h2>Загрузка команды</h2></div><p className="muted">Текущие незавершённые задачи по исполнителям.</p>
     <div className="legend"><span><i className="status-dot progress" /> В работе</span><span><i className="status-dot revision" /> Правки</span><span><i className="status-dot review" /> На проверке</span></div>
-    <div className="workload">{workload.map((item) => <div className="workload-row" key={item.id}><Avatar initials={item.initials} color={item.color} /><div><strong>{item.name}</strong><div className="load-bar" aria-label={`В работе ${item.progress}, правки ${item.revision}, на проверке ${item.review}`}>{(['progress', 'revision', 'review'] as const).map((status) => item[status] > 0 && <span key={status} className={status} style={{ width: `${item[status] * 100 / maximum}%` }} />)}</div></div><b>{item.progress + item.revision + item.review}</b></div>)}</div>
+    <div className="workload">{workload.map((item) => <div className="workload-row" key={item.id}><Avatar personId={item.id} initials={item.initials} color={item.color} /><div><strong>{item.name}</strong><div className="load-bar" aria-label={`В работе ${item.progress}, правки ${item.revision}, на проверке ${item.review}`}>{(['progress', 'revision', 'review'] as const).map((status) => item[status] > 0 && <span key={status} className={status} style={{ width: `${item[status] * 100 / maximum}%` }} />)}</div></div><b>{item.progress + item.revision + item.review}</b></div>)}</div>
   </section>;
 }
 

@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, BriefcaseBusiness, Clapperboard, Search, ShieldCheck } from 'lucide-react';
-import { demoProfiles } from '@/lib/demo-profiles';
+import { Avatar } from './board';
 import { formatDate, roles, statuses, type Profile, type Task } from '@/lib/workflow';
 import './team-directory.css';
 
@@ -14,8 +14,7 @@ const groups = [
 ] as const;
 
 function MemberAvatar({ member }: { member: Profile }) {
-  const portrait = demoProfiles.findIndex(profile => profile.id === member.id && profile.email === member.email);
-  return <span className={`avatar team-portrait ${member.color}`} data-portrait={portrait >= 0 ? portrait : undefined} aria-hidden="true">{portrait < 0 ? member.initials : null}</span>;
+ return <Avatar personId={member.id} initials={member.initials} color={member.color}/>;
 }
 
 export function TeamDirectory({ members, tasks, currentId }: { members: Profile[]; tasks: Task[]; currentId: number }) {

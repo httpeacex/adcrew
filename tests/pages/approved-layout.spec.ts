@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('approved workspace keeps account and alerts in the reference topbar and searches task IDs inside board', async ({ page }) => {
+test('approved workspace keeps account and alerts in the reference topbar without a board search input', async ({ page }) => {
   await page.setViewportSize({ width: 1664, height: 946 });
   await page.goto('./');
   await page.getByRole('button', { name: 'Тестовый вход', exact: true }).click();
@@ -13,11 +13,8 @@ test('approved workspace keeps account and alerts in the reference topbar and se
   await expect(themes.getByRole('button', { name: 'Включить светлую тему' })).toHaveAttribute('aria-pressed', 'true');
   await themes.getByRole('button', { name: 'Включить светлую тему' }).click();
   await expect(themes.getByRole('button', { name: 'Включить светлую тему' })).toHaveAttribute('aria-pressed', 'true');
-  const search = page.locator('.board-main').getByRole('searchbox');
-  await search.fill('КР-009');
-  await expect(page.locator('.task-card')).toHaveCount(1);
-  await expect(page.locator('.task-card')).toContainText('КР-009');
-  await search.clear();
+  await expect(page.locator('.board-local-search')).toHaveCount(0);
+  await expect(page.getByRole('searchbox')).toHaveCount(0);
   const panel = page.locator('.task-drawer');
   await panel.getByRole('button', { name: 'Содержимое', exact: true }).click();
   await expect(panel.getByRole('button', { name: 'Содержимое', exact: true })).toBeVisible();

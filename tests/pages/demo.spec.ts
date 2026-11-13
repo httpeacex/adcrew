@@ -124,9 +124,7 @@ test('Pages routes, covers and the mobile dialog fit the published project path'
     else await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
   }
   await page.getByRole('navigation', { name: 'Рабочее пространство' }).getByRole('link', { name: 'Доска задач', exact: true }).click();
-  const cover = page.locator('.card-cover img').first();
-  await expect(cover).toHaveAttribute('src', /.+/);
-  expect(await cover.evaluate(async image => (await fetch((image as HTMLImageElement).src)).ok)).toBe(true);
+  await expect(page.locator('.task-card .card-cover')).toHaveCount(0);
   await expect(page.locator('.card-assignees').first()).toBeVisible();
   await page.locator('.profile-menu summary').click();
   await page.locator('.profile-popup').getByRole('link', { name: 'Как это работает', exact: true }).click();

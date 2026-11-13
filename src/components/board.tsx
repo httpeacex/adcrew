@@ -1,12 +1,12 @@
 'use client';
 
+import avatarAtlas from '../../public/avatars/team-atlas.png';
+
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { boardDropAction } from '@/lib/board-moves';
 import { TaskAction } from './forms';
-import NextImage from 'next/image';
-import { fileHref } from '@/lib/client-runtime';
-import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, ChartNoAxesColumnIncreasing, Columns3, Film, Flag, ImageIcon, Layers3, List, MoreHorizontal, Paperclip, Play, Plus, Search, Shapes, SlidersHorizontal, TriangleAlert, Users, X } from 'lucide-react';
+import { Archive, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Columns3, Film, Flag, ImageIcon, Layers3, List, MoreHorizontal, Clock3, Hourglass, Eye, Plus, Shapes, SlidersHorizontal, TriangleAlert, Users } from 'lucide-react';
 import { duration, formatDate, formats, isOverdue, localDay, priorities, statuses, type Actor, type Format, type Status, type Task } from '@/lib/workflow';
 
 const icons = { image: ImageIcon, video: Film, animation: Shapes, other: Layers3 };
@@ -16,36 +16,23 @@ export function FormatMark({ format }: { format: Format }) {
   return <span className={`format-mark ${format}`}><Icon size={14} aria-hidden="true" /></span>;
 }
 
-export function Avatar({ initials, color, size = '' }: { initials: string; color: string; size?: string }) {
-  return <span className={`avatar ${color} ${size}`}>{initials}</span>;
+const avatarPositions: Record<number,string> = {1:'0% 0%',2:'50% 0%',3:'100% 0%',4:'0% 100%',5:'50% 100%'};
+export function Avatar({ initials, color, size = '', personId }: { initials: string; color: string; size?: string; personId?: number | null }) {
+ const position=personId ? avatarPositions[personId] : undefined;
+ const src=typeof avatarAtlas==='string'?avatarAtlas:avatarAtlas.src;
+ return <span className={`avatar ${color} ${size}${position?' generated-avatar':''}`} style={position?{backgroundImage:`url(${src})`,backgroundSize:'300% 200%',backgroundPosition:position}:undefined} aria-hidden="true">{position?null:initials}</span>;
 }
 
 function TaskCard({ task, now, href, selected, draggable, onDragStart, onDragEnd }: { task: Task; now: number; href: string; selected: boolean; draggable?: boolean; onDragStart?: React.DragEventHandler<HTMLAnchorElement>; onDragEnd?: React.DragEventHandler<HTMLAnchorElement> }) {
   const overdue = isOverdue(task, now) && task.status !== 'done';
-  const statusLabel = statuses.find(status => status.id === task.status)!.label;
-  return <Link className={`task-card task-${task.status}${task.coverId ? ' has-cover' : ' compact-card'}${overdue ? ' overdue-card' : ''}${selected ? ' is-selected' : ''}`} draggable={draggable} onDragStart={onDragStart} onDragEnd={onDragEnd} href={href} scroll={false} aria-current={selected ? 'true' : undefined}>
-    <div className="card-body"><div className="card-top">
-      <span className="task-code">КР-{String(task.id).padStart(3, '0')}</span><span className={`priority ${task.priority}`} title={`Приоритет: ${priorities[task.priority]}`}><Flag size={11} /> {priorities[task.priority]}</span></div>
-    {task.coverId && <span className={`card-cover ${task.format}`}>
-      <NextImage alt="" fill loading="lazy" unoptimized src={fileHref(task.coverId, true)} />
-      <span className="card-cover-status">{statusLabel}</span>
-      {task.format === 'video' ? <span className="cover-play" aria-hidden="true"><Play size={14} fill="currentColor" /></span> : null}
-      {task.status === 'done' && <span className="cover-accepted"><Check size={12} aria-hidden="true" /></span>}
-    </span>}
-    <h3><ChartNoAxesColumnIncreasing size={14} className={`card-priority-mark ${task.priority}`} /><span className="card-title-text">{task.offer}</span></h3>
-    <div className="card-assignees"><span>Байер: {task.buyerName}</span><span>Исполнитель: {task.creativeName || 'Свободна'}</span></div><div className="card-tags"><span className="card-format"><FormatMark format={task.format} />{formats[task.format]} · {task.quantity} шт.</span><span className="geo-tag">{task.geo}</span></div>
-    {task.status === 'done' && <span className="card-approved"><Check size={13} aria-hidden="true" />Согласовано</span>}
-    <div className="card-footer"><span className={`due ${overdue ? 'late' : ''}`} title={overdue ? 'Дедлайн просрочен' : 'Дедлайн'}>{overdue ? <TriangleAlert size={13} /> : <CalendarDays size={14} />}{formatDate(task.deadline)}</span>
-    </div>
-    <div className="card-time"><span>Создана {formatDate(task.createdAt,true)}</span><span>Ожидание: {duration(task.timing?.waiting ?? Math.max(0,(task.claimedAt??now)-task.createdAt))}</span><span>В работе: {duration(task.timing?.production ?? 0)} · На проверке: {duration(task.timing?.review ?? 0)}</span>{task.status==='done'&&<span>Потрачено: {duration(task.timing?.production ?? 0)}</span>}{overdue&&<span className="late">Просрочка: {duration(now-task.deadline)}</span>}</div>
-    <div className="card-counters" aria-label="Участники, материалы и обсуждение">
-      <div className="card-participants" title={task.creativeName ? `${task.buyerName}, ${task.creativeName}` : `${task.buyerName} · без исполнителя`}>
-        <Avatar initials={task.buyerName.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()} color="violet" size="tiny" />
-        {task.creativeInitials && <Avatar initials={task.creativeInitials} color={task.creativeColor || 'violet'} size="tiny" />}
-      </div>
-      <span title="Файлы"><Paperclip size={12} />{task.fileCount ?? 0}</span>
-      <span title="Чек-лист приёмки"><i className="progress-ring" style={{ '--progress': `${(task.checkedCount ?? 0) / 3 * 100}%` } as React.CSSProperties} />{task.checkedCount ?? 0}/3</span><span className={`card-format-label format-${task.format}`}><i/><span className="card-format-text">{formats[task.format]}</span></span>
-    </div></div>
+  const initials=task.creativeInitials || task.buyerName.split(/\s+/).map(p=>p[0]).slice(0,2).join('');
+  return <Link className={`task-card reference-task-card task-${task.status}${overdue ? ' overdue-card' : ''}${selected ? ' is-selected' : ''}`} draggable={draggable} onDragStart={onDragStart} onDragEnd={onDragEnd} href={href} scroll={false} aria-current={selected ? 'true' : undefined}>
+    <div className="ref-card-identity"><Avatar personId={task.creativeId ?? task.buyerId} initials={initials} color={task.creativeColor || 'violet'}/><div><span className="ref-card-code">КР-{String(task.id).padStart(3,'0')}</span><span className={`ref-card-priority ${task.priority}`}><Flag size={10}/>{priorities[task.priority]}</span></div></div>
+    <div className="ref-card-heading"><div><h3>{task.offer}</h3><p>{formats[task.format]} · {task.geo}</p></div><span className="ref-card-format" title={formats[task.format]}><FormatMark format={task.format}/></span></div>
+    <div className="card-assignees ref-card-people"><span><small>Заказчик</small>{task.buyerName}</span><span><small>Исполнитель</small>{task.creativeName || 'Не назначен'}</span></div>
+    <div className="ref-card-metrics"><div><Hourglass size={14}/><strong>{duration(task.timing?.waiting ?? Math.max(0,(task.claimedAt??now)-task.createdAt))}</strong><small>Ожидание</small></div><div><Clock3 size={14}/><strong>{duration(task.timing?.production ?? 0)}</strong><small>{task.status==='done'?'Потрачено':'В работе'}</small></div><div><Eye size={14}/><strong>{duration(task.timing?.review ?? 0)}</strong><small>Проверка</small></div></div>
+    <small className="ref-card-created">Создана {formatDate(task.createdAt,true)}</small>
+    <div className={`ref-card-deadline${overdue?' late':''}${task.status==='done'?' accepted':''}`}>{overdue?<TriangleAlert size={13}/>:task.status==='done'?<Check size={13}/>:<CalendarDays size={13}/>}<span>{overdue?`Просрочка ${duration(now-task.deadline)}`:task.status==='done'?`Готово ${formatDate(task.completedAt!,true)}`:`До ${formatDate(task.deadline,true)}`}</span></div>
   </Link>;
 }
 
@@ -86,9 +73,7 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
       setDrop(null);
     }
   },[drop,tasks]);
-  const [query, setQuery] = useState('');
   const [stages, setStages] = useState('all');
-  const searchInput = useRef<HTMLInputElement>(null);
   const [geo, setGeo] = useState('');
   const [priority, setPriority] = useState('');
   const [assignee, setAssignee] = useState('');
@@ -109,7 +94,6 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
       if (saved && !initialStatus) {
         // Restore browser-only preferences after hydration.
         /* eslint-disable react-hooks/set-state-in-effect */
-        setQuery(typeof saved.query === 'string' ? saved.query : '');
         setGeo(typeof saved.geo === 'string' ? saved.geo : '');
         setAssignee(typeof saved.assignee === 'string' ? saved.assignee : '');
         setPriority(Object.hasOwn(priorities, saved.priority) ? saved.priority : '');
@@ -124,20 +108,10 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   }, [storageKey, initialStatus]);
   useEffect(() => {
     if (!restored.current || initialStatus) return;
-    try { sessionStorage.setItem(storageKey, JSON.stringify({ query, geo, priority, assignee, status, lateOnly, showFilters, expanded })); } catch { /* Browsing remains available without storage. */ }
-  }, [storageKey, initialStatus, query, geo, priority, assignee, status, lateOnly, showFilters, expanded]);
+    try { sessionStorage.setItem(storageKey, JSON.stringify({ geo, priority, assignee, status, lateOnly, showFilters, expanded })); } catch { /* Browsing remains available without storage. */ }
+  }, [storageKey, initialStatus, geo, priority, assignee, status, lateOnly, showFilters, expanded]);
   const isBuyer = person.role === 'buyer';
   const hasTaskDrawer = !!drawer && !defaultDrawer;
-  useEffect(() => {
-    function focusSearch(event: KeyboardEvent) {
-      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.key.toLowerCase() !== 'k') return;
-      if (hasTaskDrawer && window.matchMedia('(max-width: 1199px)').matches) return;
-      event.preventDefault();
-      searchInput.current?.focus();
-    }
-    window.addEventListener('keydown', focusSearch);
-    return () => window.removeEventListener('keydown', focusSearch);
-  }, [hasTaskDrawer]);
   useEffect(() => {
     if (!hasTaskDrawer) return;
     const media = window.matchMedia('(max-width: 1199px)');
@@ -192,16 +166,15 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
   }, [hasTaskDrawer, selectedId]);
   const scoped = mine ? tasks.filter((task) => task.buyerId === person.id || task.creativeId === person.id) : tasks;
   const geos = [...new Set(scoped.map((task) => task.geo))].sort();
-  const term = query.trim().toLocaleLowerCase('ru');
   const overdue = (task: Task) => task.status !== 'done' && isOverdue(task, now);
   const today = (task: Task) => task.status !== 'done' && localDay(task.deadline) === localDay(now);
   const own = (task: Task) => task.buyerId === person.id || task.creativeId === person.id;
-  const filtered = scoped.filter((task) => (!term || `${task.offer} КР-${String(task.id).padStart(3, '0')}`.toLocaleLowerCase('ru').includes(term)) && (!geo || task.geo === geo) && (!format || task.format === format) && (!offer || task.offer === offer) && (quick !== 'mine' || own(task)) && (quick !== 'today' || today(task)) && (view !== 'archive' || task.status === 'done') &&
+  const filtered = scoped.filter((task) => (!geo || task.geo === geo) && (!format || task.format === format) && (!offer || task.offer === offer) && (quick !== 'mine' || own(task)) && (quick !== 'today' || today(task)) && (view !== 'archive' || task.status === 'done') &&
     (scopeFilter !== 'active' || task.status !== 'done') && (scopeFilter !== 'free' || (task.status === 'new' && task.creativeId === null)) && (!priority || task.priority === priority) && (!assignee || (assignee === 'free' ? !task.creativeId : String(task.creativeId) === assignee)) && (!lateOnly || overdue(task)) && (!status || task.status === status));
   const boardStatus = status || scopeFilter;
   const boardPath = `${mine ? '/board?scope=mine&' : '/board?'}${boardStatus ? `status=${encodeURIComponent(boardStatus)}&` : ''}`;
-  const hasFilters = !!scopeFilter || lateOnly || quick !== 'all' || !!(query || geo || priority || assignee || status || format || offer);
-  function resetFilters() { setScopeFilter(''); setLateOnly(false); setQuick('all'); setQuery(''); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); setFormat(''); setOffer(''); }
+  const hasFilters = !!scopeFilter || lateOnly || quick !== 'all' || !!(geo || priority || assignee || status || format || offer);
+  function resetFilters() { setScopeFilter(''); setLateOnly(false); setQuick('all'); setGeo(''); setPriority(''); setAssignee(''); setStatus(''); setFormat(''); setOffer(''); }
   const showAllStages = true;
   const displayedStages = statuses;
   return <div className={`board-layout${drawer ? ' with-drawer' : ''}${defaultDrawer ? ' default-drawer' : ''}`}>
@@ -215,13 +188,6 @@ export function Board({ tasks, person, mine, now, selectedId, defaultDrawer, dra
     ] as const).map(([id, label, Icon]) => <button key={id} type="button" aria-pressed={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><Icon size={15} aria-hidden="true" />{label}</button>)}</div>
     <div className="board-stage-choice"><select aria-label="Колонки доски" value={stages} onChange={event=>setStages(event.target.value)}><option value="production">Производство</option><option value="all">Все статусы</option></select></div>
     <div className="board-quick-tabs production-filters" aria-label="Быстрые фильтры">
-    <div className="board-local-search">        <div className="search" role="search" aria-label="Поиск по задачам">
-          <Search className="search-icon" size={16} aria-hidden="true" />
-          <input ref={searchInput} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Поиск задач" aria-label="Поиск задач" aria-keyshortcuts="Control+K Meta+K" />
-          {query ? <button className="search-clear" type="button" aria-label="Очистить поиск" onClick={() => { setQuery(''); searchInput.current?.focus(); }}><X size={16} aria-hidden="true" /></button>
-            : <kbd className="search-shortcut" aria-hidden="true">Ctrl K</kbd>}
-        </div>
-</div>
       <button type="button" className={quick === 'all' && !lateOnly ? 'active' : ''} aria-pressed={quick === 'all' && !lateOnly} onClick={() => { setQuick('all'); setLateOnly(false); }}>Все задачи <span>{scoped.length}</span></button>
       <button type="button" className={quick === 'mine' ? 'active' : ''} aria-pressed={quick === 'mine'} onClick={() => { setQuick(quick === 'mine' ? 'all' : 'mine'); setLateOnly(false); }}>Мои <span>{scoped.filter(own).length}</span></button>
       <button type="button" className={quick === 'today' ? 'active' : ''} aria-pressed={quick === 'today'} onClick={() => { setQuick(quick === 'today' ? 'all' : 'today'); setLateOnly(false); }}>Сегодня <span>{scoped.filter(today).length}</span></button>
